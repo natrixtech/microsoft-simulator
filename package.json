@@ -1,0 +1,44 @@
+{
+  "name": "simulators",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve word",
+    "build": "ng build word --base-href ./",
+    "build:shared": "ng build shared",
+    "build:word": "ng build word --base-href ./",
+    "build:all": "ng build shared && ng build word --base-href ./",
+    "watch": "ng build word --watch --configuration development",
+    "test": "ng test word"
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/animations": "^16.2.12",
+    "@angular/common": "^16.2.12",
+    "@angular/compiler": "^16.2.12",
+    "@angular/core": "^16.2.12",
+    "@angular/forms": "^16.2.12",
+    "@angular/platform-browser": "^16.2.12",
+    "@angular/platform-browser-dynamic": "^16.2.12",
+    "@angular/router": "^16.2.12",
+    "canvas-confetti": "^1.9.4",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0",
+    "zone.js": "~0.13.3"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^16.2.16",
+    "@angular/cli": "^16.2.16",
+    "@angular/compiler-cli": "^16.2.12",
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/jasmine": "~4.3.5",
+    "jasmine-core": "~4.6.0",
+    "karma": "~6.4.2",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "ng-packagr": "^16.2.0",
+    "typescript": "~5.1.6"
+  }
+}
