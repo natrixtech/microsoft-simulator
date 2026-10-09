@@ -1,0 +1,98 @@
+<div class="card-container">
+  <section class="task-card" [class.success]="isSuccess">
+    <!-- Drag Handle Header Area -->
+    <div
+      class="card-drag-handle"
+      role="button"
+      tabindex="0"
+      aria-label="Movable task card. Use arrow keys to reposition."
+      (keydown)="onDragHandleKeydown($event)"
+      title="Drag to reposition card (Arrow keys to move)"
+    >
+      <div class="drag-grip-indicator" aria-hidden="true">
+        <span class="grip-dot"></span>
+        <span class="grip-dot"></span>
+        <span class="grip-dot"></span>
+        <span class="grip-dot"></span>
+        <span class="grip-dot"></span>
+        <span class="grip-dot"></span>
+      </div>
+      <span class="lesson-eyebrow">{{ eyebrowText }}</span>
+      <span class="drag-pill" aria-hidden="true">Move ✥</span>
+    </div>
+
+    <h2>{{ title }}</h2>
+    <p class="explanation">{{ explanation }}</p>
+
+    <div class="task-box">
+      <span class="task-label">YOUR TASK</span>
+      <ng-container *ngIf="instructions.length === 1; else multiStep">
+        <p>
+          <ng-container *ngFor="let token of parseInstruction(instructions[0])">
+            <code *ngIf="token.type === 'code'">{{ token.content }}</code>
+            <button
+              type="button"
+              class="inline-reference"
+              *ngIf="token.type === 'cell'"
+              (click)="onCellClick(token.content)"
+            >
+              {{ token.content }}
+            </button>
+            <strong *ngIf="token.type === 'bold'">{{ token.content }}</strong>
+            <span *ngIf="token.type === 'text'">{{ token.content }}</span>
+          </ng-container>
+        </p>
+      </ng-container>
+      <ng-template #multiStep>
+        <ol>
+          <li *ngFor="let step of instructions">
+            <ng-container *ngFor="let token of parseInstruction(step)">
+              <code *ngIf="token.type === 'code'">{{ token.content }}</code>
+              <button
+                type="button"
+                class="inline-reference"
+                *ngIf="token.type === 'cell'"
+                (click)="onCellClick(token.content)"
+              >
+                {{ token.content }}
+              </button>
+              <strong *ngIf="token.type === 'bold'">{{ token.content }}</strong>
+              <span *ngIf="token.type === 'text'">{{ token.content }}</span>
+            </ng-container>
+          </li>
+        </ol>
+      </ng-template>
+    </div>
+
+    <button
+      type="button"
+      class="help-button"
+      *ngIf="hasShowMeHow"
+      (click)="showDemo.emit()"
+    >
+      ▷ &nbsp; Show me how
+    </button>
+
+    <div
+      class="feedback"
+      *ngIf="feedbackMessage"
+      [class.good]="isSuccess"
+      [class.bad]="!isSuccess"
+      role="status"
+    >
+      {{ feedbackMessage }}
+    </div>
+
+    <button
+      type="button"
+      class="primary check-button"
+      [disabled]="isDisabled"
+      (click)="onPrimaryAction()"
+    >
+      {{ buttonLabel }}
+    </button>
+  </section>
+
+  <!-- Associated Mascot (Moves with Task Card) -->
+  <lib-mascot [mood]="mascotMood" [assetBaseUrl]="assetBaseUrl"></lib-mascot>
+</div>

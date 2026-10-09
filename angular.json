@@ -7,65 +7,32 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "shared": {
-      "projectType": "library",
-      "root": "projects/shared",
-      "sourceRoot": "projects/shared/src",
-      "prefix": "lib",
-      "architect": {
-        "build": {
-          "builder": "@angular-devkit/build-angular:ng-packagr",
-          "options": {
-            "project": "projects/shared/ng-package.json"
-          },
-          "configurations": {
-            "production": {
-              "tsConfig": "projects/shared/tsconfig.lib.prod.json"
-            },
-            "development": {
-              "tsConfig": "projects/shared/tsconfig.lib.json"
-            }
-          },
-          "defaultConfiguration": "production"
-        },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "tsConfig": "projects/shared/tsconfig.spec.json",
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ]
-          }
-        }
-      }
-    },
-    "word": {
+    "word-processing-simulator": {
       "projectType": "application",
       "schematics": {},
-      "root": "projects/word",
-      "sourceRoot": "projects/word/src",
+      "root": "",
+      "sourceRoot": "src",
       "prefix": "app",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
             "outputPath": "dist/word",
-            "index": "projects/word/src/index.html",
-            "main": "projects/word/src/main.ts",
+            "index": "src/index.html",
+            "main": "src/main.ts",
             "polyfills": [
               "zone.js"
             ],
-            "tsConfig": "projects/word/tsconfig.app.json",
+            "tsConfig": "tsconfig.app.json",
             "assets": [
               {
                 "glob": "**/*",
-                "input": "projects/word/public",
+                "input": "public",
                 "output": "/"
               }
             ],
             "styles": [
-              "projects/word/src/styles.css"
+              "src/styles.css"
             ],
             "scripts": []
           },
@@ -100,10 +67,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "word:build:production"
+              "browserTarget": "word-processing-simulator:build:production"
             },
             "development": {
-              "browserTarget": "word:build:development"
+              "browserTarget": "word-processing-simulator:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -118,16 +85,16 @@
               "zone.js",
               "zone.js/testing"
             ],
-            "tsConfig": "projects/word/tsconfig.spec.json",
+            "tsConfig": "tsconfig.spec.json",
             "assets": [
               {
                 "glob": "**/*",
-                "input": "projects/word/public",
+                "input": "public",
                 "output": "/"
               }
             ],
             "styles": [
-              "projects/word/src/styles.css"
+              "src/styles.css"
             ],
             "scripts": []
           }

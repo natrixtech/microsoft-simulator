@@ -3,13 +3,11 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve word",
-    "build": "ng build word --base-href ./",
-    "build:shared": "ng build shared",
-    "build:word": "ng build word --base-href ./",
-    "build:all": "ng build shared && ng build word --base-href ./",
-    "watch": "ng build word --watch --configuration development",
-    "test": "ng test word"
+    "start": "ng serve",
+    "build": "ng build --base-href ./",
+    "build:word": "ng build --base-href ./",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test"
   },
   "private": true,
   "dependencies": {
@@ -38,7 +36,6 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
-    "ng-packagr": "^16.2.0",
     "typescript": "~5.1.6"
   }
 }

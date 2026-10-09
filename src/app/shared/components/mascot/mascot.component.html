@@ -1,0 +1,13 @@
+<div class="mascot-area">
+  <div class="mascot-figure" [attr.data-mood]="mood" aria-label="Practice helper robot">
+    <img
+      [src]="mascotSrc"
+      [alt]="mascotAlt"
+      class="mascot-svg"
+      loading="eager"
+    />
+  </div>
+  <p class="mascot-message">
+    {{ messageText }}
+  </p>
+</div>

@@ -1,0 +1,397 @@
+    <div class="demo-backdrop" (click)="onBackdropClick($event)" role="dialog" aria-modal="true">
+      <div class="demo-dialog" (click)="$event.stopPropagation()">
+        <!-- Header: Task Title, First Instruction, and Close button only (strictly pinned) -->
+        <header class="dialog-header">
+          <div class="header-titles">
+            <h2>{{ title }}</h2>
+            <p class="header-instruction" *ngIf="instruction">{{ instruction }}</p>
+          </div>
+          <button type="button" class="close-button" (click)="onClose()" aria-label="Close">×</button>
+        </header>
+
+        <div class="demo-body">
+          <!-- Left Column: Steps Checklist with Numbered Circles and Replay Button (bounded) -->
+          <div class="demo-steps-col">
+            <ol class="demo-steps" *ngIf="steps().length > 0">
+              <li *ngFor="let step of steps(); let i = index" [class]="step.state">
+                <span class="step-num">
+                  {{ step.state === 'done' ? '✓' : i + 1 }}
+                </span>
+                <span class="step-label">{{ step.label }}</span>
+              </li>
+            </ol>
+            <div class="empty-steps-note" *ngIf="steps().length === 0">
+              <span>Ready to demonstrate</span>
+            </div>
+            <button type="button" class="replay-btn" (click)="replay()">
+              ↺ Replay
+            </button>
+          </div>
+
+          <!-- Right Area: Scaled-down NON-interactive replica of the real Word app with animated cursor -->
+          <div class="demo-replica-area" #replicaArea>
+            <div class="demo-toast" *ngIf="showToast()">
+              ✨ That’s how you {{ getToastTitle() }}!
+            </div>
+
+            <!-- Scaler container for coherent, responsive scaling -->
+            <div
+              class="replica-scaler"
+              [style.transform]="scaleTransform()"
+              [style.width]="scalerWidth()"
+              [style.height]="scalerHeight()"
+            >
+              <!-- Replica Window Container -->
+              <div class="replica-window" [attr.data-app]="appKind">
+                <!-- Word 365 Blue Title Bar -->
+                <ng-container *ngIf="appKind === 'word'">
+                  <div class="replica-word-titlebar">
+                    <div class="rw-titlebar-left">
+                      <span class="rw-app-icon" aria-hidden="true" title="Microsoft Word">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                          <path d="M19.5 3h-15C3.67 3 3 3.67 3 4.5v15c0 .83.67 1.5 1.5 1.5h15c.83 0 1.5-.67 1.5-1.5v-15c0-.83-.67-1.5-1.5-1.5zm-6.25 14h-1.56l-1.9-6.8-1.9 6.8H6.33L4.5 9h1.72l1.1 5.3 1.83-5.3h1.7l1.83 5.3 1.1-5.3h1.72l-1.75 8z"/>
+                        </svg>
+                      </span>
+                      <span class="rw-qa-btn" data-demo-target="undo" title="Undo">↶</span>
+                      <strong class="rw-doc-name">{{ title }} - Word</strong>
+                    </div>
+                  </div>
+
+                  <!-- Word Ribbon Tabs -->
+                  <div class="replica-ribbon-tabs">
+                    <span class="rw-tab">File</span>
+                    <span class="rw-tab" data-demo-target="tab-home" [class.active]="replicaActiveTab() === 'home'" (click)="setReplicaTab('home')">Home</span>
+                    <span class="rw-tab" data-demo-target="tab-insert" [class.active]="replicaActiveTab() === 'insert'" (click)="setReplicaTab('insert')">Insert</span>
+                    <span class="rw-tab" data-demo-target="tab-layout" [class.active]="replicaActiveTab() === 'layout'" (click)="setReplicaTab('layout')">Layout</span>
+                    <span class="rw-tab" data-demo-target="tab-tools" [class.active]="replicaActiveTab() === 'tools'" (click)="setReplicaTab('tools')">Tools</span>
+                    <span class="rw-tab disabled">Review</span>
+                    <span class="rw-tab disabled">View</span>
+                  </div>
+
+                  <!-- Word Ribbon Command Bar with Targets (compact, explicit 68px height) -->
+                  <div class="replica-ribbon-commands">
+                    <!-- Home Tab Command Groups -->
+                    <ng-container *ngIf="replicaActiveTab() === 'home'">
+                      <!-- Clipboard -->
+                      <div class="rw-group">
+                        <div class="rw-group-row">
+                          <span class="rw-btn" data-demo-target="paste" [class.highlight]="activeAction() === 'paste'">Paste</span>
+                          <span class="rw-btn micro" data-demo-target="cut" [class.highlight]="activeAction() === 'cut'">✂</span>
+                          <span class="rw-btn micro" data-demo-target="copy" [class.highlight]="activeAction() === 'copy'">📋</span>
+                        </div>
+                        <span class="rw-group-label">Clipboard</span>
+                      </div>
+
+                      <!-- Font -->
+                      <div class="rw-group">
+                        <div class="rw-group-row">
+                          <span class="rw-select" data-demo-target="font">{{ replicaFont() }}</span>
+                          <span class="rw-select micro" data-demo-target="size">{{ replicaFontSize() }}</span>
+                        </div>
+                        <div class="rw-group-row">
+                          <span class="rw-btn micro" data-demo-target="bold" [class.highlight]="activeAction() === 'bold'"><strong>B</strong></span>
+                          <span class="rw-btn micro" data-demo-target="italic" [class.highlight]="activeAction() === 'italic'"><em>I</em></span>
+                          <span class="rw-btn micro" data-demo-target="underline" [class.highlight]="activeAction() === 'underline'"><u>U</u></span>
+                          <span class="rw-btn micro" data-demo-target="color" [class.highlight]="activeAction() === 'color'">A <small>▼</small></span>
+                          <span class="rw-btn micro" data-demo-target="highlight" [class.highlight]="activeAction() === 'highlight'">🖊 <small>▼</small></span>
+                        </div>
+                        <span class="rw-group-label">Font</span>
+                      </div>
+
+                      <!-- Paragraph -->
+                      <div class="rw-group">
+                        <div class="rw-group-row">
+                          <span class="rw-btn micro" data-demo-target="bullets" [class.highlight]="activeAction() === 'bullets'">•≡</span>
+                          <span class="rw-btn micro" data-demo-target="numbering" [class.highlight]="activeAction() === 'numbering'">1≡</span>
+                          <span class="rw-btn micro" data-demo-target="indent" [class.highlight]="activeAction() === 'indent'">⇥</span>
+                        </div>
+                        <div class="rw-group-row">
+                          <span class="rw-btn micro" data-demo-target="align-left" [class.highlight]="activeAction() === 'align-left'">⯸</span>
+                          <span class="rw-btn micro" data-demo-target="align-center" [class.highlight]="activeAction() === 'align-center'">≡</span>
+                          <span class="rw-btn micro" data-demo-target="align-right" [class.highlight]="activeAction() === 'align-right'">⯹</span>
+                          <span class="rw-btn micro" data-demo-target="align-justify" [class.highlight]="activeAction() === 'align-justify'">≣</span>
+                          <span class="rw-btn micro" data-demo-target="line-spacing" [class.highlight]="activeAction() === 'line-spacing'">↕</span>
+                        </div>
+                        <span class="rw-group-label">Paragraph</span>
+                      </div>
+
+                      <!-- Styles Gallery -->
+                      <div class="rw-group rw-styles-group">
+                        <div class="rw-styles-strip">
+                          <span class="rw-style-tile" data-demo-target="style-normal" [class.active]="replicaStyle() === 'normal'">Normal</span>
+                          <span class="rw-style-tile" data-demo-target="style-title" [class.active]="replicaStyle() === 'title'">Title</span>
+                          <span class="rw-style-tile" data-demo-target="style-subtitle" [class.active]="replicaStyle() === 'subtitle'">Subtitle</span>
+                          <span class="rw-style-tile" data-demo-target="style-h1" [class.active]="replicaStyle() === 'h1'">Heading 1</span>
+                          <span class="rw-style-tile" data-demo-target="style-h2" [class.active]="replicaStyle() === 'h2'">Heading 2</span>
+                          <span class="rw-style-tile" data-demo-target="style-h3" [class.active]="replicaStyle() === 'h3'">Heading 3</span>
+                        </div>
+                        <span class="rw-group-label">Styles</span>
+                      </div>
+
+                      <!-- Editing -->
+                      <div class="rw-group">
+                        <div class="rw-group-row vertical">
+                          <span class="rw-btn micro-text" data-demo-target="find" [class.highlight]="activeAction() === 'find'">🔍 Find</span>
+                          <span class="rw-btn micro-text" data-demo-target="replace" [class.highlight]="activeAction() === 'replace'">⇄ Replace</span>
+                        </div>
+                        <span class="rw-group-label">Editing</span>
+                      </div>
+                    </ng-container>
+
+                    <!-- Insert Tab Command Groups -->
+                    <ng-container *ngIf="replicaActiveTab() === 'insert'">
+                      <div class="rw-group">
+                        <div class="rw-group-row">
+                          <span class="rw-btn" data-demo-target="insert-page-break">⎘ Page Break</span>
+                        </div>
+                        <span class="rw-group-label">Pages</span>
+                      </div>
+
+                      <div class="rw-group">
+                        <div class="rw-group-row">
+                          <span class="rw-btn" data-demo-target="insert-table">田 Table</span>
+                        </div>
+                        <span class="rw-group-label">Tables</span>
+                      </div>
+
+                      <div class="rw-group">
+                        <div class="rw-group-row">
+                          <span class="rw-btn" data-demo-target="insert-image">🖼 Pictures</span>
+                        </div>
+                        <span class="rw-group-label">Illustrations</span>
+                      </div>
+
+                      <div class="rw-group">
+                        <div class="rw-group-row">
+                          <span class="rw-btn micro-text" data-demo-target="insert-header">⤒ Header</span>
+                          <span class="rw-btn micro-text" data-demo-target="insert-footer">⤓ Footer</span>
+                          <span class="rw-btn micro-text" data-demo-target="insert-page-numbers"># Number</span>
+                        </div>
+                        <span class="rw-group-label">Header & Footer</span>
+                      </div>
+
+                      <div class="rw-group">
+                        <div class="rw-group-row">
+                          <span class="rw-btn micro-text" data-demo-target="insert-toc">📑 TOC</span>
+                          <span class="rw-btn micro-text" data-demo-target="insert-footnote">¹ Footnote</span>
+                          <span class="rw-btn micro-text" data-demo-target="insert-comment">💬 Comment</span>
+                        </div>
+                        <span class="rw-group-label">Links & Notes</span>
+                      </div>
+                    </ng-container>
+
+                    <!-- Layout Tab Command Groups -->
+                    <ng-container *ngIf="replicaActiveTab() === 'layout'">
+                      <div class="rw-group">
+                        <div class="rw-group-row">
+                          <span class="rw-btn" data-demo-target="page-setup">📄 Page Setup</span>
+                        </div>
+                        <span class="rw-group-label">Page Setup</span>
+                      </div>
+                    </ng-container>
+
+                    <!-- Tools Tab Command Groups -->
+                    <ng-container *ngIf="replicaActiveTab() === 'tools'">
+                      <div class="rw-group">
+                        <div class="rw-group-row">
+                          <span class="rw-btn" data-demo-target="tools-variables">&#123;x&#125; Variables</span>
+                        </div>
+                        <span class="rw-group-label">Variables</span>
+                      </div>
+                    </ng-container>
+                  </div>
+
+                  <!-- Word Document Canvas Sheet (occupies remaining height) -->
+                  <div class="replica-doc-workspace">
+                    <div class="replica-doc-ruler">
+                      <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span>
+                    </div>
+                    <div class="replica-doc-stage" [class.landscape]="replicaOrientation() === 'landscape'">
+                      <div
+                        class="replica-doc-page"
+                        [style.padding-top.px]="replicaMargins().top * 16"
+                        [style.padding-bottom.px]="replicaMargins().bottom * 16"
+                        [style.padding-left.px]="replicaMargins().left * 16"
+                        [style.padding-right.px]="replicaMargins().right * 16"
+                      >
+                        <!-- Optional Header Area -->
+                        <div class="replica-header-area" *ngIf="replicaHeader()" data-demo-target="replica-header">
+                          {{ replicaHeader() }}
+                        </div>
+
+                        <!-- Document Content Container -->
+                        <div
+                          #replicaDocContent
+                          class="replica-doc-content"
+                          data-demo-target="doc-canvas"
+                        ></div>
+
+                        <!-- Optional Footer Area -->
+                        <div class="replica-footer-area" *ngIf="replicaFooter() || replicaPageNumbers()" data-demo-target="replica-footer">
+                          <span>{{ replicaFooter() }}</span>
+                          <span *ngIf="replicaPageNumbers()">Page 1</span>
+                        </div>
+                      </div>
+
+                      <!-- Right Margin Comments Gutter -->
+                      <div class="replica-comments-gutter" *ngIf="replicaComments().length > 0">
+                        <div
+                          class="replica-comment-card"
+                          *ngFor="let c of replicaComments(); let cIdx = index"
+                          [class.resolved]="c.resolved"
+                          [attr.data-demo-target]="'replica-comment-' + cIdx"
+                        >
+                          <div class="rc-header">
+                            <span class="rc-author">Comment</span>
+                            <span
+                              class="rc-check"
+                              [class.done]="c.resolved"
+                              [attr.data-demo-target]="'comment-resolve-' + cIdx"
+                              title="Resolve comment"
+                            >✓</span>
+                          </div>
+                          <div class="rc-text">{{ c.text || c.comment }}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </ng-container>
+
+                <!-- In-Replica Dialogs Driven Step by Step -->
+
+                <!-- Find and Replace Dialog -->
+                <div class="replica-dialog-overlay" *ngIf="replicaDialog() === 'findReplace'">
+                  <div class="replica-dialog-box">
+                    <div class="rd-header">Find and Replace</div>
+                    <div class="rd-body">
+                      <div class="rd-field">
+                        <label>Find what:</label>
+                        <input
+                          type="text"
+                          [value]="findWhatInput()"
+                          data-demo-target="find-what-input"
+                          readonly
+                        />
+                      </div>
+                      <div class="rd-field">
+                        <label>Replace with:</label>
+                        <input
+                          type="text"
+                          [value]="replaceWithInput()"
+                          data-demo-target="replace-with-input"
+                          readonly
+                        />
+                      </div>
+                      <div class="rd-actions">
+                        <span class="rd-btn primary" data-demo-target="dialog-replace-btn">Replace</span>
+                        <span class="rd-btn" data-demo-target="dialog-close-btn">Close</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Page Setup Dialog -->
+                <div class="replica-dialog-overlay" *ngIf="replicaDialog() === 'pageSetup'">
+                  <div class="replica-dialog-box page-setup-dialog">
+                    <div class="rd-header">Page Setup</div>
+                    <div class="rd-body">
+                      <div class="rd-field">
+                        <label>Orientation:</label>
+                        <div class="rd-pill-row">
+                          <span
+                            class="rd-pill"
+                            [class.active]="replicaOrientation() === 'portrait'"
+                            data-demo-target="ps-orient-portrait"
+                          >Portrait</span>
+                          <span
+                            class="rd-pill"
+                            [class.active]="replicaOrientation() === 'landscape'"
+                            data-demo-target="ps-orient-landscape"
+                          >Landscape</span>
+                        </div>
+                      </div>
+                      <div class="rd-field">
+                        <label>Paper Size:</label>
+                        <span class="rd-input-fake" data-demo-target="ps-size">{{ replicaPaperSize() }}</span>
+                      </div>
+                      <div class="rd-field">
+                        <label>Margins (in):</label>
+                        <div class="rd-margin-inputs">
+                          <span>T: <strong data-demo-target="ps-margin-top">{{ replicaMargins().top }}</strong></span>
+                          <span>B: <strong data-demo-target="ps-margin-bottom">{{ replicaMargins().bottom }}</strong></span>
+                          <span>L: <strong data-demo-target="ps-margin-left">{{ replicaMargins().left }}</strong></span>
+                          <span>R: <strong data-demo-target="ps-margin-right">{{ replicaMargins().right }}</strong></span>
+                        </div>
+                      </div>
+                      <div class="rd-actions">
+                        <span class="rd-btn primary" data-demo-target="pagesetup-ok-btn">OK</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Insert Image Dialog -->
+                <div class="replica-dialog-overlay" *ngIf="replicaDialog() === 'insertImage'">
+                  <div class="replica-dialog-box">
+                    <div class="rd-header">Insert Picture</div>
+                    <div class="rd-body">
+                      <div class="rd-pic-preview">🖼 {{ replicaImageFile() }}</div>
+                      <div class="rd-actions">
+                        <span class="rd-btn primary" data-demo-target="insert-image-ok-btn">Insert</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Insert Table Dialog -->
+                <div class="replica-dialog-overlay" *ngIf="replicaDialog() === 'insertTable'">
+                  <div class="replica-dialog-box">
+                    <div class="rd-header">Insert Table</div>
+                    <div class="rd-body">
+                      <div class="rd-table-grid">{{ replicaTableRows() }} × {{ replicaTableCols() }} Table</div>
+                      <div class="rd-actions">
+                        <span class="rd-btn primary" data-demo-target="insert-table-ok-btn">Insert</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Variables Dialog -->
+                <div class="replica-dialog-overlay" *ngIf="replicaDialog() === 'variables'">
+                  <div class="replica-dialog-box">
+                    <div class="rd-header">Insert Variable</div>
+                    <div class="rd-body">
+                      <div class="rd-var-list">
+                        <div
+                          class="rd-var-item"
+                          *ngFor="let kv of getVariableEntries()"
+                          [attr.data-demo-target]="'var-' + kv.key"
+                        >
+                          <strong>{{ kv.key }}</strong>: <span>{{ kv.value }}</span>
+                        </div>
+                      </div>
+                      <div class="rd-actions">
+                        <span class="rd-btn primary" data-demo-target="variables-insert-btn">Insert</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Animated Cursor Glide Element placed in demo-replica-area -->
+            <div
+              class="animated-cursor"
+              [style.left.px]="cursorPixelX()"
+              [style.top.px]="cursorPixelY()"
+              [class.clicking]="isClicking()"
+            >
+              <svg viewBox="0 0 24 24" width="22" height="22">
+                <path fill="#202124" stroke="#ffffff" stroke-width="1.5" d="M3 2l18 10-9 2-4 8z" />
+              </svg>
+              <span class="click-pulse" *ngIf="isClicking()"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>

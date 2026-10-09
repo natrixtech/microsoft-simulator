@@ -17,8 +17,10 @@
     "useDefineForClassFields": false,
     "paths": {
       "shared": [
-        "./projects/shared/src/public-api.ts",
-        "./dist/shared"
+        "./src/app/shared/index.ts"
+      ],
+      "@shared/*": [
+        "./src/app/shared/*"
       ]
     },
     "importHelpers": true,

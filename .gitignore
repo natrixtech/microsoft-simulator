@@ -37,3 +37,7 @@ yarn-error.log
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# Scratch and temporary testing files
+/scratch/
+.gemini/
