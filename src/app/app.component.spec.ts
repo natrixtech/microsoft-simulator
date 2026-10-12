@@ -686,6 +686,32 @@ describe('AppComponent', () => {
       app.onEditorInput();
       expect(app.editorRef?.nativeElement.querySelector('ul')).toBeFalsy();
     });
+
+    it('12. Force Finish immediately sends activityCompleted with current progress', () => {
+      spyOn(app.bridge, 'sendComplete');
+      app.loadWordActivity({
+        mode: 'assessment',
+        title: 'Multi-Task Assessment',
+        assetBaseUrl: './assets/',
+        theme: 'LIGHT',
+        tasks: [
+          { title: 'Task 1', explanation: 'E1', instructions: ['I1'], goals: [] },
+          { title: 'Task 2', explanation: 'E2', instructions: ['I2'], goals: [] },
+        ],
+      });
+      fixture.detectChanges();
+
+      // Simulate student having passed 1 out of 2 tasks
+      app.passedTasks.set(new Set<number>([0]));
+
+      // Trigger FORCE_FINISH
+      app.bridge.forceFinishTrigger.update(v => v + 1);
+      fixture.detectChanges();
+
+      // Must call sendComplete with completed=false, tasksPassed=1, tasksTotal=2
+      expect(app.bridge.sendComplete).toHaveBeenCalledWith(false, 1, 2);
+      expect(app.isCompleted()).toBeTrue();
+    });
   });
 });
 

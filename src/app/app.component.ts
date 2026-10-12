@@ -332,14 +332,20 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     effect(() => {
       const trigger = this.bridge.forceFinishTrigger();
       if (trigger > 0) {
-        this.isDemoOpen.set(false);
-        const total = this.totalTasks();
-        const passedCount = this.passedTasks().size;
-        const allDone = passedCount >= total;
-        this.bridge.sendComplete(allDone, passedCount, total);
-        this.isCompleted.set(true);
+        untracked(() => {
+          if (this.advanceTimer) {
+            clearTimeout(this.advanceTimer);
+            this.advanceTimer = null;
+          }
+          this.isDemoOpen.set(false);
+          const total = this.totalTasks();
+          const passedCount = this.passedTasks().size;
+          const allDone = passedCount >= total;
+          this.bridge.sendComplete(allDone, passedCount, total);
+          this.isCompleted.set(true);
+        });
       }
-    });
+    }, { allowSignalWrites: true });
   }
 
   ngOnInit(): void {
