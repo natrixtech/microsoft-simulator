@@ -42,17 +42,6 @@ export interface TaskStartSnapshot {
   assetBaseUrl: string;
 }
 
-interface MenuItem {
-  label: string;
-  action?: () => void;
-  disabled?: boolean;
-}
-
-interface MenuCategory {
-  name: string;
-  items: MenuItem[];
-}
-
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -63,9 +52,30 @@ interface MenuCategory {
 })
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('editorElement') editorRef?: ElementRef<HTMLElement>;
+  @ViewChild('page2EditorElement') page2EditorRef?: ElementRef<HTMLElement>;
+  @ViewChild('headerEl') headerRef?: ElementRef<HTMLElement>;
+  @ViewChild('footerEl') footerRef?: ElementRef<HTMLElement>;
   @ViewChild('workLayout') workLayoutRef?: ElementRef<HTMLElement>;
   @ViewChild('wordPaper') paperRef?: ElementRef<HTMLElement>;
   @ViewChild('movableGroup') movableGroupRef?: ElementRef<HTMLElement>;
+
+  readonly hasPageBreak = signal<boolean>(false);
+  readonly activeRegion = signal<'body' | 'header' | 'footer'>('body');
+  readonly activePageNum = signal<number>(1);
+  readonly totalDocPages = computed<number>(() => this.hasPageBreak() ? 2 : 1);
+
+  // Draggable Image Resizing State
+  readonly imageBoxLeft = signal<number>(0);
+  readonly imageBoxTop = signal<number>(0);
+  readonly imageBoxWidth = signal<number>(0);
+  readonly imageBoxHeight = signal<number>(0);
+  private isResizing = false;
+  private resizeHandle: string = '';
+  private resizeStartX = 0;
+  private resizeStartY = 0;
+  private resizeStartWidth = 0;
+  private resizeStartHeight = 0;
+  private resizeAspectRatio = 1;
 
   readonly currentActivity = signal<ActivityPayload | null>(null);
   readonly taskIndex = signal<number>(0);
@@ -91,6 +101,11 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
   readonly showPageSetup = signal<boolean>(false);
   readonly showFindReplace = signal<boolean>(false);
+  readonly showCommentDialog = signal<boolean>(false);
+  readonly commentSelectedText = signal<string>('');
+  readonly newCommentText = signal<string>('Please review this section.');
+  readonly activeRibbonTab = signal<'Home' | 'Insert' | 'Layout'>('Home');
+  readonly showOrientationPicker = signal<boolean>(false);
   readonly openMenuName = signal<string | null>(null);
 
   readonly selectedStyle = signal<string>('normal');
@@ -129,6 +144,9 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly showImageDialog = signal<boolean>(false);
   readonly selectedImageFile = signal<string>('');
   readonly selectedImageEl = signal<HTMLImageElement | null>(null);
+  readonly selectedTableEl = signal<HTMLTableElement | null>(null);
+  readonly selectedTocEl = signal<HTMLElement | null>(null);
+  readonly selectedPageNum = signal<boolean>(false);
 
   readonly showTablePicker = signal<boolean>(false);
   readonly tableHoverRows = signal<number>(2);
@@ -288,8 +306,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly sizeList = [8, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72];
   readonly colorKeys = Object.keys(COLORS);
 
-  menus: MenuCategory[] = [];
-
   readonly paperPadding = computed<string>(() => {
     const m = this.wordDoc.setup.margins;
     return `${m.top * 48}px ${m.right * 48}px ${m.bottom * 48}px ${m.left * 48}px`;
@@ -328,7 +344,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit(): void {
     this.bridge.init('word');
-    this.setupMenus();
     const initialAct = this.bridge.activity();
     if (initialAct) {
       this.loadWordActivity(initialAct);
@@ -349,6 +364,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
     setTimeout(() => {
       this.computeInitialPlacement();
+      this.updateHeaderFooterDom();
     }, 50);
   }
 
@@ -356,115 +372,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.advanceTimer) {
       clearTimeout(this.advanceTimer);
     }
-  }
-
-  private setupMenus(): void {
-    this.menus = [
-      {
-        name: 'File',
-        items: [
-          { label: 'Page setup', action: () => this.openPageSetupDialog() },
-          { label: 'Print preview', disabled: true },
-        ],
-      },
-      {
-        name: 'Edit',
-        items: [
-          { label: 'Undo', action: () => document.execCommand('undo') },
-          { label: 'Redo', action: () => document.execCommand('redo') },
-          { label: 'Cut', action: () => this.wordDoc.rich?.copy(true) },
-          { label: 'Copy', action: () => this.wordDoc.rich?.copy(false) },
-          { label: 'Paste', action: () => this.wordDoc.rich?.paste() },
-          { label: 'Find & replace', action: () => this.openFindReplaceDialog() },
-        ],
-      },
-      {
-        name: 'Insert',
-        items: [
-          {
-            label: 'Image',
-            action: () => {
-              const file = (this.currentActivity()?.images as any)?.[0]?.file || 'photo.png';
-              const img = document.createElement('img');
-              const base = this.currentActivity()?.assetBaseUrl || '';
-              img.src = base ? base + file : file;
-              img.dataset['file'] = file;
-              img.style.maxWidth = '300px';
-              this.editorRef?.nativeElement.append(img);
-              this.wordDoc.logAction('insertImage', file);
-              this.onEditorInput();
-            },
-          },
-          {
-            label: 'Table (2x2)',
-            action: () => {
-              const table = document.createElement('table');
-              table.className = 'doc-table';
-              for (let i = 0; i < 2; i++) {
-                const r = table.insertRow();
-                for (let j = 0; j < 2; j++) {
-                  const c = r.insertCell();
-                  c.innerHTML = '<br>';
-                }
-              }
-              this.editorRef?.nativeElement.append(table);
-              this.wordDoc.logAction('insertTable');
-              this.onEditorInput();
-            },
-          },
-          {
-            label: 'Page break',
-            action: () => {
-              const hr = document.createElement('hr');
-              hr.dataset['element'] = 'pageBreak';
-              this.editorRef?.nativeElement.append(hr);
-              this.wordDoc.logAction('pageBreak');
-              this.onEditorInput();
-            },
-          },
-          {
-            label: 'Page header',
-            action: () => {
-              const text = this.wordDoc.header || 'Header';
-              this.wordDoc.header = text;
-              this.wordDoc.logAction('header', text);
-            },
-          },
-          {
-            label: 'Page footer',
-            action: () => {
-              const text = this.wordDoc.footer || 'Footer';
-              this.wordDoc.footer = text;
-              this.wordDoc.logAction('footer', text);
-            },
-          },
-          {
-            label: 'Page numbers',
-            action: () => {
-              this.wordDoc.numbering = !this.wordDoc.numbering;
-              this.wordDoc.logAction('pageNumbers');
-            },
-          },
-        ],
-      },
-      {
-        name: 'Format',
-        items: [
-          { label: 'Paragraph style: Heading 1', action: () => this.applyParagraphStyle('h1') },
-          { label: 'Paragraph style: Heading 2', action: () => this.applyParagraphStyle('h2') },
-          { label: 'Paragraph style: Normal', action: () => this.applyParagraphStyle('normal') },
-          { label: 'Align: Left', action: () => this.formatCmd('justifyLeft') },
-          { label: 'Align: Center', action: () => this.formatCmd('justifyCenter') },
-          { label: 'Align: Right', action: () => this.formatCmd('justifyRight') },
-        ],
-      },
-      {
-        name: 'Help',
-        items: [
-          { label: 'Show me how', action: () => this.openDemoModal() },
-        ],
-      },
-    ];
   }
 
   toggleMenu(name: string, event: MouseEvent): void {
@@ -476,17 +383,21 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   closeMenus(): void {
     this.openMenuName.set(null);
     this.showTablePicker.set(false);
+    this.showOrientationPicker.set(false);
   }
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event?: MouseEvent): void {
     const target = event?.target as HTMLElement | null;
-    if (!target?.closest('.ribbon-tab-menu')) {
+    if (!target?.closest('.ribbon-tab-menu') && !target?.closest('.ribbon-popover-wrap')) {
       this.closeMenus();
     }
     if (!target?.closest('.color-picker-wrap')) {
       this.showFontColorPicker.set(false);
       this.showHighlightColorPicker.set(false);
+    }
+    if (!target?.closest('.orientation-dropdown-wrap')) {
+      this.showOrientationPicker.set(false);
     }
   }
 
@@ -495,13 +406,45 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     this.closeMenus();
     this.showFontColorPicker.set(false);
     this.showHighlightColorPicker.set(false);
+    this.showCommentDialog.set(false);
+    this.showOrientationPicker.set(false);
+    this.selectedImageEl.set(null);
+    this.selectedTableEl.set(null);
+    this.selectedTocEl.set(null);
+    this.selectedPageNum.set(false);
+    this.activeRegion.set('body');
   }
 
-  onMenuItemClick(item: MenuItem): void {
-    if (item.action) {
-      item.action();
+  @HostListener('document:keydown', ['$event'])
+  onDocumentKeydown(e: KeyboardEvent): void {
+    if (e.key === 'Backspace' || e.key === 'Delete') {
+      if (this.selectedImageEl()) {
+        e.preventDefault();
+        this.deleteSelectedImage();
+        return;
+      }
+      if (this.selectedPageNum()) {
+        e.preventDefault();
+        this.deletePageNumbers();
+        return;
+      }
+      if (this.selectedTocEl()) {
+        e.preventDefault();
+        this.deleteSelectedToc();
+        return;
+      }
+      if (this.selectedTableEl()) {
+        const sel = window.getSelection();
+        const anchor = sel?.anchorNode;
+        const el = anchor?.nodeType === Node.ELEMENT_NODE ? anchor as Element : anchor?.parentElement;
+        const inCell = el?.closest('td, th');
+        if (!inCell) {
+          e.preventDefault();
+          this.deleteSelectedTable();
+          return;
+        }
+      }
     }
-    this.closeMenus();
   }
 
   private captureTaskStartSnapshot(index: number, act: ActivityPayload, task: LessonTask): void {
@@ -568,6 +511,15 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     this.showFinalTealCard.set(false);
     this.showPageSetup.set(false);
     this.showFindReplace.set(false);
+    this.showCommentDialog.set(false);
+    this.commentSelectedText.set('');
+    this.newCommentText.set('Please review this section.');
+    this.showOrientationPicker.set(false);
+    this.activeRibbonTab.set('Home');
+    this.selectedImageEl.set(null);
+    this.selectedTableEl.set(null);
+    this.selectedTocEl.set(null);
+    this.selectedPageNum.set(false);
     this.findTextQuery = '';
     this.replaceTextQuery = '';
     this.taskStartSnapshots.clear();
@@ -580,7 +532,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     this.updateWordCount();
 
     if (this.editorRef) {
-      this.wordDoc.init(firstTask, normalizedAct, this.editorRef.nativeElement);
+      this.setupDocumentForTask(firstTask, normalizedAct);
     }
     this.captureTaskStartSnapshot(0, normalizedAct, firstTask);
   }
@@ -595,15 +547,57 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     this.taskIndex.set(index);
     this.isPassed.set(false);
     this.feedbackMsg.set('');
+    this.selectedImageEl.set(null);
+    this.selectedTableEl.set(null);
+    this.selectedTocEl.set(null);
+    this.selectedPageNum.set(false);
 
+    this.setupDocumentForTask(task, act);
+    this.captureTaskStartSnapshot(index, act, task);
+  }
+
+  private setupDocumentForTask(task: LessonTask, act: ActivityPayload): void {
+    if (!this.editorRef) return;
+    this.selectedImageEl.set(null);
+    this.selectedTableEl.set(null);
+    this.selectedTocEl.set(null);
+    this.selectedPageNum.set(false);
+    this.activeRegion.set('body');
+    this.activePageNum.set(1);
+
+    const rawHtml = task.startingDocument !== undefined && task.startingDocument !== null
+      ? task.startingDocument
+      : (act.startingDocument || '');
+
+    // Check if document contains a page break element
+    if (rawHtml && (rawHtml.includes('data-element="pageBreak"') || rawHtml.includes('pageBreak'))) {
+      const parts = rawHtml.split(/<hr[^>]*data-element=["']pageBreak["'][^>]*>/i);
+      if (parts.length > 1) {
+        this.wordDoc.init({ ...task, startingDocument: parts[0] + '<hr data-element="pageBreak" style="display:none">' }, act, this.editorRef.nativeElement);
+        this.hasPageBreak.set(true);
+        this.wordDoc.hasPageBreak = true;
+        setTimeout(() => {
+          if (this.page2EditorRef?.nativeElement) {
+            this.page2EditorRef.nativeElement.innerHTML = parts.slice(1).join('') || '<p><br></p>';
+            this.wordDoc.page2Element = this.page2EditorRef.nativeElement;
+          }
+          this.updateHeaderFooterDom();
+          this.syncDocumentContent();
+        });
+        return;
+      }
+    }
+
+    this.hasPageBreak.set(false);
+    this.wordDoc.hasPageBreak = false;
+    this.wordDoc.page2Element = null;
     if (task.startingDocument !== null && task.startingDocument !== undefined) {
       this.wordDoc.init(task, act, this.editorRef.nativeElement);
     } else {
       this.wordDoc.actions = [];
     }
+    this.updateHeaderFooterDom();
     this.updateWordCount();
-
-    this.captureTaskStartSnapshot(index, act, task);
   }
 
   loadFallbackActivity(index: number = 0): void {
@@ -621,20 +615,228 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onEditorInput(): void {
-    this.wordDoc.html = this.editorRef?.nativeElement.innerHTML || '';
+    const editor = this.editorRef?.nativeElement;
+    if (editor) {
+      // 1. Clean up empty variable tokens
+      editor.querySelectorAll<HTMLElement>('span[data-element="variable"]').forEach((v) => {
+        if (!v.textContent?.trim()) {
+          v.remove();
+        }
+      });
+
+      // 2. Clean up orphaned footnote section if all footnote references are gone
+      const fnRefs = editor.querySelectorAll('sup.footnote-ref');
+      const fnSection = editor.querySelector('.footnote-section');
+      if (fnSection && fnRefs.length === 0) {
+        fnSection.remove();
+      }
+
+      // 3. Clean up completely empty list shells
+      editor.querySelectorAll<HTMLElement>('ul, ol').forEach((list) => {
+        if (!list.textContent?.trim() && !list.contains(document.activeElement)) {
+          list.remove();
+        }
+      });
+
+      // 4. Prune empty page break if removed from page 1 DOM
+      if (this.hasPageBreak() && !editor.querySelector('[data-element="pageBreak"]')) {
+        this.mergePage2IntoPage1();
+      }
+    }
+    this.syncDocumentContent();
+  }
+
+  onPage2Input(): void {
+    this.syncDocumentContent();
+  }
+
+  onEditorKeydown(e: KeyboardEvent): void {
+    if (e.key === 'Delete' && this.hasPageBreak()) {
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0 && this.editorRef?.nativeElement.contains(sel.anchorNode)) {
+        const range = sel.getRangeAt(0);
+        const testRange = document.createRange();
+        testRange.setStart(range.endContainer, range.endOffset);
+        testRange.setEndAfter(this.editorRef.nativeElement.lastChild || this.editorRef.nativeElement);
+        if (testRange.toString().trim() === '') {
+          e.preventDefault();
+          this.mergePage2IntoPage1();
+          return;
+        }
+      }
+    }
+
+    if (e.key === 'Backspace') {
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0 && this.editorRef?.nativeElement.contains(sel.anchorNode)) {
+        const anchor = sel.anchorNode;
+        const el = anchor?.nodeType === Node.ELEMENT_NODE ? anchor as Element : anchor?.parentElement;
+
+        // If inside an empty table
+        const cell = el?.closest('td, th');
+        const table = cell?.closest('table');
+        if (cell && table) {
+          const isEmpty = Array.from(table.querySelectorAll('td, th')).every(c => !c.textContent?.trim());
+          if (isEmpty) {
+            e.preventDefault();
+            const p = document.createElement('p');
+            p.innerHTML = '<br>';
+            table.parentNode?.insertBefore(p, table);
+            table.remove();
+            this.selectedTableEl.set(null);
+            this.onEditorInput();
+            const r = document.createRange();
+            r.setStart(p, 0);
+            r.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(r);
+            return;
+          }
+        }
+
+        // If in an empty li
+        const li = el?.closest('li');
+        if (li && !li.textContent?.trim()) {
+          const list = li.closest('ul, ol');
+          if (list) {
+            e.preventDefault();
+            li.remove();
+            if (list.querySelectorAll('li').length === 0) {
+              const p = document.createElement('p');
+              p.innerHTML = '<br>';
+              list.parentNode?.insertBefore(p, list);
+              list.remove();
+              const r = document.createRange();
+              r.setStart(p, 0);
+              r.collapse(true);
+              sel.removeAllRanges();
+              sel.addRange(r);
+            }
+            this.onEditorInput();
+            return;
+          }
+        }
+      }
+    }
+  }
+
+  mergePage2IntoPage1(): void {
+    const editor = this.editorRef?.nativeElement;
+    const p2 = this.page2EditorRef?.nativeElement;
+    if (editor) {
+      const marker = editor.querySelector('[data-element="pageBreak"]');
+      if (marker) marker.remove();
+      if (p2) {
+        const text = p2.innerText.trim();
+        if (text) {
+          editor.innerHTML += p2.innerHTML;
+        }
+      }
+      editor.focus();
+    }
+    this.hasPageBreak.set(false);
+    this.wordDoc.hasPageBreak = false;
+    this.wordDoc.page2Element = null;
+    this.activePageNum.set(1);
+    this.syncDocumentContent();
+  }
+
+  onPage2Keydown(e: KeyboardEvent): void {
+    if (e.key === 'Backspace' && this.page2EditorRef) {
+      const p2 = this.page2EditorRef.nativeElement;
+      const text = p2.innerText.trim();
+      const sel = window.getSelection();
+      const isAtStart = sel && sel.rangeCount > 0 && sel.anchorOffset === 0;
+
+      if (!text || isAtStart) {
+        e.preventDefault();
+        this.mergePage2IntoPage1();
+      }
+    }
+  }
+
+  syncDocumentContent(): void {
+    const p1Html = this.editorRef?.nativeElement.innerHTML || '';
+    const p2Html = this.hasPageBreak() && this.page2EditorRef?.nativeElement ? this.page2EditorRef.nativeElement.innerHTML : '';
+    this.wordDoc.html = p1Html + (this.hasPageBreak() ? '<hr data-element="pageBreak" style="display:none">' + p2Html : '');
+    if (this.hasPageBreak() && this.page2EditorRef?.nativeElement) {
+      this.wordDoc.page2Element = this.page2EditorRef.nativeElement;
+    } else {
+      this.wordDoc.page2Element = null;
+    }
     this.updateWordCount();
   }
 
+  updateHeaderFooterDom(): void {
+    if (this.headerRef?.nativeElement && document.activeElement !== this.headerRef.nativeElement) {
+      this.headerRef.nativeElement.textContent = this.wordDoc.header || '';
+    }
+    if (this.footerRef?.nativeElement && document.activeElement !== this.footerRef.nativeElement) {
+      this.footerRef.nativeElement.textContent = this.wordDoc.footer || '';
+    }
+  }
+
   onHeaderInput(e: Event): void {
-    this.wordDoc.header = (e.target as HTMLElement).textContent || '';
+    const text = (e.target as HTMLElement).textContent || '';
+    this.wordDoc.header = text.trim() === '' ? '' : text;
   }
 
   onFooterInput(e: Event): void {
-    this.wordDoc.footer = (e.target as HTMLElement).textContent || '';
+    const text = (e.target as HTMLElement).textContent || '';
+    this.wordDoc.footer = text.trim() === '' ? '' : text;
+  }
+
+  removeHeader(): void {
+    this.wordDoc.header = '';
+    if (this.headerRef?.nativeElement) {
+      this.headerRef.nativeElement.textContent = '';
+    }
+    this.wordDoc.logAction('header', '');
+    this.closeHeaderFooterEdit();
+  }
+
+  removeFooter(): void {
+    this.wordDoc.footer = '';
+    if (this.footerRef?.nativeElement) {
+      this.footerRef.nativeElement.textContent = '';
+    }
+    this.wordDoc.logAction('footer', '');
+    this.closeHeaderFooterEdit();
+  }
+
+  onHeaderBlur(): void {
+    // Keep active region or update if needed
+  }
+
+  onFooterBlur(): void {
+    // Keep active region or update if needed
+  }
+
+  openHeaderEdit(e?: MouseEvent): void {
+    if (e) e.stopPropagation();
+    this.activeRegion.set('header');
+    setTimeout(() => {
+      this.headerRef?.nativeElement?.focus();
+    });
+  }
+
+  openFooterEdit(e?: MouseEvent): void {
+    if (e) e.stopPropagation();
+    this.activeRegion.set('footer');
+    setTimeout(() => {
+      this.footerRef?.nativeElement?.focus();
+    });
+  }
+
+  closeHeaderFooterEdit(): void {
+    this.activeRegion.set('body');
   }
 
   private updateWordCount(): void {
     let text = this.editorRef?.nativeElement.innerText || '';
+    if (this.hasPageBreak() && this.page2EditorRef?.nativeElement) {
+      text += ' ' + this.page2EditorRef.nativeElement.innerText;
+    }
     if (!text && this.wordDoc.html) {
       const temp = document.createElement('div');
       temp.innerHTML = this.wordDoc.html;
@@ -646,6 +848,9 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
   formatCmd(cmd: string, val?: string): void {
     this.wordDoc.rich?.command(cmd, val);
+    if (cmd === 'undo' || cmd === 'redo') {
+      this.wordDoc.logAction(cmd);
+    }
     this.onEditorInput();
   }
 
@@ -787,11 +992,88 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onEditorClick(event: MouseEvent): void {
+    this.activeRegion.set('body');
     const target = event.target as HTMLElement;
     if (target && target.tagName === 'IMG') {
-      this.selectedImageEl.set(target as HTMLImageElement);
+      const img = target as HTMLImageElement;
+      this.selectedImageEl.set(img);
+      this.wordDoc.logAction('selectImage', img.dataset['file'] || img.src);
+      setTimeout(() => this.updateImageBoxRect());
     } else {
       this.selectedImageEl.set(null);
+    }
+
+    const table = target?.closest('table') as HTMLTableElement | null;
+    this.selectedTableEl.set(table);
+
+    const toc = target?.closest('.table-of-contents') as HTMLElement | null;
+    this.selectedTocEl.set(toc);
+
+    if (!target?.closest('.page-num')) {
+      this.selectedPageNum.set(false);
+    }
+  }
+
+  deleteSelectedImage(): void {
+    const img = this.selectedImageEl();
+    if (img) {
+      img.remove();
+      this.selectedImageEl.set(null);
+      this.wordDoc.logAction('deleteImage');
+      this.onEditorInput();
+    }
+  }
+
+  deleteSelectedTable(): void {
+    const table = this.selectedTableEl();
+    if (table) {
+      table.remove();
+      this.selectedTableEl.set(null);
+      this.wordDoc.logAction('deleteTable');
+      this.onEditorInput();
+    }
+  }
+
+  deleteSelectedToc(): void {
+    const toc = this.selectedTocEl();
+    if (toc) {
+      toc.remove();
+      this.selectedTocEl.set(null);
+      this.wordDoc.logAction('deleteTableOfContents');
+      this.onEditorInput();
+    }
+  }
+
+  selectPageNumber(e: MouseEvent): void {
+    e.stopPropagation();
+    this.selectedPageNum.set(true);
+    this.selectedImageEl.set(null);
+    this.selectedTableEl.set(null);
+    this.selectedTocEl.set(null);
+  }
+
+  deletePageNumbers(e?: Event): void {
+    if (e) e.preventDefault();
+    this.wordDoc.numbering = false;
+    this.selectedPageNum.set(false);
+    this.wordDoc.logAction('pageNumbers');
+    this.onEditorInput();
+  }
+
+  onPage1Click(event: MouseEvent): void {
+    this.activePageNum.set(1);
+    this.onEditorClick(event);
+  }
+
+  onPage2Click(event: MouseEvent): void {
+    this.activePageNum.set(2);
+    this.onEditorClick(event);
+  }
+
+  onPaperClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.page-header') && !target.closest('.page-footer')) {
+      this.activeRegion.set('body');
     }
   }
 
@@ -810,6 +1092,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
         img.style.margin = '0';
       }
       this.onEditorInput();
+      setTimeout(() => this.updateImageBoxRect());
     }
   }
 
@@ -828,6 +1111,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
         img.style.display = 'inline-block';
       }
       this.onEditorInput();
+      setTimeout(() => this.updateImageBoxRect());
     }
   }
 
@@ -836,8 +1120,82 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     if (img) {
       img.width = width;
       img.style.width = width + 'px';
+      img.style.height = 'auto';
       this.onEditorInput();
+      setTimeout(() => this.updateImageBoxRect());
     }
+  }
+
+  updateImageBoxRect(): void {
+    const img = this.selectedImageEl();
+    if (!img) return;
+    const canvas = document.querySelector('.word-canvas') as HTMLElement | null;
+    if (!canvas) return;
+
+    const cRect = canvas.getBoundingClientRect();
+    const iRect = img.getBoundingClientRect();
+
+    this.imageBoxLeft.set(Math.round(iRect.left - cRect.left + canvas.scrollLeft));
+    this.imageBoxTop.set(Math.round(iRect.top - cRect.top + canvas.scrollTop));
+    this.imageBoxWidth.set(Math.round(iRect.width));
+    this.imageBoxHeight.set(Math.round(iRect.height));
+  }
+
+  onResizeStart(e: MouseEvent, handle: string): void {
+    e.preventDefault();
+    e.stopPropagation();
+    const img = this.selectedImageEl();
+    if (!img) return;
+
+    this.isResizing = true;
+    this.resizeHandle = handle;
+    this.resizeStartX = e.clientX;
+    this.resizeStartY = e.clientY;
+    this.resizeStartWidth = img.clientWidth || img.width || 300;
+    this.resizeStartHeight = img.clientHeight || img.height || 200;
+    this.resizeAspectRatio = this.resizeStartWidth / (this.resizeStartHeight || 1);
+
+    const onMouseMove = (moveEvt: MouseEvent) => {
+      if (!this.isResizing || !this.selectedImageEl()) return;
+      const dx = moveEvt.clientX - this.resizeStartX;
+      const dy = moveEvt.clientY - this.resizeStartY;
+      let newWidth = this.resizeStartWidth;
+
+      if (handle === 'se') {
+        newWidth = Math.max(50, Math.min(700, this.resizeStartWidth + dx));
+      } else if (handle === 'sw') {
+        newWidth = Math.max(50, Math.min(700, this.resizeStartWidth - dx));
+      } else if (handle === 'ne') {
+        newWidth = Math.max(50, Math.min(700, this.resizeStartWidth + dx));
+      } else if (handle === 'nw') {
+        newWidth = Math.max(50, Math.min(700, this.resizeStartWidth - dx));
+      } else if (handle === 'e') {
+        newWidth = Math.max(50, Math.min(700, this.resizeStartWidth + dx));
+      } else if (handle === 'w') {
+        newWidth = Math.max(50, Math.min(700, this.resizeStartWidth - dx));
+      } else if (handle === 's' || handle === 'n') {
+        const factor = handle === 's' ? 1 : -1;
+        const newHeight = Math.max(40, this.resizeStartHeight + dy * factor);
+        newWidth = Math.round(newHeight * this.resizeAspectRatio);
+      }
+
+      const targetImg = this.selectedImageEl()!;
+      targetImg.width = Math.round(newWidth);
+      targetImg.style.width = `${Math.round(newWidth)}px`;
+      targetImg.style.height = 'auto';
+      this.updateImageBoxRect();
+    };
+
+    const onMouseUp = () => {
+      this.isResizing = false;
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      this.onEditorInput();
+      this.updateImageBoxRect();
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
   }
 
   insertGridTable(rows: number, cols: number): void {
@@ -862,26 +1220,67 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   insertPageBreak(): void {
+    if (!this.editorRef) return;
+    const editor = this.editorRef.nativeElement;
+
+    let moveHtml = '';
+    const sel = window.getSelection();
+
+    if (sel && sel.rangeCount > 0 && editor.contains(sel.anchorNode)) {
+      const range = sel.getRangeAt(0);
+      const afterRange = document.createRange();
+      afterRange.setStart(range.endContainer, range.endOffset);
+      afterRange.setEndAfter(editor.lastChild || editor);
+      const frag = afterRange.extractContents();
+      const div = document.createElement('div');
+      div.appendChild(frag);
+      moveHtml = div.innerHTML.trim();
+    }
+
     const hr = document.createElement('hr');
     hr.dataset['element'] = 'pageBreak';
-    this.editorRef?.nativeElement.append(hr);
+    hr.className = 'page-break-marker';
+    hr.style.display = 'none';
+    editor.appendChild(hr);
+
+    this.hasPageBreak.set(true);
+    this.wordDoc.hasPageBreak = true;
     this.wordDoc.logAction('pageBreak');
     this.closeMenus();
-    this.onEditorInput();
+
+    setTimeout(() => {
+      if (this.page2EditorRef?.nativeElement) {
+        this.page2EditorRef.nativeElement.innerHTML = moveHtml || '<p><br></p>';
+        this.wordDoc.page2Element = this.page2EditorRef.nativeElement;
+        this.page2EditorRef.nativeElement.focus();
+      }
+      this.syncDocumentContent();
+      this.activePageNum.set(2);
+    });
   }
 
   toggleHeader(): void {
     const text = this.wordDoc.header || 'Document Header';
     this.wordDoc.header = text;
+    this.activeRegion.set('header');
     this.wordDoc.logAction('header', text);
     this.closeMenus();
+    setTimeout(() => {
+      this.updateHeaderFooterDom();
+      this.headerRef?.nativeElement?.focus();
+    });
   }
 
   toggleFooter(): void {
     const text = this.wordDoc.footer || 'Document Footer';
     this.wordDoc.footer = text;
+    this.activeRegion.set('footer');
     this.wordDoc.logAction('footer', text);
     this.closeMenus();
+    setTimeout(() => {
+      this.updateHeaderFooterDom();
+      this.footerRef?.nativeElement?.focus();
+    });
   }
 
   togglePageNumbers(): void {
@@ -896,7 +1295,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     const toc = document.createElement('div');
     toc.className = 'table-of-contents doc-toc';
     toc.dataset['element'] = 'tableOfContents';
-    toc.contentEditable = 'false';
+    toc.tabIndex = 0;
 
     let listHtml = '';
     if (headings.length > 0) {
@@ -910,7 +1309,18 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       listHtml = `<li class="toc-item"><a href="#doc-top">Document Overview</a><span class="toc-dots">.....</span><span class="toc-page">1</span></li><li class="toc-item"><a href="#doc-details">Details</a><span class="toc-dots">.....</span><span class="toc-page">1</span></li>`;
     }
 
-    toc.innerHTML = `<strong>Table of Contents</strong><ul class="toc-list">${listHtml}</ul>`;
+    toc.innerHTML = `<div class="toc-header-bar"><strong>Table of Contents</strong><button type="button" class="toc-remove-btn" title="Remove Table of Contents" aria-label="Remove Table of Contents">✕</button></div><ul class="toc-list">${listHtml}</ul>`;
+    const btn = toc.querySelector('.toc-remove-btn');
+    if (btn) {
+      btn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        toc.remove();
+        this.selectedTocEl.set(null);
+        this.wordDoc.logAction('deleteTableOfContents');
+        this.onEditorInput();
+      });
+    }
+
     this.editorRef.nativeElement.prepend(toc);
     this.wordDoc.logAction('tableOfContents');
     this.wordDoc.logAction('navigateToc');
@@ -925,12 +1335,19 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     const fnRef = document.createElement('sup');
     fnRef.className = 'footnote-ref';
     fnRef.dataset['element'] = 'footnote';
+    fnRef.dataset['noteId'] = String(noteNum);
+    fnRef.tabIndex = 0;
     fnRef.textContent = `[${noteNum}]`;
 
     const sel = window.getSelection();
-    if (sel && sel.rangeCount > 0) {
+    if (sel && sel.rangeCount > 0 && this.editorRef.nativeElement.contains(sel.anchorNode)) {
       const range = sel.getRangeAt(0);
+      range.deleteContents();
       range.insertNode(fnRef);
+      range.setStartAfter(fnRef);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
     } else {
       this.editorRef.nativeElement.append(fnRef);
     }
@@ -939,36 +1356,73 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!fnSection) {
       fnSection = document.createElement('div');
       fnSection.className = 'footnote-section';
-      fnSection.setAttribute('contenteditable', 'false');
       fnSection.innerHTML = '<hr class="footnote-divider"/>';
       this.editorRef.nativeElement.append(fnSection);
     }
     const fnItem = document.createElement('p');
     fnItem.className = 'footnote';
     fnItem.dataset['element'] = 'footnote';
-    fnItem.innerHTML = `<sup>${noteNum}</sup> Footnote ${noteNum} details`;
+    fnItem.dataset['noteId'] = String(noteNum);
+    fnItem.innerHTML = `<sup>${noteNum}</sup> Footnote ${noteNum} details <button type="button" class="footnote-remove-btn" title="Remove footnote" style="background:none;border:none;cursor:pointer;color:#888;font-size:11px;margin-left:6px;">✕</button>`;
     fnSection.append(fnItem);
+
+    const btn = fnItem.querySelector('.footnote-remove-btn');
+    if (btn) {
+      btn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        fnItem.remove();
+        fnRef.remove();
+        if (fnSection && fnSection.querySelectorAll('.footnote').length === 0) {
+          fnSection.remove();
+        }
+        this.onEditorInput();
+      });
+    }
 
     this.wordDoc.logAction('footnote');
     this.closeMenus();
     this.onEditorInput();
   }
 
-  insertComment(): void {
+  insertComment(commentText?: string, targetText?: string): void {
     const sel = window.getSelection();
-    const text = sel ? sel.toString().trim() : '';
-    const commentText = prompt('Enter your comment:', 'Please review this section.');
-    if (commentText) {
+    const text = targetText !== undefined ? targetText : (sel ? sel.toString().trim() : '');
+    if (commentText !== undefined) {
       this.wordDoc.comments.push({
         text: text || 'Selected text',
-        comment: commentText,
+        comment: commentText || 'Please review this section.',
         resolved: false,
         replies: []
       });
       this.wordDoc.logAction('comment', text || commentText);
       this.closeMenus();
       this.onEditorInput();
+      return;
     }
+    this.commentSelectedText.set(text || 'Selected text');
+    this.newCommentText.set('Please review this section.');
+    this.showCommentDialog.set(true);
+    this.closeMenus();
+  }
+
+  confirmInsertComment(): void {
+    const comment = this.newCommentText().trim() || 'Please review this section.';
+    const text = this.commentSelectedText();
+    this.wordDoc.comments.push({
+      text: text || 'Selected text',
+      comment: comment,
+      resolved: false,
+      replies: []
+    });
+    this.wordDoc.logAction('comment', text || comment);
+    this.showCommentDialog.set(false);
+    this.newCommentText.set('Please review this section.');
+    this.onEditorInput();
+  }
+
+  cancelInsertComment(): void {
+    this.showCommentDialog.set(false);
+    this.newCommentText.set('Please review this section.');
   }
 
   toggleResolveComment(index: number): void {
@@ -990,6 +1444,14 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     this.onEditorInput();
   }
 
+  deleteComment(index: number): void {
+    if (this.wordDoc.comments && index >= 0 && index < this.wordDoc.comments.length) {
+      this.wordDoc.comments.splice(index, 1);
+      this.wordDoc.logAction('deleteComment');
+      this.onEditorInput();
+    }
+  }
+
   showVariablesPanel = signal<boolean>(false);
   openVariablesPanel(): void {
     this.showVariablesPanel.set(true);
@@ -1006,8 +1468,24 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   insertVariable(key: string, val: string): void {
     const span = document.createElement('span');
     span.dataset['element'] = 'variable';
+    span.dataset['variableKey'] = key;
+    span.className = 'doc-variable-token';
     span.textContent = val;
-    this.editorRef?.nativeElement.append(span);
+    span.tabIndex = 0;
+
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && this.editorRef?.nativeElement.contains(sel.anchorNode)) {
+      const range = sel.getRangeAt(0);
+      range.deleteContents();
+      range.insertNode(span);
+      range.setStartAfter(span);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } else {
+      this.editorRef?.nativeElement.append(span);
+    }
+
     this.wordDoc.logAction('variable', key);
     this.showVariablesPanel.set(false);
     this.onEditorInput();
@@ -1045,11 +1523,9 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     this.showPageSetup.set(false);
   }
 
-  findTab = signal<'find' | 'replace'>('replace');
+  findTab = signal<'headings' | 'find' | 'replace'>('replace');
   openFindReplaceDialog(tab: 'find' | 'replace' = 'replace'): void {
     this.findTab.set(tab);
-    this.findTextQuery = '';
-    this.replaceTextQuery = '';
     this.updateMatchCount();
     this.wordDoc.logAction('openFindReplace');
     this.showFindReplace.set(true);
@@ -1074,6 +1550,15 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     this.wordDoc.logAction('find', this.findTextQuery);
     if ((window as any).find) {
       (window as any).find(this.findTextQuery, this.matchCase(), false, true);
+    }
+    this.updateMatchCount();
+  }
+
+  findPrev(): void {
+    if (!this.findTextQuery || !this.editorRef) return;
+    this.wordDoc.logAction('find', this.findTextQuery);
+    if ((window as any).find) {
+      (window as any).find(this.findTextQuery, this.matchCase(), true, true);
     }
     this.updateMatchCount();
   }
@@ -1156,6 +1641,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     if (allPassed) {
+      this.selectedImageEl.set(null);
       this.isPassed.set(true);
       this.feedbackMsg.set(task.goals.length === 0 ? '' : "Well done! You've got this!");
       this.confetti.celebrate();
@@ -1181,6 +1667,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onContinueNext(): void {
+    this.selectedImageEl.set(null);
     const total = this.totalTasks();
     const curIdx = this.taskIndex();
 

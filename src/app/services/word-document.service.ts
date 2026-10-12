@@ -52,10 +52,14 @@ export class WordDocumentService {
   actions: ActionLog[] = [];
 
   editorElement: HTMLElement | null = null;
+  page2Element: HTMLElement | null = null;
+  hasPageBreak: boolean = false;
   rich: RichEditor | null = null;
 
   init(data: any, activity: ActivityPayload, editorEl: HTMLElement): void {
     this.editorElement = editorEl;
+    this.page2Element = null;
+    this.hasPageBreak = false;
     this.actions = [];
 
     this.setup = {
@@ -108,11 +112,12 @@ export class WordDocumentService {
   check(g: Record<string, any>): boolean {
     if (!this.editorElement) return false;
     const root = this.editorElement;
-    const text = root.textContent || '';
+    const p2 = this.page2Element;
+    const text = (root.textContent || '') + (p2 ? ' ' + (p2.textContent || '') : '');
 
     switch (g['type']) {
       case 'textStyle':
-        return styleMatches(root, g);
+        return styleMatches(root, g) || (p2 ? styleMatches(p2, g) : false);
 
       case 'textContains':
         return (
@@ -133,7 +138,7 @@ export class WordDocumentService {
       }
 
       case 'paragraph': {
-        const r = findText(root, g['text']);
+        const r = findText(root, g['text']) || (p2 ? findText(p2, g['text']) : null);
         const b = r?.startContainer.parentElement?.closest('p,h1,h2,h3,li,div') as HTMLElement | null;
         if (!b) return false;
 
@@ -158,21 +163,24 @@ export class WordDocumentService {
         );
       }
 
-      case 'list':
-        return g['items'].every((t: string) => {
-          const r = findText(root, t);
-          const li = r?.startContainer.parentElement?.closest('li');
-          if (!li || li.parentElement?.tagName !== (g['listType'] === 'bullet' ? 'UL' : 'OL')) {
-            return false;
-          }
-          let level = 0;
-          let p: HTMLElement | null = li.parentElement?.parentElement as HTMLElement | null;
-          while (p && p !== root) {
-            if (p.tagName === 'UL' || p.tagName === 'OL') level++;
-            p = p.parentElement;
-          }
-          return g['level'] === undefined || g['level'] === level;
-        });
+      case 'list': {
+        const checkList = (container: HTMLElement) =>
+          g['items'].every((t: string) => {
+            const r = findText(container, t);
+            const li = r?.startContainer.parentElement?.closest('li');
+            if (!li || li.parentElement?.tagName !== (g['listType'] === 'bullet' ? 'UL' : 'OL')) {
+              return false;
+            }
+            let level = 0;
+            let p: HTMLElement | null = li.parentElement?.parentElement as HTMLElement | null;
+            while (p && p !== container) {
+              if (p.tagName === 'UL' || p.tagName === 'OL') level++;
+              p = p.parentElement;
+            }
+            return g['level'] === undefined || g['level'] === level;
+          });
+        return checkList(root) || (p2 ? checkList(p2) : false);
+      }
 
       case 'pageSetup':
         return (
@@ -183,8 +191,9 @@ export class WordDocumentService {
             ))
         );
 
-      case 'table':
-        return Array.from(root.querySelectorAll('table')).some((t) => {
+      case 'table': {
+        const tables = [...Array.from(root.querySelectorAll('table')), ...(p2 ? Array.from(p2.querySelectorAll('table')) : [])];
+        return tables.some((t) => {
           const rowsMatch = g['rows'] === undefined || t.rows.length === g['rows'];
           const colsMatch =
             g['columns'] === undefined ||
@@ -196,9 +205,11 @@ export class WordDocumentService {
             );
           return rowsMatch && colsMatch && cellsMatch;
         });
+      }
 
-      case 'image':
-        return Array.from(root.querySelectorAll('img')).some((im) => {
+      case 'image': {
+        const images = [...Array.from(root.querySelectorAll('img')), ...(p2 ? Array.from(p2.querySelectorAll('img')) : [])];
+        return images.some((im) => {
           const fileMatch =
             !g['file'] ||
             im.dataset['file'] === g['file'] ||
@@ -211,8 +222,12 @@ export class WordDocumentService {
           const maxW = g['maxWidth'] === undefined || im.width <= g['maxWidth'];
           return fileMatch && alignMatch && wrapMatch && minW && maxW;
         });
+      }
 
       case 'element':
+        if (g['element'] === 'pageBreak') {
+          return this.hasPageBreak || !!root.querySelector('[data-element="pageBreak"]') || !!p2?.querySelector('[data-element="pageBreak"]');
+        }
         if (g['element'] === 'header' || g['element'] === 'footer') {
           const val = g['element'] === 'header' ? this.header : this.footer;
           return !!val && (!g['text'] || val.includes(g['text']));
@@ -229,12 +244,15 @@ export class WordDocumentService {
           return true;
         }
         if (g['element'] === 'tableOfContents') {
-          return !!root.querySelector('.table-of-contents, [data-element="tableOfContents"], nav.toc');
+          return !!root.querySelector('.table-of-contents, [data-element="tableOfContents"], nav.toc') ||
+                 !!p2?.querySelector('.table-of-contents, [data-element="tableOfContents"], nav.toc');
         }
         if (g['element'] === 'footnote') {
-          return !!root.querySelector('.footnote, [data-element="footnote"], sup.footnote-ref');
+          return !!root.querySelector('.footnote, [data-element="footnote"], sup.footnote-ref') ||
+                 !!p2?.querySelector('.footnote, [data-element="footnote"], sup.footnote-ref');
         }
-        return Array.from(root.querySelectorAll('[data-element]')).some((n: any) => {
+        const elements = [...Array.from(root.querySelectorAll('[data-element]')), ...(p2 ? Array.from(p2.querySelectorAll('[data-element]')) : [])];
+        return elements.some((n: any) => {
           return (
             n.dataset['element'] === g['element'] &&
             (!g['text'] || n.textContent?.includes(g['text'])) &&
@@ -440,6 +458,8 @@ export class WordDocumentService {
       header: this.header,
       footer: this.footer,
       numbering: this.numbering,
+      hasPageBreak: this.hasPageBreak,
+      page2Html: this.page2Element ? this.page2Element.innerHTML : '',
       comments: clone(this.comments),
       styles: clone(this.styles),
       actions: clone(this.actions),
@@ -450,6 +470,10 @@ export class WordDocumentService {
     this.html = s['html'] || '';
     if (this.editorElement) {
       this.editorElement.innerHTML = this.html;
+    }
+    this.hasPageBreak = !!s['hasPageBreak'];
+    if (this.page2Element) {
+      this.page2Element.innerHTML = s['page2Html'] || '';
     }
     this.setup = clone(s['setup']);
     this.header = s['header'] || '';

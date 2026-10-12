@@ -122,11 +122,17 @@ export class RichEditor {
         this.command('underline');
       } else if (key === 'z') {
         e.preventDefault();
-        if (e.shiftKey) this.command('redo');
-        else this.command('undo');
+        if (e.shiftKey) {
+          this.command('redo');
+          this.action('redo');
+        } else {
+          this.command('undo');
+          this.action('undo');
+        }
       } else if (key === 'y') {
         e.preventDefault();
         this.command('redo');
+        this.action('redo');
       } else if (key === 'a') {
         e.preventDefault();
         const r = document.createRange();

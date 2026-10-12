@@ -13,18 +13,17 @@ export type MascotMood = 'normal' | 'sad' | 'happy';
 })
 export class MascotComponent {
   @Input() mood: MascotMood = 'normal';
-  @Input() assetBaseUrl: string = './assets/';
+  @Input() assetBaseUrl?: string;
 
   get mascotSrc(): string {
-    const base = this.assetBaseUrl ? (this.assetBaseUrl.endsWith('/') ? this.assetBaseUrl : this.assetBaseUrl + '/') : './assets/';
     switch (this.mood) {
       case 'happy':
-        return `${base}robot-happy.svg`;
+        return './assets/robot-happy.svg';
       case 'sad':
-        return `${base}robot-sad.svg`;
+        return './assets/robot-sad.svg';
       case 'normal':
       default:
-        return `${base}robot-neutral.svg`;
+        return './assets/robot-neutral.svg';
     }
   }
 

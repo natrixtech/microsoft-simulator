@@ -172,8 +172,13 @@ describe('WordDocumentService Goal Checks', () => {
     service.init(act, act, container);
     service.logAction('select', 'Action');
     service.logAction('copy', 'Action');
+    service.logAction('undo');
+    service.logAction('selectImage', 'photo.png');
 
     expect(service.check({ type: 'action', action: 'select', text: 'Action' })).toBeTrue();
     expect(service.check({ type: 'action', action: 'copy', text: 'Action' })).toBeTrue();
+    expect(service.check({ type: 'action', action: 'undo' })).toBeTrue();
+    expect(service.check({ type: 'action', action: 'selectImage' })).toBeTrue();
+    expect(service.check({ type: 'action', action: 'selectImage', text: 'photo.png' })).toBeTrue();
   });
 });

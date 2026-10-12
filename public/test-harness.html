@@ -37,7 +37,7 @@
       <!-- Lesson Navigation Group -->
       <div class="nav-group">
         <button id="prev-lesson-btn" title="Previous Lesson">◀ Prev</button>
-        <span id="lesson-indicator" class="lesson-indicator">Lesson 1 of 11</span>
+        <span id="lesson-indicator" class="lesson-indicator">Lesson 1 of 14</span>
         <button id="next-lesson-btn" class="nav-btn" title="Next Lesson">Next Lesson ▶</button>
       </div>
 
@@ -54,6 +54,9 @@
         <option value="pageSetup">Lesson 9: Change Page Setup (pageSetup)</option>
         <option value="table">Lesson 10: Insert Table (table)</option>
         <option value="assessment">Lesson 11: Multi-Task Skills Assessment (3 tasks)</option>
+        <option value="image">Lesson 12: Insert and Align Picture (image)</option>
+        <option value="element">Lesson 13: Add Page Header (element)</option>
+        <option value="action">Lesson 14: Undo Editing Mistake (action)</option>
       </select>
 
       <button id="load-btn" class="primary">Load Activity</button>
@@ -301,6 +304,68 @@
               showMeHow: true
             }
           ]
+        },
+        image: {
+          mode: 'lesson',
+          title: 'Insert and Align Picture',
+          tasks: [
+            {
+              title: 'Insert and center picture',
+              explanation: 'Illustrations and graphics can be inserted into documents and formatted to align with your text.',
+              instructions: [
+                'Click Insert in the ribbon menu and select Picture.',
+                'Select books.svg and click Insert.',
+                'Click the inserted picture to reveal options, then click Center.'
+              ],
+              hint: 'Go to Insert > Picture, insert the image, click it, and choose Center.',
+              startingDocument: '<p>Reading books expands your perspective and enhances creativity.</p>',
+              goals: [{ type: 'image', file: 'books.svg', align: 'center' }],
+              showMeHow: true
+            }
+          ],
+          images: [{ file: 'books.svg', alt: 'A stack of books' }],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        element: {
+          mode: 'lesson',
+          title: 'Insert Page Header',
+          tasks: [
+            {
+              title: 'Add a header',
+              explanation: 'Headers appear at the top of every page and help readers track document context.',
+              instructions: [
+                'Click Insert in the ribbon menu.',
+                'Select Page Header to insert a header at the top of the document.'
+              ],
+              hint: 'Click Insert > Page Header.',
+              startingDocument: '<p>Quarterly summary of activities and milestones.</p>',
+              goals: [{ type: 'element', element: 'header' }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        action: {
+          mode: 'lesson',
+          title: 'Undo Editing Mistake',
+          tasks: [
+            {
+              title: 'Undo an action',
+              explanation: 'The Undo command lets you quickly reverse your last action or typing mistake.',
+              instructions: [
+                'Make a change or select text in the document.',
+                'Click the Undo button in the toolbar (or press Ctrl+Z) to reverse the change.'
+              ],
+              hint: 'Click the Undo button on the Home ribbon or press Ctrl+Z.',
+              startingDocument: '<p>This sentence has an accidental typing error.</p>',
+              goals: [{ type: 'action', action: 'undo' }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
         }
       };
 
