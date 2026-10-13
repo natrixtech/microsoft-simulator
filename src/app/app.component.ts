@@ -104,7 +104,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly showCommentDialog = signal<boolean>(false);
   readonly commentSelectedText = signal<string>('');
   readonly newCommentText = signal<string>('Please review this section.');
-  readonly activeRibbonTab = signal<'Home' | 'Insert' | 'Layout'>('Home');
+  readonly activeRibbonTab = signal<'Home' | 'Insert' | 'Layout' | 'References'>('Home');
   readonly showOrientationPicker = signal<boolean>(false);
   readonly openMenuName = signal<string | null>(null);
 
@@ -306,9 +306,23 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly sizeList = [8, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72];
   readonly colorKeys = Object.keys(COLORS);
 
+  readonly docSetup = signal<PageSetup>({
+    orientation: 'portrait',
+    paperSize: 'Letter',
+    margins: { top: 1, bottom: 1, left: 1, right: 1 },
+  });
+
   readonly paperPadding = computed<string>(() => {
-    const m = this.wordDoc.setup.margins;
+    const m = this.docSetup().margins;
     return `${m.top * 48}px ${m.right * 48}px ${m.bottom * 48}px ${m.left * 48}px`;
+  });
+
+  readonly paperSize = computed<'Letter' | 'A4' | 'Legal'>(() => {
+    return this.docSetup().paperSize || 'Letter';
+  });
+
+  readonly paperOrientation = computed<'portrait' | 'landscape'>(() => {
+    return this.docSetup().orientation || 'portrait';
   });
 
   constructor(
@@ -317,6 +331,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     private confetti: ConfettiService,
     public wordDoc: WordDocumentService
   ) {
+    this.docSetup.set(clone(this.wordDoc.setup));
     // A host may send a new activity at any time (e.g. after activityCompleted
     // it sends the next lesson as a separate PLUGIN_DATA_IN). Reload + fully
     // reset the plugin whenever the activity signal changes, so a finished
@@ -364,6 +379,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       const task = this.currentTask();
       if (act && task) {
         this.wordDoc.init(task, act, this.editorRef.nativeElement);
+        this.docSetup.set(clone(this.wordDoc.setup));
         this.captureTaskStartSnapshot(this.taskIndex(), act, task);
       }
     }
@@ -488,6 +504,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       ...t,
       showMeHow: t.showMeHow === true,
       startingDocument: t.startingDocument !== undefined ? t.startingDocument : act.startingDocument,
+      pageSetup: t.pageSetup || act.pageSetup,
     }));
     if (!tasks.length) {
       tasks = [
@@ -498,6 +515,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
           goals: act.goals || [],
           showMeHow: act.showMeHow === true,
           startingDocument: act.startingDocument,
+          pageSetup: act.pageSetup,
         },
       ];
     }
@@ -536,6 +554,22 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       this.wordDoc.html = initialDoc;
     }
     this.updateWordCount();
+
+    const effectiveSetup = firstTask.pageSetup || act.pageSetup;
+    this.wordDoc.setup = {
+      orientation: 'portrait',
+      paperSize: 'Letter',
+      margins: { top: 1, bottom: 1, left: 1, right: 1 },
+      ...clone(effectiveSetup || {}),
+    };
+    this.wordDoc.setup.margins = {
+      top: 1,
+      bottom: 1,
+      left: 1,
+      right: 1,
+      ...effectiveSetup?.margins,
+    };
+    this.docSetup.set(clone(this.wordDoc.setup));
 
     if (this.editorRef) {
       this.setupDocumentForTask(firstTask, normalizedAct);
@@ -580,6 +614,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       const parts = rawHtml.split(/<hr[^>]*data-element=["']pageBreak["'][^>]*>/i);
       if (parts.length > 1) {
         this.wordDoc.init({ ...task, startingDocument: parts[0] + '<hr data-element="pageBreak" style="display:none">' }, act, this.editorRef.nativeElement);
+        this.docSetup.set(clone(this.wordDoc.setup));
         this.hasPageBreak.set(true);
         this.wordDoc.hasPageBreak = true;
         setTimeout(() => {
@@ -597,10 +632,28 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     this.hasPageBreak.set(false);
     this.wordDoc.hasPageBreak = false;
     this.wordDoc.page2Element = null;
-    if (task.startingDocument !== null && task.startingDocument !== undefined) {
+    if (task.startingDocument !== null) {
       this.wordDoc.init(task, act, this.editorRef.nativeElement);
+      this.docSetup.set(clone(this.wordDoc.setup));
     } else {
       this.wordDoc.actions = [];
+      const effectivePageSetup = task.pageSetup || act.pageSetup;
+      if (effectivePageSetup) {
+        this.wordDoc.setup = {
+          orientation: 'portrait',
+          paperSize: 'Letter',
+          margins: { top: 1, bottom: 1, left: 1, right: 1 },
+          ...clone(effectivePageSetup),
+        };
+        this.wordDoc.setup.margins = {
+          top: 1,
+          bottom: 1,
+          left: 1,
+          right: 1,
+          ...effectivePageSetup.margins,
+        };
+      }
+      this.docSetup.set(clone(this.wordDoc.setup));
     }
     this.updateHeaderFooterDom();
     this.updateWordCount();
@@ -1459,10 +1512,29 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   showVariablesPanel = signal<boolean>(false);
+  readonly selectedVariableKey = signal<string>('');
+  readonly selectedVariableVal = signal<string>('');
+
   openVariablesPanel(): void {
+    const list = this.getVariablesList();
+    if (list.length > 0) {
+      this.selectedVariableKey.set(list[0].key);
+      this.selectedVariableVal.set(list[0].val);
+    } else {
+      this.selectedVariableKey.set('');
+      this.selectedVariableVal.set('');
+    }
     this.showVariablesPanel.set(true);
     this.wordDoc.logAction('openVariables');
     this.closeMenus();
+  }
+
+  confirmInsertVariable(): void {
+    const key = this.selectedVariableKey();
+    const val = this.selectedVariableVal();
+    if (key) {
+      this.insertVariable(key, val);
+    }
   }
 
   getVariablesList(): { key: string; val: string }[] {
@@ -1525,6 +1597,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
   savePageSetup(): void {
     this.wordDoc.setup = clone(this.tempSetup);
+    this.docSetup.set(clone(this.wordDoc.setup));
     this.wordDoc.logAction('pageSetup');
     this.showPageSetup.set(false);
   }

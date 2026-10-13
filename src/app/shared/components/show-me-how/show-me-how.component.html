@@ -59,13 +59,14 @@
 
                   <!-- Word Ribbon Tabs -->
                   <div class="replica-ribbon-tabs">
-                    <span class="rw-tab">File</span>
+                    <span class="rw-tab disabled">File</span>
                     <span class="rw-tab" data-demo-target="tab-home" [class.active]="replicaActiveTab() === 'home'" (click)="setReplicaTab('home')">Home</span>
                     <span class="rw-tab" data-demo-target="tab-insert" [class.active]="replicaActiveTab() === 'insert'" (click)="setReplicaTab('insert')">Insert</span>
                     <span class="rw-tab" data-demo-target="tab-layout" [class.active]="replicaActiveTab() === 'layout'" (click)="setReplicaTab('layout')">Layout</span>
-                    <span class="rw-tab" data-demo-target="tab-tools" [class.active]="replicaActiveTab() === 'tools'" (click)="setReplicaTab('tools')">Tools</span>
+                    <span class="rw-tab" data-demo-target="tab-references" [class.active]="replicaActiveTab() === 'references'" (click)="setReplicaTab('references')">References</span>
                     <span class="rw-tab disabled">Review</span>
                     <span class="rw-tab disabled">View</span>
+                    <span class="rw-tab" data-demo-target="tab-tools" [class.active]="replicaActiveTab() === 'tools'" (click)="setReplicaTab('tools')">Tools</span>
                   </div>
 
                   <!-- Word Ribbon Command Bar with Targets (compact, explicit 68px height) -->
@@ -172,11 +173,9 @@
 
                       <div class="rw-group">
                         <div class="rw-group-row">
-                          <span class="rw-btn micro-text" data-demo-target="insert-toc">📑 TOC</span>
-                          <span class="rw-btn micro-text" data-demo-target="insert-footnote">¹ Footnote</span>
                           <span class="rw-btn micro-text" data-demo-target="insert-comment">💬 Comment</span>
                         </div>
-                        <span class="rw-group-label">Links & Notes</span>
+                        <span class="rw-group-label">Comments</span>
                       </div>
                     </ng-container>
 
@@ -187,6 +186,23 @@
                           <span class="rw-btn" data-demo-target="page-setup">📄 Page Setup</span>
                         </div>
                         <span class="rw-group-label">Page Setup</span>
+                      </div>
+                    </ng-container>
+
+                    <!-- References Tab Command Groups -->
+                    <ng-container *ngIf="replicaActiveTab() === 'references'">
+                      <div class="rw-group">
+                        <div class="rw-group-row">
+                          <span class="rw-btn" data-demo-target="insert-toc">📑 Table of Contents</span>
+                        </div>
+                        <span class="rw-group-label">Table of Contents</span>
+                      </div>
+
+                      <div class="rw-group">
+                        <div class="rw-group-row">
+                          <span class="rw-btn" data-demo-target="insert-footnote">¹ Insert Footnote</span>
+                        </div>
+                        <span class="rw-group-label">Footnotes</span>
                       </div>
                     </ng-container>
 

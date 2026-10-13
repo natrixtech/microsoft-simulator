@@ -6,7 +6,7 @@ An interactive, frontend-only Microsoft Word 365 learning simulator built with *
 
 ## 📋 Overview
 
-- **Learner App (The Simulator):** A high-fidelity Microsoft Word 365 interface featuring the Ribbon UI, document canvas, paragraph styles, editing dialogs, comments margin gutter, variables side panel, and a responsive floating task mascot card.
+- **Learner App (The Simulator):** A high-fidelity Microsoft Word 365 interface featuring the Ribbon UI, document canvas, paragraph styles, editing dialogs, comments margin gutter, variables dialog, and a responsive floating task mascot card.
 - **QA Test Harness:** A parent-window host environment (`test-harness.html`) simulating the LMS platform. It enables loading lessons, assessments, theme switching, and live `postMessage` contract monitoring.
 - **Shared Application Architecture:** Normal application modules under `src/app/shared/` containing the iframe communication bridge (`PluginBridgeService`), task mascot card component, and the animated "Show Me How" interactive demo component with coherent scaling.
 

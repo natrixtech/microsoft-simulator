@@ -239,4 +239,23 @@ describe('ShowMeHowComponent', () => {
     // Advance time - no unexpected errors thrown
     tick(3000);
   }));
+
+  it('should switch to references tab when demonstrating tableOfContents and footnote', fakeAsync(() => {
+    component.title = 'References Demo';
+    component.goals = [
+      { type: 'element', element: 'tableOfContents' },
+      { type: 'element', element: 'footnote', text: 'Citation note' },
+    ];
+    component.startingDocument = '<p>Body text</p>';
+
+    fixture.detectChanges();
+    tick(6000);
+    fixture.detectChanges();
+
+    expect(component.steps().every((s) => s.state === 'done')).toBeTrue();
+    expect(component.replicaActiveTab()).toBe('references');
+    const docEl = fixture.nativeElement.querySelector('.replica-doc-content');
+    expect(docEl.querySelector('.table-of-contents')).toBeTruthy();
+    expect(docEl.querySelector('.footnote-section')).toBeTruthy();
+  }));
 });

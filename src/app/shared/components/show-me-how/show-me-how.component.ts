@@ -58,7 +58,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly replicaDialog = signal<string | null>(null);
 
   // Tab switching state
-  readonly replicaActiveTab = signal<'home' | 'insert' | 'layout' | 'tools'>('home');
+  readonly replicaActiveTab = signal<'home' | 'insert' | 'layout' | 'references' | 'tools'>('home');
 
   // Coherent scaling state
   readonly baseWidth = 680;
@@ -288,7 +288,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
     this.replicaImageFile.set(defaultImg);
   }
 
-  setReplicaTab(tab: 'home' | 'insert' | 'layout' | 'tools'): void {
+  setReplicaTab(tab: 'home' | 'insert' | 'layout' | 'references' | 'tools'): void {
     this.replicaActiveTab.set(tab);
     this.cdr.markForCheck();
   }
@@ -337,6 +337,8 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
       this.replicaActiveTab.set('insert');
     } else if (targetName === 'tab-layout') {
       this.replicaActiveTab.set('layout');
+    } else if (targetName === 'tab-references') {
+      this.replicaActiveTab.set('references');
     } else if (targetName === 'tab-tools') {
       this.replicaActiveTab.set('tools');
     } else if (targetName === 'tab-home') {
@@ -349,12 +351,12 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
         'insert-header',
         'insert-footer',
         'insert-page-numbers',
-        'insert-toc',
-        'insert-footnote',
         'insert-comment',
       ].includes(targetName)
     ) {
       this.replicaActiveTab.set('insert');
+    } else if (['insert-toc', 'insert-footnote'].includes(targetName)) {
+      this.replicaActiveTab.set('references');
     } else if (targetName === 'page-setup') {
       this.replicaActiveTab.set('layout');
     } else if (targetName === 'tools-variables') {

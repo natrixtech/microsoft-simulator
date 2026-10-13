@@ -712,6 +712,275 @@ describe('AppComponent', () => {
       expect(app.bridge.sendComplete).toHaveBeenCalledWith(false, 1, 2);
       expect(app.isCompleted()).toBeTrue();
     });
+
+    it('13. Variables Dialog: opens centered modal dialog, logs openVariables, and inserts token on Insert', () => {
+      spyOn(app.wordDoc, 'logAction');
+      app.loadWordActivity({
+        mode: 'lesson',
+        title: 'Variables Lesson',
+        assetBaseUrl: './assets/',
+        theme: 'LIGHT',
+        variables: { studentName: 'Alice', score: '95' },
+        tasks: [
+          { title: 'T', explanation: 'E', instructions: ['I'], goals: [] },
+        ],
+      });
+      fixture.detectChanges();
+
+      expect(app.showVariablesPanel()).toBeFalse();
+
+      // Open variables dialog
+      app.openVariablesPanel();
+      fixture.detectChanges();
+
+      expect(app.showVariablesPanel()).toBeTrue();
+      expect(app.wordDoc.logAction).toHaveBeenCalledWith('openVariables');
+      expect(fixture.nativeElement.querySelector('.modal-backdrop .variables-dialog')).toBeTruthy();
+      expect(app.selectedVariableKey()).toBe('studentName');
+
+      // Change selection to 'score'
+      app.selectedVariableKey.set('score');
+      app.selectedVariableVal.set('95');
+      fixture.detectChanges();
+
+      // Confirm Insert
+      app.confirmInsertVariable();
+      fixture.detectChanges();
+
+      expect(app.showVariablesPanel()).toBeFalse();
+      expect(app.wordDoc.logAction).toHaveBeenCalledWith('variable', 'score');
+
+      const token = app.editorRef?.nativeElement.querySelector('span[data-element="variable"]') as HTMLElement;
+      expect(token).toBeTruthy();
+      expect(token.dataset['variableKey']).toBe('score');
+      expect(token.textContent).toBe('95');
+      expect(token.classList.contains('doc-variable-token')).toBeTrue();
+    });
+
+    it('14. References Tab: enables References tab, switches ribbon, renders 6 groups, and supports TOC & Footnote', () => {
+      app.loadWordActivity({
+        mode: 'lesson',
+        title: 'References Lesson',
+        assetBaseUrl: './assets/',
+        theme: 'LIGHT',
+        tasks: [
+          { title: 'T', explanation: 'E', instructions: ['I'], goals: [] },
+        ],
+      });
+      fixture.detectChanges();
+
+      // 1. Check Insert tab - TOC and Footnotes should NOT be present
+      app.activeRibbonTab.set('Insert');
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.group-insert-references')).toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-demo-target="insert-toc"]')).toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-demo-target="insert-footnote"]')).toBeNull();
+
+      // 2. Click References tab
+      const refTabBtn = fixture.nativeElement.querySelector('[data-demo-target="tab-references"]') as HTMLButtonElement;
+      expect(refTabBtn).toBeTruthy();
+      refTabBtn.click();
+      fixture.detectChanges();
+
+      expect(app.activeRibbonTab()).toBe('References');
+
+      // 3. Verify groups in References tab
+      expect(fixture.nativeElement.querySelector('.group-ref-toc')).toBeTruthy();
+      expect(fixture.nativeElement.querySelector('.group-ref-footnotes')).toBeTruthy();
+      expect(fixture.nativeElement.querySelector('.group-ref-citations')).toBeTruthy();
+      expect(fixture.nativeElement.querySelector('.group-ref-captions')).toBeTruthy();
+      expect(fixture.nativeElement.querySelector('.group-ref-index')).toBeTruthy();
+      expect(fixture.nativeElement.querySelector('.group-ref-authorities')).toBeTruthy();
+
+      // 4. Verify Table of Contents insertion from References tab
+      const tocBtn = fixture.nativeElement.querySelector('[data-demo-target="insert-toc"]') as HTMLButtonElement;
+      expect(tocBtn).toBeTruthy();
+      expect(tocBtn.disabled).toBeFalse();
+      tocBtn.click();
+      fixture.detectChanges();
+      expect(app.editorRef?.nativeElement.querySelector('.table-of-contents')).toBeTruthy();
+
+      // 5. Verify Insert Footnote from References tab
+      const fnBtn = fixture.nativeElement.querySelector('[data-demo-target="insert-footnote"]') as HTMLButtonElement;
+      expect(fnBtn).toBeTruthy();
+      expect(fnBtn.disabled).toBeFalse();
+      fnBtn.click();
+      fixture.detectChanges();
+      expect(app.editorRef?.nativeElement.querySelector('.footnote-section')).toBeTruthy();
+    });
+  });
+
+  describe('Page Setup: Margins and Paper Size', () => {
+    it('updates paperPadding when margins are modified and saved', () => {
+      const fixture = TestBed.createComponent(AppComponent);
+      const app = fixture.componentInstance;
+      fixture.detectChanges();
+
+      expect(app.paperPadding()).toBe('48px 48px 48px 48px');
+
+      app.openPageSetupDialog();
+      app.tempSetup.margins = { top: 2, bottom: 1.5, left: 1, right: 1 };
+      app.savePageSetup();
+      fixture.detectChanges();
+
+      expect(app.paperPadding()).toBe('96px 48px 72px 48px');
+      const paper = fixture.nativeElement.querySelector('.word-paper') as HTMLElement;
+      expect(paper.style.paddingTop).toBe('96px');
+      expect(paper.style.paddingBottom).toBe('72px');
+      expect(paper.style.paddingLeft).toBe('48px');
+      expect(paper.style.paddingRight).toBe('48px');
+    });
+
+    it('updates paperSize signal and applies size classes when paper size is changed', () => {
+      const fixture = TestBed.createComponent(AppComponent);
+      const app = fixture.componentInstance;
+      fixture.detectChanges();
+
+      expect(app.paperSize()).toBe('Letter');
+      const paper = fixture.nativeElement.querySelector('.word-paper') as HTMLElement;
+      expect(paper.classList.contains('size-a4')).toBeFalse();
+      expect(paper.classList.contains('size-legal')).toBeFalse();
+
+      // Change to A4
+      app.openPageSetupDialog();
+      app.tempSetup.paperSize = 'A4';
+      app.savePageSetup();
+      fixture.detectChanges();
+
+      expect(app.paperSize()).toBe('A4');
+      expect(paper.classList.contains('size-a4')).toBeTrue();
+
+      // Change to Legal
+      app.openPageSetupDialog();
+      app.tempSetup.paperSize = 'Legal';
+      app.savePageSetup();
+      fixture.detectChanges();
+
+      expect(app.paperSize()).toBe('Legal');
+      expect(paper.classList.contains('size-legal')).toBeTrue();
+    });
+
+    it('immediately applies custom pageSetup (Legal, large margins, landscape) from activity JSON without opening Page Setup dialog', async () => {
+      const fixture = TestBed.createComponent(AppComponent);
+      const app = fixture.componentInstance;
+      const flush = async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+      };
+      await flush();
+
+      const customActivity = {
+        mode: 'lesson' as const,
+        title: 'Custom Page Setup Lesson',
+        assetBaseUrl: './assets/',
+        theme: 'LIGHT' as const,
+        pageSetup: {
+          orientation: 'landscape' as const,
+          paperSize: 'Legal' as const,
+          margins: { top: 2, bottom: 1.5, left: 1.25, right: 1.25 },
+        },
+        tasks: [
+          {
+            title: 'Task 1',
+            explanation: 'Inspect custom page setup.',
+            instructions: ['Check dimensions.'],
+            goals: [],
+            startingDocument: '<p>Legal Landscape Content</p>',
+          },
+        ],
+      };
+
+      app.bridge.loadActivity(customActivity);
+      await flush();
+
+      // Confirm signals and properties updated immediately on load without touching dialog
+      expect(app.showPageSetup()).toBeFalse();
+      expect(app.paperSize()).toBe('Legal');
+      expect(app.paperOrientation()).toBe('landscape');
+      expect(app.paperPadding()).toBe('96px 60px 72px 60px');
+      expect(app.docSetup().margins).toEqual({ top: 2, bottom: 1.5, left: 1.25, right: 1.25 });
+      expect(app.wordDoc.setup.paperSize).toBe('Legal');
+      expect(app.wordDoc.setup.orientation).toBe('landscape');
+
+      // Confirm DOM element classes and styling
+      const paper = fixture.nativeElement.querySelector('.word-paper') as HTMLElement;
+      expect(paper.classList.contains('size-legal')).toBeTrue();
+      expect(paper.classList.contains('landscape')).toBeTrue();
+      expect(paper.style.paddingTop).toBe('96px');
+      expect(paper.style.paddingBottom).toBe('72px');
+      expect(paper.style.paddingLeft).toBe('60px');
+      expect(paper.style.paddingRight).toBe('60px');
+    });
+
+    it('re-syncs docSetup when switching tasks within a multi-task activity', async () => {
+      const fixture = TestBed.createComponent(AppComponent);
+      const app = fixture.componentInstance;
+      const flush = async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+      };
+      await flush();
+
+      const multiTaskActivity = {
+        mode: 'assessment' as const,
+        title: 'Multi-Task Page Setup Lesson',
+        assetBaseUrl: './assets/',
+        theme: 'LIGHT' as const,
+        tasks: [
+          {
+            title: 'Task 1 - Legal Landscape',
+            explanation: '',
+            instructions: ['Do something.'],
+            goals: [],
+            startingDocument: '<p>Page 1</p>',
+            pageSetup: {
+              orientation: 'landscape' as const,
+              paperSize: 'Legal' as const,
+              margins: { top: 2, bottom: 2, left: 1, right: 1 },
+            },
+          },
+          {
+            title: 'Task 2 - A4 Portrait with 0.5in margins',
+            explanation: '',
+            instructions: ['Do something else.'],
+            goals: [],
+            startingDocument: '<p>Page 2</p>',
+            pageSetup: {
+              orientation: 'portrait' as const,
+              paperSize: 'A4' as const,
+              margins: { top: 0.5, bottom: 0.5, left: 0.75, right: 0.75 },
+            },
+          },
+        ],
+      };
+
+      app.bridge.loadActivity(multiTaskActivity);
+      await flush();
+
+      // Task 1 initial state
+      expect(app.paperSize()).toBe('Legal');
+      expect(app.paperOrientation()).toBe('landscape');
+      expect(app.paperPadding()).toBe('96px 48px 96px 48px');
+
+      // Switch to Task 2
+      app.loadTaskAtIndex(1);
+      await flush();
+
+      // Confirm task 2 re-synced docSetup
+      expect(app.paperSize()).toBe('A4');
+      expect(app.paperOrientation()).toBe('portrait');
+      expect(app.paperPadding()).toBe('24px 36px 24px 36px');
+      const paper = fixture.nativeElement.querySelector('.word-paper') as HTMLElement;
+      expect(paper.classList.contains('size-a4')).toBeTrue();
+      expect(paper.classList.contains('size-legal')).toBeFalse();
+      expect(paper.classList.contains('landscape')).toBeFalse();
+      expect(paper.style.paddingTop).toBe('24px');
+      expect(paper.style.paddingBottom).toBe('24px');
+      expect(paper.style.paddingLeft).toBe('36px');
+      expect(paper.style.paddingRight).toBe('36px');
+    });
   });
 });
 

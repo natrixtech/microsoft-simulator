@@ -161,6 +161,29 @@ describe('WordDocumentService Goal Checks', () => {
     expect(service.check({ type: 'element', element: 'pageNumbers' })).toBeTrue();
   });
 
+  it('should inherit pageSetup from activity payload when task has no pageSetup', () => {
+    const act = {
+      assetBaseUrl: '',
+      theme: 'LIGHT' as const,
+      instruction: 'Setup page at activity level',
+      startingDocument: '<p>Document</p>',
+      pageSetup: {
+        orientation: 'landscape' as const,
+        paperSize: 'Legal' as const,
+        margins: { top: 2, bottom: 1.5, left: 1.25, right: 1.25 },
+      },
+      goals: [],
+    };
+    const taskWithoutPageSetup = {
+      startingDocument: '<p>Document</p>',
+    };
+    service.init(taskWithoutPageSetup, act, container);
+
+    expect(service.setup.paperSize).toBe('Legal');
+    expect(service.setup.orientation).toBe('landscape');
+    expect(service.setup.margins).toEqual({ top: 2, bottom: 1.5, left: 1.25, right: 1.25 });
+  });
+
   it('should evaluate action goals', () => {
     const act = {
       assetBaseUrl: '',

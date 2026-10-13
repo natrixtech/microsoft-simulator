@@ -62,18 +62,19 @@ export class WordDocumentService {
     this.hasPageBreak = false;
     this.actions = [];
 
+    const effectivePageSetup = data?.pageSetup || activity?.pageSetup || {};
     this.setup = {
       orientation: 'portrait',
       paperSize: 'Letter',
       margins: { top: 1, bottom: 1, left: 1, right: 1 },
-      ...clone(data.pageSetup || {}),
+      ...clone(effectivePageSetup),
     };
     this.setup.margins = {
       top: 1,
       bottom: 1,
       left: 1,
       right: 1,
-      ...data.pageSetup?.margins,
+      ...effectivePageSetup?.margins,
     };
 
     this.header = '';
