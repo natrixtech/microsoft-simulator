@@ -2245,10 +2245,11 @@
       </footer>
     </section>
 
-    <!-- Movable Task Card & Mascot Group (Initially beside the RIGHT side of the page) -->
+    <!-- Movable Task Card & Mascot Group (Sitting bottom-left of work area: left: 14px, bottom: 24px) -->
     <aside
       #movableGroup
       class="lesson-side movable-group"
+      [class.dragging]="isDragging()"
       [style.left.px]="effectiveX()"
       [style.top.px]="effectiveY()"
       [attr.inert]="bridge.isPaused() ? '' : null"

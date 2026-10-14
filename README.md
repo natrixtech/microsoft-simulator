@@ -155,6 +155,7 @@ All third-party libraries and direct dependencies utilized in this project are o
 | `rxjs` | `~7.8.0` | Apache-2.0 | Reactive asynchronous event handling and stream primitives | [GitHub](https://github.com/ReactiveX/rxjs) |
 | `tslib` | `^2.3.0` | 0BSD | Runtime TypeScript helper library | [GitHub](https://github.com/microsoft/tslib) |
 | `zone.js` | `~0.13.3` | MIT | Zone execution context for change detection tracking | [GitHub](https://github.com/angular/angular) |
+| `Lexend` | Variable (100–900) | SIL OFL 1.1 | Modern typography for lesson task card UI | [Google Fonts / GitHub](https://github.com/googlefonts/lexend) |
 
 ---
 

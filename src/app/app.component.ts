@@ -1,6 +1,7 @@
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   HostListener,
@@ -8,9 +9,7 @@ import {
   OnInit,
   ViewChild,
   computed,
-  effect,
   signal,
-  untracked,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -89,11 +88,11 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly showFinalTealCard = signal<boolean>(false);
   readonly wordCount = signal<number>(0);
 
-  // Movable Group Positioning State (initially beside right of page)
+  // Movable Group Positioning State (initially bottom-left of work area: left: 14px, bottom: 24px)
   readonly groupX = signal<number | null>(null);
   readonly groupY = signal<number | null>(null);
   readonly hasUserMoved = signal<boolean>(false);
-  private isDragging = false;
+  readonly isDragging = signal<boolean>(false);
   private dragStartPointerX = 0;
   private dragStartPointerY = 0;
   private dragStartGroupX = 0;
@@ -132,8 +131,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   });
 
   readonly isDarkTheme = computed<boolean>(() => {
-    const t = (this.theme && typeof this.theme.currentTheme === 'function' ? this.theme.currentTheme() : null) || this.currentActivity()?.theme || 'LIGHT';
-    return t === 'DARK';
+    return this.bridge.theme() === 'DARK';
   });
 
   findTextQuery: string = '';
@@ -325,45 +323,42 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     return this.docSetup().orientation || 'portrait';
   });
 
+  private bridgeUnsubscribes: Array<() => void> = [];
+
   constructor(
     public bridge: PluginBridgeService,
     public theme: ThemeService,
     private confetti: ConfettiService,
-    public wordDoc: WordDocumentService
+    public wordDoc: WordDocumentService,
+    private cdr: ChangeDetectorRef
   ) {
     this.docSetup.set(clone(this.wordDoc.setup));
-    // A host may send a new activity at any time (e.g. after activityCompleted
-    // it sends the next lesson as a separate PLUGIN_DATA_IN). Reload + fully
-    // reset the plugin whenever the activity signal changes, so a finished
-    // plugin always accepts new data. (ngAfterViewInit covers an activity that
-    // arrived before the editor existed; loadWordActivity is idempotent.)
-    effect(() => {
-      const act = this.bridge.activity();
-      if (act) {
-        untracked(() => this.loadWordActivity(act));
-      }
-    });
-
-    effect(() => {
-      const trigger = this.bridge.forceFinishTrigger();
-      if (trigger > 0) {
-        untracked(() => {
-          if (this.advanceTimer) {
-            clearTimeout(this.advanceTimer);
-            this.advanceTimer = null;
-          }
-          this.isDemoOpen.set(false);
-          const total = this.totalTasks();
-          const passedCount = this.passedTasks().size;
-          const allDone = passedCount >= total;
-          this.bridge.sendComplete(allDone, passedCount, total);
-          this.isCompleted.set(true);
-        });
-      }
-    }, { allowSignalWrites: true });
   }
 
   ngOnInit(): void {
+    this.bridgeUnsubscribes.push(
+      this.bridge.onActivity((act) => {
+        this.loadWordActivity(act);
+        this.cdr.markForCheck();
+      })
+    );
+
+    this.bridgeUnsubscribes.push(
+      this.bridge.onForceFinish(() => {
+        if (this.advanceTimer) {
+          clearTimeout(this.advanceTimer);
+          this.advanceTimer = null;
+        }
+        this.isDemoOpen.set(false);
+        const total = this.totalTasks();
+        const passedCount = this.passedTasks().size;
+        const allDone = passedCount >= total;
+        this.bridge.sendComplete(allDone, passedCount, total);
+        this.isCompleted.set(true);
+        this.cdr.markForCheck();
+      })
+    );
+
     this.bridge.init('word');
     const initialAct = this.bridge.activity();
     if (initialAct) {
@@ -394,6 +389,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.advanceTimer) {
       clearTimeout(this.advanceTimer);
     }
+    this.bridgeUnsubscribes.forEach((unsub) => unsub());
+    this.bridgeUnsubscribes = [];
   }
 
   toggleMenu(name: string, event: MouseEvent): void {
@@ -495,6 +492,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   loadWordActivity(act: ActivityPayload): void {
+
     if (this.advanceTimer) {
       clearTimeout(this.advanceTimer);
       this.advanceTimer = null;
@@ -1584,6 +1582,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
   setOrientation(o: 'portrait' | 'landscape'): void {
     this.wordDoc.setup.orientation = o;
+    this.docSetup.set(clone(this.wordDoc.setup));
     this.wordDoc.logAction('pageSetup');
     this.closeMenus();
   }
@@ -1778,42 +1777,37 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   computeInitialPlacement(): void {
-    if (!this.workLayoutRef || !this.paperRef) return;
+    if (!this.workLayoutRef) return;
     const layoutEl = this.workLayoutRef.nativeElement;
-    const paperEl = this.paperRef.nativeElement;
     const layoutRect = layoutEl.getBoundingClientRect();
-    const paperRect = paperEl.getBoundingClientRect();
     const groupEl = this.movableGroupRef?.nativeElement;
-    const groupWidth = groupEl?.offsetWidth || 330;
-    const groupHeight = groupEl?.offsetHeight || 440;
+    const groupWidth = groupEl?.offsetWidth || 300;
+    const groupHeight = groupEl?.offsetHeight || 441;
 
-    // Right side of the Word page
-    let targetX = (paperRect.right - layoutRect.left) + 24;
+    // Check if assessment strip is visible on the left
+    const stripEl = layoutEl.querySelector('.assessment-strip') as HTMLElement | null;
+    const leftOffset = stripEl ? stripEl.offsetWidth : 0;
 
-    // If there is not enough room to the right of the paper, dock near the right edge
-    if (targetX + groupWidth > layoutRect.width - 16) {
-      targetX = layoutRect.width - groupWidth - 16;
-    }
-    if (targetX < 12) {
-      targetX = 12;
-    }
+    // Find status bar to ensure mascot is at least 24px above it
+    const statusBar = layoutEl.querySelector('.word-statusbar') as HTMLElement | null;
+    const bottomLimit = statusBar
+      ? (statusBar.getBoundingClientRect().top - layoutRect.top)
+      : layoutRect.height;
 
-    // Vertically align near the top of the document page
-    let targetY = Math.max(16, (paperRect.top - layoutRect.top) + 12);
-    const maxY = Math.max(16, layoutRect.height - groupHeight - 16);
-    if (targetY > maxY) {
-      targetY = maxY;
-    }
+    // Sit at the bottom-left of the work area: left: 14px, at least 24px above status bar
+    const actualHeight = groupEl?.getBoundingClientRect().height || groupHeight;
+    const targetX = Math.max(8, 14 + leftOffset);
+    const targetY = Math.max(8, Math.floor(bottomLimit - actualHeight - 24));
 
-    this.groupX.set(Math.round(targetX));
-    this.groupY.set(Math.round(targetY));
+    this.groupX.set(Math.round(this.clampX(targetX)));
+    this.groupY.set(Math.round(this.clampY(targetY)));
   }
 
   clampX(x: number): number {
     if (!this.workLayoutRef) return Math.max(8, x);
     const layoutRect = this.workLayoutRef.nativeElement.getBoundingClientRect();
     const groupEl = this.movableGroupRef?.nativeElement;
-    const groupWidth = groupEl?.offsetWidth || 330;
+    const groupWidth = groupEl?.offsetWidth || 300;
     const minX = 8;
     const maxX = Math.max(minX, layoutRect.width - groupWidth - 8);
     return Math.min(Math.max(x, minX), maxX);
@@ -1823,9 +1817,14 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.workLayoutRef) return Math.max(8, y);
     const layoutRect = this.workLayoutRef.nativeElement.getBoundingClientRect();
     const groupEl = this.movableGroupRef?.nativeElement;
-    const groupHeight = groupEl?.offsetHeight || 440;
+    const groupHeight = groupEl?.offsetHeight || 441;
+    const actualHeight = groupEl?.getBoundingClientRect().height || groupHeight;
+    const statusBar = this.workLayoutRef.nativeElement.querySelector('.word-statusbar') as HTMLElement | null;
+    const bottomLimit = statusBar
+      ? (statusBar.getBoundingClientRect().top - layoutRect.top)
+      : layoutRect.height;
     const minY = 8;
-    const maxY = Math.max(minY, layoutRect.height - groupHeight - 8);
+    const maxY = Math.max(minY, Math.floor(bottomLimit - actualHeight - 24));
     return Math.min(Math.max(y, minY), maxY);
   }
 
@@ -1836,7 +1835,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       return; // Do not initiate drag from regular buttons or card body
     }
 
-    this.isDragging = true;
+    this.isDragging.set(true);
     this.dragStartPointerX = event.clientX;
     this.dragStartPointerY = event.clientY;
 
@@ -1851,7 +1850,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onGroupPointerMove(event: PointerEvent): void {
-    if (!this.isDragging) return;
+    if (!this.isDragging()) return;
     const dx = event.clientX - this.dragStartPointerX;
     const dy = event.clientY - this.dragStartPointerY;
     const nextX = this.clampX(this.dragStartGroupX + dx);
@@ -1862,8 +1861,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onGroupPointerUp(event: PointerEvent): void {
-    if (this.isDragging) {
-      this.isDragging = false;
+    if (this.isDragging()) {
+      this.isDragging.set(false);
       try {
         (event.currentTarget as HTMLElement)?.releasePointerCapture(event.pointerId);
       } catch {}
@@ -1871,8 +1870,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onGroupPointerCancel(event: PointerEvent): void {
-    if (this.isDragging) {
-      this.isDragging = false;
+    if (this.isDragging()) {
+      this.isDragging.set(false);
       try {
         (event.currentTarget as HTMLElement)?.releasePointerCapture(event.pointerId);
       } catch {}
@@ -1881,8 +1880,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onNudgePosition(delta: { dx: number; dy: number }): void {
     const groupEl = this.movableGroupRef?.nativeElement;
-    const curX = this.groupX() ?? groupEl?.offsetLeft ?? 0;
-    const curY = this.groupY() ?? groupEl?.offsetTop ?? 0;
+    const curX = this.groupX() ?? groupEl?.offsetLeft ?? 14;
+    const curY = this.groupY() ?? groupEl?.offsetTop ?? 100;
     this.groupX.set(Math.round(this.clampX(curX + delta.dx)));
     this.groupY.set(Math.round(this.clampY(curY + delta.dy)));
     this.hasUserMoved.set(true);
@@ -1898,3 +1897,4 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 }
+

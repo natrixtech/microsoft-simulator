@@ -1,8 +1,21 @@
 @import './styles/theme.css';
 
+@font-face {
+  font-family: 'Lexend';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('./assets/fonts/lexend-variable.woff2') format('woff2');
+}
+
+:root {
+  --ui: 'Lexend', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
 html, body {
   height: 100%;
   margin: 0;
   padding: 0;
   overflow: hidden;
 }
+

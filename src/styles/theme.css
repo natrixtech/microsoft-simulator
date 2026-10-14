@@ -407,165 +407,7 @@ h3 {
   align-self: flex-start;
   padding: 3px 0;
 }
-.task-card {
-  padding: 24px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 13px;
-  box-shadow: 0 4px 18px #26354d06;
-  position: relative;
-}
-.task-card:after {
-  content: "";
-  position: absolute;
-  bottom: -10px;
-  left: 40px;
-  width: 18px;
-  height: 18px;
-  background: var(--surface);
-  border-right: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  transform: rotate(45deg);
-}
-.task-card h2 {
-  font-size: 21px;
-  line-height: 1.25;
-  margin: 13px 0;
-}
-.task-card .explanation {
-  font-size: 12px;
-  color: var(--muted);
-  margin-bottom: 18px;
-}
-.task-box {
-  background: var(--soft);
-  padding: 15px;
-  border-radius: 8px;
-  font-size: 12px;
-  line-height: 1.7;
-}
-.task-box p {
-  margin: 9px 0 0;
-}
-.task-label {
-  font-size: 9px;
-  letter-spacing: 1px;
-  color: var(--muted);
-  font-weight: 700;
-}
-.task-box ol {
-  padding-left: 18px;
-  margin-bottom: 0;
-}
-.task-box li + li {
-  margin-top: 8px;
-}
-.task-box code {
-  font-family: Consolas, monospace;
-  background: #dce7fd;
-  color: #285ba9;
-  border-radius: 4px;
-  padding: 2px 5px;
-  overflow-wrap: anywhere;
-}
-.inline-reference {
-  border: 0;
-  padding: 0 1px;
-  background: none;
-  color: #3272da;
-  font-size: inherit;
-  font-weight: 650;
-  text-decoration: underline;
-}
-.help-button {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: #3272da;
-  font-size: 12px;
-  font-weight: 650;
-  margin: 21px 0 4px;
-}
-.check-button {
-  width: 100%;
-  margin-top: 18px;
-  padding: 13px 8px;
-  background: #245dcc;
-  border-color: #245dcc;
-}
-.feedback {
-  font-size: 12px;
-  line-height: 1.6;
-  padding: 13px;
-  border-radius: 7px;
-  margin-top: 16px;
-}
-.feedback.bad {
-  background: #fff0dd;
-  color: #865211;
-  border: 1px solid #e8bb75;
-}
-.feedback.good {
-  background: #e4f5eb;
-  color: #14613e;
-  border: 1px solid #9aceb2;
-}
-.task-card.success {
-  border-color: #79bc97;
-}
-.success .check-button {
-  background: #21845a;
-  border-color: #21845a;
-}
-.mascot-area {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  padding: 28px 13px;
-}
-.mascot-area p {
-  font-size: 11px;
-  color: var(--muted);
-  max-width: 120px;
-}
-.mascot {
-  width: 69px;
-  flex-shrink: 0;
-}
-.mascot-screen {
-  border: 5px solid #395eac;
-  border-radius: 10px;
-  background: #e6f0ff;
-  height: 48px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: #274c91;
-  box-shadow: inset 0 0 0 2px #fff;
-}
-.eyes {
-  font-size: 18px;
-  letter-spacing: 7px;
-  line-height: 12px;
-  padding-left: 6px;
-}
-.mouth {
-  font-size: 23px;
-  line-height: 13px;
-}
-.mascot-base {
-  height: 6px;
-  background: #294981;
-  margin: 0 -5px;
-  border-radius: 2px 2px 8px 8px;
-}
-.mascot[data-mood="sad"] .mouth {
-  transform: rotate(180deg);
-}
-.mascot[data-mood="happy"] .mouth {
-  font-weight: bold;
-}
+
 .assessment-progress {
   display: flex;
   flex-direction: column;
@@ -1241,9 +1083,7 @@ dialog::backdrop {
   .lesson-side {
     width: 260px;
   }
-  .task-card {
-    padding: 18px;
-  }
+
   .thumbnails {
     width: 100px;
   }
@@ -1292,12 +1132,7 @@ dialog::backdrop {
     width: 100%;
     padding-top: 15px;
   }
-  .task-card {
-    padding: 20px;
-  }
-  .mascot-area {
-    padding: 20px;
-  }
+
   .app-titlebar {
     padding: 10px 12px;
   }

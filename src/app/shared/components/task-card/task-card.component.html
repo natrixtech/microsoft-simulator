@@ -1,53 +1,39 @@
 <div class="card-container">
-  <section class="task-card" [class.success]="isSuccess">
-    <!-- Drag Handle Header Area -->
-    <div
-      class="card-drag-handle"
-      role="button"
-      tabindex="0"
-      aria-label="Movable task card. Use arrow keys to reposition."
-      (keydown)="onDragHandleKeydown($event)"
-      title="Drag to reposition card (Arrow keys to move)"
-    >
-      <div class="drag-grip-indicator" aria-hidden="true">
-        <span class="grip-dot"></span>
-        <span class="grip-dot"></span>
-        <span class="grip-dot"></span>
-        <span class="grip-dot"></span>
-        <span class="grip-dot"></span>
-        <span class="grip-dot"></span>
+  <section class="task-card" role="dialog" aria-labelledby="cardTitle">
+    <!-- Blue header band -->
+    <div class="c-band">
+      <!-- Assessments only eyebrow (TASK X OF Y · TITLE) -->
+      <div class="assessment-eyebrow" *ngIf="isAssessment">{{ eyebrowText }}</div>
+      <div class="c-top">
+        <span class="c-task" id="cardTitle">Your task</span>
+        <button
+          type="button"
+          class="move card-drag-handle"
+          id="move"
+          role="button"
+          tabindex="0"
+          aria-label="Drag to reposition panel"
+          aria-describedby="moveTip"
+          title="Drag to reposition panel"
+          (keydown)="onDragHandleKeydown($event)"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/>
+          </svg>
+          <span class="tip" id="moveTip" role="tooltip">Drag to reposition panel</span>
+        </button>
       </div>
-      <span class="lesson-eyebrow">{{ eyebrowText }}</span>
-      <span class="drag-pill" aria-hidden="true">Move ✥</span>
+      <p class="why">{{ explanation }}</p>
     </div>
 
-    <h2>{{ title }}</h2>
-    <p class="explanation">{{ explanation }}</p>
-
-    <div class="task-box">
-      <span class="task-label">YOUR TASK</span>
-      <ng-container *ngIf="instructions.length === 1; else multiStep">
-        <p>
-          <ng-container *ngFor="let token of parseInstruction(instructions[0])">
-            <code *ngIf="token.type === 'code'">{{ token.content }}</code>
-            <button
-              type="button"
-              class="inline-reference"
-              *ngIf="token.type === 'cell'"
-              (click)="onCellClick(token.content)"
-            >
-              {{ token.content }}
-            </button>
-            <strong *ngIf="token.type === 'bold'">{{ token.content }}</strong>
-            <span *ngIf="token.type === 'text'">{{ token.content }}</span>
-          </ng-container>
-        </p>
-      </ng-container>
-      <ng-template #multiStep>
-        <ol>
-          <li *ngFor="let step of instructions">
+    <!-- Middle scrollable body: steps + Show me how + feedback -->
+    <div class="c-body">
+      <ol class="steps">
+        <li class="step" *ngFor="let step of instructions; let i = index">
+          <span class="n">{{ i + 1 }}</span>
+          <span class="t">
             <ng-container *ngFor="let token of parseInstruction(step)">
-              <code *ngIf="token.type === 'code'">{{ token.content }}</code>
+              <b *ngIf="token.type === 'code'">{{ token.content }}</b>
               <button
                 type="button"
                 class="inline-reference"
@@ -56,43 +42,53 @@
               >
                 {{ token.content }}
               </button>
-              <strong *ngIf="token.type === 'bold'">{{ token.content }}</strong>
+              <b *ngIf="token.type === 'bold'">{{ token.content }}</b>
               <span *ngIf="token.type === 'text'">{{ token.content }}</span>
             </ng-container>
-          </li>
-        </ol>
-      </ng-template>
+          </span>
+        </li>
+      </ol>
+
+      <button
+        type="button"
+        class="how"
+        *ngIf="hasShowMeHow"
+        (click)="showDemo.emit()"
+        data-demo-target="show-me-how-btn"
+      >
+        <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+          <path d="M3 1l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        </svg>
+        Show me how
+      </button>
+
+      <div
+        class="feedback bad"
+        *ngIf="feedbackMessage && !isSuccess"
+        role="status"
+      >
+        {{ feedbackMessage }}
+      </div>
     </div>
 
-    <button
-      type="button"
-      class="help-button"
-      *ngIf="hasShowMeHow"
-      (click)="showDemo.emit()"
-    >
-      ▷ &nbsp; Show me how
-    </button>
-
-    <div
-      class="feedback"
-      *ngIf="feedbackMessage"
-      [class.good]="isSuccess"
-      [class.bad]="!isSuccess"
-      role="status"
-    >
-      {{ feedbackMessage }}
+    <!-- Bottom button area -->
+    <div class="c-foot">
+      <p class="success" *ngIf="isSuccess" role="status">Well done! You've got this!</p>
+      <button
+        type="button"
+        class="btn"
+        [class.win]="isSuccess"
+        [class.ready]="!isSuccess"
+        [disabled]="isDisabled"
+        (click)="onPrimaryAction()"
+        data-demo-target="check-work-btn"
+      >
+        {{ buttonLabel }}
+      </button>
     </div>
-
-    <button
-      type="button"
-      class="primary check-button"
-      [disabled]="isDisabled"
-      (click)="onPrimaryAction()"
-    >
-      {{ buttonLabel }}
-    </button>
   </section>
 
   <!-- Associated Mascot (Moves with Task Card) -->
-  <lib-mascot [mood]="mascotMood"></lib-mascot>
+  <lib-mascot [mood]="mascotMood" [assetBaseUrl]="assetBaseUrl"></lib-mascot>
 </div>
+

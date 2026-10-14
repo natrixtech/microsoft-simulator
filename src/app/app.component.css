@@ -1606,24 +1606,42 @@
 }
 
 /* -------------------------------------------------------------
-   Lesson Side & Task Card (Movable group beside right side of page)
+   Lesson Side & Task Card (Movable group at bottom-left of work area)
    ------------------------------------------------------------- */
 .lesson-side.movable-group {
   position: absolute;
-  width: 330px;
+  width: 300px;
   max-width: calc(100vw - 24px);
-  max-height: calc(100% - 24px);
+  max-height: calc(100% - 66px);
+  padding: 0;
+  margin: 0;
   z-index: 1000;
   pointer-events: auto;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  font-family: var(--ui, 'Lexend', system-ui, -apple-system, sans-serif);
+}
+
+.lesson-side.movable-group.dragging {
+  cursor: grabbing;
+}
+
+.lesson-side.movable-group.dragging .tip {
+  opacity: 0 !important;
+}
+
+.lesson-side.movable-group.dragging ::ng-deep .task-card {
+  box-shadow: 0 0 0 6px rgba(26, 115, 232, 0.14), 0 24px 56px rgba(26, 60, 120, 0.32) !important;
+  animation: none !important;
 }
 
 .teal-card {
+  width: 300px;
   background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
   border: 2px solid #38b2ac;
-  border-radius: 12px;
+  border-radius: 18px;
   padding: 26px 20px;
   text-align: center;
   box-shadow: 0 8px 24px rgba(56, 178, 172, 0.18);
@@ -1631,6 +1649,7 @@
   flex-direction: column;
   align-items: center;
   gap: 10px;
+  box-sizing: border-box;
 }
 
 .teal-icon {
@@ -1654,10 +1673,9 @@
   background: #319795;
   color: white;
   border: none;
-  border-radius: 6px;
-  padding: 10px 20px;
-  font-size: 13.5px;
-  font-weight: 650;
+  border-radius: 10px;
+  padding: 12px 20px;
+  font: 600 15px var(--ui, 'Lexend', sans-serif);
   cursor: pointer;
   width: 100%;
 }
@@ -3099,63 +3117,6 @@
   --card-bg: #242424;
 }
 
-.simulator.word:is(.dark-theme, [data-theme='DARK']) ::ng-deep .task-card {
-  background: #242424 !important;
-  border-color: #3b3a39 !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55) !important;
-  color: #d1d1d1 !important;
-}
-
-.simulator.word:is(.dark-theme, [data-theme='DARK']) ::ng-deep .task-card::after {
-  border-top-color: #242424 !important;
-}
-
-.simulator.word:is(.dark-theme, [data-theme='DARK']) ::ng-deep .task-card h2 {
-  color: #ffffff !important;
-}
-
-.simulator.word:is(.dark-theme, [data-theme='DARK']) ::ng-deep .task-card .explanation {
-  color: #d1d1d1 !important;
-}
-
-.simulator.word:is(.dark-theme, [data-theme='DARK']) ::ng-deep .task-box {
-  background: #1b1b1b !important;
-  border-color: #383838 !important;
-  color: #f3f2f1 !important;
-}
-
-.simulator.word:is(.dark-theme, [data-theme='DARK']) ::ng-deep .task-box ol,
-.simulator.word:is(.dark-theme, [data-theme='DARK']) ::ng-deep .task-box p,
-.simulator.word:is(.dark-theme, [data-theme='DARK']) ::ng-deep .task-box li,
-.simulator.word:is(.dark-theme, [data-theme='DARK']) ::ng-deep .task-box span,
-.simulator.word:is(.dark-theme, [data-theme='DARK']) ::ng-deep .task-box strong {
-  color: #f3f2f1 !important;
-}
-
-.simulator.word:is(.dark-theme, [data-theme='DARK']) ::ng-deep .card-drag-handle {
-  background: rgba(255, 255, 255, 0.04) !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
-}
-
-.simulator.word:is(.dark-theme, [data-theme='DARK']) ::ng-deep .lesson-eyebrow {
-  color: #4da3ff !important;
-}
-
-.simulator.word:is(.dark-theme, [data-theme='DARK']) ::ng-deep .drag-pill {
-  background: rgba(255, 255, 255, 0.08) !important;
-  color: #a19f9d !important;
-}
-
-.simulator.word:is(.dark-theme, [data-theme='DARK']) ::ng-deep .mascot-message {
-  background: #242424 !important;
-  border-color: #3b3a39 !important;
-  color: #d1d1d1 !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
-}
-
-.simulator.word:is(.dark-theme, [data-theme='DARK']) ::ng-deep .mascot-message::before {
-  border-right-color: #242424 !important;
-}
 
 /* 9. Dialogs & Dropdowns in Dark Mode */
 .simulator.word:is(.dark-theme, [data-theme='DARK']) :is(.modal-dialog, .orientation-dropdown-menu) {
@@ -3480,3 +3441,36 @@
   background: #fde7e9;
   border-color: #a80000;
 }
+
+/* Responsive Narrow Screens (≤760px) */
+@media (max-width: 760px) {
+  .lesson-side.movable-group {
+    position: static !important;
+    width: auto !important;
+    max-width: 100% !important;
+    margin: 16px 16px 64px !important;
+    left: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+  }
+
+  .lesson-side.movable-group ::ng-deep lib-mascot {
+    display: none !important;
+  }
+
+  .lesson-side.movable-group ::ng-deep .task-card {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
+
+  .lesson-side.movable-group ::ng-deep .task-card::after {
+    display: none !important;
+  }
+
+  .lesson-side.movable-group ::ng-deep .move {
+    display: none !important;
+  }
+}
+

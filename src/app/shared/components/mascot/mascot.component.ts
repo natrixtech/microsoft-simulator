@@ -38,16 +38,5 @@ export class MascotComponent {
         return 'Assistant mascot';
     }
   }
-
-  get messageText(): string {
-    switch (this.mood) {
-      case 'happy':
-        return 'Great job! Keep it up!';
-      case 'sad':
-        return 'Take your time. You can try again.';
-      case 'normal':
-      default:
-        return 'A little practice goes a long way.';
-    }
-  }
 }
+

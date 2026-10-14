@@ -15,14 +15,30 @@ export class PluginBridgeService {
   readonly activity = signal<ActivityPayload | null>(null);
   readonly isPaused = signal<boolean>(false);
   readonly theme = signal<ThemePreference>('LIGHT');
-  readonly forceFinishTrigger = signal<number>(0);
   readonly isEmbedded = signal<boolean>(typeof window !== 'undefined' && window.parent !== window);
   readonly isCompleted = signal<boolean>(false);
+
+  private activityCallbacks: Array<(activity: ActivityPayload) => void> = [];
+  private forceFinishCallbacks: Array<() => void> = [];
 
   private hostOrigin: string | null = null;
   private currentKind: AppKind | null = null;
 
   constructor(private ngZone: NgZone) {}
+
+  onActivity(callback: (activity: ActivityPayload) => void): () => void {
+    this.activityCallbacks.push(callback);
+    return () => {
+      this.activityCallbacks = this.activityCallbacks.filter((cb) => cb !== callback);
+    };
+  }
+
+  onForceFinish(callback: () => void): () => void {
+    this.forceFinishCallbacks.push(callback);
+    return () => {
+      this.forceFinishCallbacks = this.forceFinishCallbacks.filter((cb) => cb !== callback);
+    };
+  }
 
   init(kind: AppKind): void {
     if (typeof window === 'undefined') return;
@@ -92,6 +108,9 @@ export class PluginBridgeService {
       this.theme.set(validated.theme || 'LIGHT');
       this.applyThemeToDom(validated.theme || 'LIGHT');
       this.activity.set(validated);
+      this.ngZone.run(() => {
+        this.activityCallbacks.forEach((cb) => cb(validated));
+      });
     } catch (err: any) {
       this.sendError(err?.message || 'Invalid activity payload');
       throw err;
@@ -123,7 +142,7 @@ export class PluginBridgeService {
             break;
 
           case 'FORCE_FINISH':
-            this.forceFinishTrigger.update((v) => v + 1);
+            this.forceFinishCallbacks.forEach((cb) => cb());
             break;
 
           case 'PREFERENCE_CHANGED':
