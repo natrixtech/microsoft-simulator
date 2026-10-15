@@ -1,9 +1,13 @@
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   EventEmitter,
   Input,
+  OnChanges,
+  OnDestroy,
   Output,
+  SimpleChanges,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppKind } from '../../models/activity.types';
@@ -22,7 +26,40 @@ export interface MarkupToken {
   styleUrls: ['./task-card.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TaskCardComponent {
+export class TaskCardComponent implements OnChanges, OnDestroy {
+  animating = true;
+  private animTimer: any = null;
+
+  constructor(private cdr: ChangeDetectorRef) {}
+
+  ngOnChanges(changes: SimpleChanges): void {
+    const isFirst =
+      (changes['taskIndex']?.isFirstChange() ?? true) &&
+      (changes['title']?.isFirstChange() ?? true);
+
+    if (!isFirst && (changes['taskIndex'] || changes['title'] || changes['instructions'])) {
+      this.replayAnimations();
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.animTimer) {
+      clearTimeout(this.animTimer);
+      this.animTimer = null;
+    }
+  }
+
+  replayAnimations(): void {
+    this.animating = false;
+    this.cdr.detectChanges();
+    if (this.animTimer) {
+      clearTimeout(this.animTimer);
+    }
+    this.animTimer = setTimeout(() => {
+      this.animating = true;
+      this.cdr.detectChanges();
+    }, 30);
+  }
   @Input() appKind: AppKind = 'word';
   @Input() title: string = '';
   @Input() explanation: string = '';

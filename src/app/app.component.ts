@@ -9,6 +9,7 @@ import {
   OnInit,
   ViewChild,
   computed,
+  effect,
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -138,6 +139,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   replaceTextQuery: string = '';
   readonly matchCase = signal<boolean>(false);
   readonly matchCount = signal<number>(0);
+  readonly currentMatchIndex = signal<number>(1);
 
   readonly showImageDialog = signal<boolean>(false);
   readonly selectedImageFile = signal<string>('');
@@ -333,6 +335,11 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     private cdr: ChangeDetectorRef
   ) {
     this.docSetup.set(clone(this.wordDoc.setup));
+    effect(() => {
+      if (!this.showFindReplace() || this.findTab() === 'headings') {
+        this.clearFindHighlights();
+      }
+    });
   }
 
   ngOnInit(): void {
@@ -391,6 +398,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     this.bridgeUnsubscribes.forEach((unsub) => unsub());
     this.bridgeUnsubscribes = [];
+    this.clearFindHighlights();
   }
 
   toggleMenu(name: string, event: MouseEvent): void {
@@ -432,6 +440,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     this.selectedTocEl.set(null);
     this.selectedPageNum.set(false);
     this.activeRegion.set('body');
+    this.clearFindHighlights();
   }
 
   @HostListener('document:keydown', ['$event'])
@@ -533,6 +542,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     this.showFinalTealCard.set(false);
     this.showPageSetup.set(false);
     this.showFindReplace.set(false);
+    this.clearFindHighlights();
     this.showCommentDialog.set(false);
     this.commentSelectedText.set('');
     this.newCommentText.set('Please review this section.');
@@ -592,6 +602,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.setupDocumentForTask(task, act);
     this.captureTaskStartSnapshot(index, act, task);
+    this.clearFindHighlights();
   }
 
   private setupDocumentForTask(task: LessonTask, act: ActivityPayload): void {
@@ -1609,59 +1620,209 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     this.showFindReplace.set(true);
   }
 
-  updateMatchCount(): void {
-    if (!this.findTextQuery || !this.editorRef) {
-      this.matchCount.set(0);
+  private getDocumentMatches(): Range[] {
+    if (!this.findTextQuery || !this.editorRef) return [];
+
+    const roots: HTMLElement[] = [this.editorRef.nativeElement];
+    if (this.hasPageBreak() && this.page2EditorRef?.nativeElement) {
+      roots.push(this.page2EditorRef.nativeElement);
+    }
+
+    const query = this.findTextQuery;
+    const matchCase = this.matchCase();
+    const allRanges: Range[] = [];
+
+    for (const root of roots) {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      const nodes: { n: Text; start: number }[] = [];
+      let n: Text | null;
+      let all = '';
+
+      while ((n = walker.nextNode() as Text | null)) {
+        nodes.push({ n, start: all.length });
+        all += n.textContent || '';
+      }
+
+      const searchStr = matchCase ? all : all.toLowerCase();
+      const target = matchCase ? query : query.toLowerCase();
+
+      let pos = 0;
+      while ((pos = searchStr.indexOf(target, pos)) !== -1) {
+        const start = nodes.find((x) => x.start + x.n.length > pos);
+        const end = nodes.find((x) => x.start + x.n.length >= pos + target.length);
+        if (start && end) {
+          const r = document.createRange();
+          r.setStart(start.n, pos - start.start);
+          r.setEnd(end.n, pos + target.length - end.start);
+          allRanges.push(r);
+        }
+        pos += target.length;
+      }
+    }
+
+    return allRanges;
+  }
+
+  private selectAndScrollMatch(r: Range): void {
+    const el = r.startContainer.parentElement;
+    if (el) {
+      el.scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  private applyFindHighlights(ranges: Range[], currentIndex: number): void {
+    if (typeof CSS === 'undefined' || !(CSS as any).highlights || typeof (window as any).Highlight === 'undefined') {
       return;
     }
-    const text = this.editorRef.nativeElement.innerText || '';
-    const query = this.matchCase() ? this.findTextQuery : this.findTextQuery.toLowerCase();
-    const source = this.matchCase() ? text : text.toLowerCase();
-    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(escaped, 'g');
-    const matches = source.match(regex);
-    this.matchCount.set(matches ? matches.length : 0);
+    try {
+      if (ranges.length === 0) {
+        this.clearFindHighlights();
+        return;
+      }
+      const HighlightCtor = (window as any).Highlight;
+      const allHl = new HighlightCtor(...ranges);
+      allHl.priority = 1;
+      (CSS as any).highlights.set('find-all', allHl);
+
+      const curRange = (currentIndex >= 1 && currentIndex <= ranges.length)
+        ? ranges[currentIndex - 1]
+        : ranges[0];
+      if (curRange) {
+        const curHl = new HighlightCtor(curRange);
+        curHl.priority = 2;
+        (CSS as any).highlights.set('find-current', curHl);
+      } else {
+        (CSS as any).highlights.delete('find-current');
+      }
+    } catch {
+      // CSS Highlight API failed, skip highlight
+    }
+  }
+
+  private clearFindHighlights(): void {
+    if (typeof CSS === 'undefined' || !(CSS as any).highlights) {
+      return;
+    }
+    try {
+      (CSS as any).highlights.delete('find-all');
+      (CSS as any).highlights.delete('find-current');
+    } catch {
+      // ignore
+    }
+  }
+
+  private refocusSearchBox(): void {
+    const input = document.querySelector<HTMLInputElement>('.nav-search-field');
+    if (input) {
+      input.focus();
+      setTimeout(() => input.focus(), 0);
+    }
+  }
+
+  updateMatchCount(resetIndex: boolean = true): void {
+    if (!this.findTextQuery || !this.editorRef) {
+      this.clearFindHighlights();
+      this.matchCount.set(0);
+      this.currentMatchIndex.set(0);
+      return;
+    }
+    const ranges = this.getDocumentMatches();
+    const total = ranges.length;
+    this.matchCount.set(total);
+    if (total === 0) {
+      this.clearFindHighlights();
+      this.currentMatchIndex.set(0);
+    } else {
+      if (resetIndex || this.currentMatchIndex() < 1 || this.currentMatchIndex() > total) {
+        this.currentMatchIndex.set(1);
+      }
+      const curIdx = this.currentMatchIndex();
+      this.selectAndScrollMatch(ranges[curIdx - 1]);
+      this.applyFindHighlights(ranges, curIdx);
+    }
   }
 
   findNext(): void {
     if (!this.findTextQuery || !this.editorRef) return;
     this.wordDoc.logAction('find', this.findTextQuery);
-    if ((window as any).find) {
-      (window as any).find(this.findTextQuery, this.matchCase(), false, true);
+    const ranges = this.getDocumentMatches();
+    this.matchCount.set(ranges.length);
+    if (ranges.length === 0) {
+      this.clearFindHighlights();
+      this.currentMatchIndex.set(0);
+      return;
     }
-    this.updateMatchCount();
+    const cur = this.currentMatchIndex();
+    const next = (cur >= ranges.length || cur < 1) ? 1 : cur + 1;
+    this.currentMatchIndex.set(next);
+    this.selectAndScrollMatch(ranges[next - 1]);
+    this.applyFindHighlights(ranges, next);
+    this.refocusSearchBox();
   }
 
   findPrev(): void {
     if (!this.findTextQuery || !this.editorRef) return;
     this.wordDoc.logAction('find', this.findTextQuery);
-    if ((window as any).find) {
-      (window as any).find(this.findTextQuery, this.matchCase(), true, true);
+    const ranges = this.getDocumentMatches();
+    this.matchCount.set(ranges.length);
+    if (ranges.length === 0) {
+      this.clearFindHighlights();
+      this.currentMatchIndex.set(0);
+      return;
     }
-    this.updateMatchCount();
+    const cur = this.currentMatchIndex();
+    const prev = (cur <= 1 || cur > ranges.length) ? ranges.length : cur - 1;
+    this.currentMatchIndex.set(prev);
+    this.selectAndScrollMatch(ranges[prev - 1]);
+    this.applyFindHighlights(ranges, prev);
+    this.refocusSearchBox();
   }
 
   executeReplace(): void {
     if (!this.findTextQuery || !this.editorRef) return;
-    const html = this.editorRef.nativeElement.innerHTML;
-    const escaped = this.findTextQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const flags = this.matchCase() ? '' : 'i';
-    const replaced = html.replace(new RegExp(escaped, flags), this.replaceTextQuery);
-    this.editorRef.nativeElement.innerHTML = replaced;
+
+    const ranges = this.getDocumentMatches();
+    if (ranges.length === 0) {
+      this.clearFindHighlights();
+      this.matchCount.set(0);
+      this.currentMatchIndex.set(0);
+      return;
+    }
+
+    const cur = Math.max(1, Math.min(this.currentMatchIndex(), ranges.length));
+    const targetRange = ranges[cur - 1];
+
+    targetRange.deleteContents();
+    targetRange.insertNode(document.createTextNode(this.replaceTextQuery || ''));
+
     this.wordDoc.logAction('find', this.findTextQuery);
     this.wordDoc.logAction('findReplace', this.findTextQuery);
-    this.updateMatchCount();
-    this.showFindReplace.set(false);
+
     this.onEditorInput();
+
+    const newRanges = this.getDocumentMatches();
+    this.matchCount.set(newRanges.length);
+    if (newRanges.length === 0) {
+      this.clearFindHighlights();
+      this.currentMatchIndex.set(0);
+    } else {
+      const nextIndex = cur > newRanges.length ? 1 : cur;
+      this.currentMatchIndex.set(nextIndex);
+      this.selectAndScrollMatch(newRanges[nextIndex - 1]);
+      this.applyFindHighlights(newRanges, nextIndex);
+    }
   }
 
   executeReplaceAll(): void {
     if (!this.findTextQuery || !this.editorRef) return;
-    const html = this.editorRef.nativeElement.innerHTML;
-    const escaped = this.findTextQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const flags = this.matchCase() ? 'g' : 'gi';
-    const replaced = html.replace(new RegExp(escaped, flags), this.replaceTextQuery);
-    this.editorRef.nativeElement.innerHTML = replaced;
+    const ranges = this.getDocumentMatches();
+    if (ranges.length > 0) {
+      const replacement = this.replaceTextQuery || '';
+      for (let i = ranges.length - 1; i >= 0; i--) {
+        ranges[i].deleteContents();
+        ranges[i].insertNode(document.createTextNode(replacement));
+      }
+    }
     this.wordDoc.logAction('find', this.findTextQuery);
     this.wordDoc.logAction('findReplace', this.findTextQuery);
     this.updateMatchCount();

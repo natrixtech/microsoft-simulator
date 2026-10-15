@@ -1,5 +1,5 @@
 <div class="card-container">
-  <section class="task-card" role="dialog" aria-labelledby="cardTitle">
+  <section class="task-card" [class.play-enter]="animating" role="dialog" aria-labelledby="cardTitle">
     <!-- Blue header band -->
     <div class="c-band">
       <!-- Assessments only eyebrow (TASK X OF Y · TITLE) -->
@@ -29,8 +29,13 @@
     <!-- Middle scrollable body: steps + Show me how + feedback -->
     <div class="c-body">
       <ol class="steps">
-        <li class="step" *ngFor="let step of instructions; let i = index">
-          <span class="n">{{ i + 1 }}</span>
+        <li
+          class="step"
+          *ngFor="let step of instructions; let i = index"
+          [class.now]="!isSuccess && i === 0"
+          [class.done]="isSuccess"
+        >
+          <span class="n">{{ isSuccess ? '✓' : (i + 1) }}</span>
           <span class="t">
             <ng-container *ngFor="let token of parseInstruction(step)">
               <b *ngIf="token.type === 'code'">{{ token.content }}</b>

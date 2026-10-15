@@ -62,13 +62,15 @@ dist/word/
 
 ---
 
-## 🧪 Testing
+## 🧪 QA Testing & Verification
 
-Run all unit tests via Karma and Jasmine:
-```bash
-npm test
-# or: npx ng test --watch=false --browsers=ChromeHeadless
-```
+Integration and iframe contract testing are performed using the interactive **QA Test Harness**:
+1. Run the development server:
+   ```bash
+   npm start
+   ```
+2. Navigate to [http://localhost:4200/test-harness.html](http://localhost:4200/test-harness.html) in your browser.
+3. Test iframe contract messaging (`PLUGIN_DATA_IN`, `FORCE_FINISH`, `THEME_CHANGE`), verify goal evaluation against active documents, inspect live `postMessage` event logs, and validate UI interactions.
 
 ---
 
@@ -81,7 +83,6 @@ word-processing-simulator/
 ├── package-lock.json            # Deterministic dependency tree
 ├── tsconfig.json                # TypeScript compiler options & shared path mappings
 ├── tsconfig.app.json            # Application build TypeScript configuration
-├── tsconfig.spec.json           # Karma test runner TypeScript configuration
 ├── .editorconfig                # Coding style settings
 ├── .gitignore                   # Git exclusion rules
 ├── README.md                    # Project documentation
@@ -99,13 +100,11 @@ word-processing-simulator/
         ├── app.component.ts     # Word editor controller
         ├── app.component.html   # Word 365 UI template (Ribbon, Document, Comments)
         ├── app.component.css    # Word 365 component styles
-        ├── app.component.spec.ts
         ├── app.config.ts        # Application configuration providers
         ├── word-lessons.data.ts # Lesson & assessment definitions
         ├── services/            # Word core services
         │   ├── rich-text.service.ts
-        │   ├── word-document.service.ts
-        │   └── word-document.service.spec.ts
+        │   └── word-document.service.ts
         └── shared/              # Shared application components & utilities
             ├── index.ts         # Public exports barrel
             ├── models/
@@ -117,8 +116,7 @@ word-processing-simulator/
             ├── utils/
             │   └── editor.utils.ts
             ├── validators/
-            │   ├── contract.validator.ts
-            │   └── contract.validator.spec.ts
+            │   └── contract.validator.ts
             └── components/
                 ├── mascot/
                 │   ├── mascot.component.ts
@@ -131,8 +129,7 @@ word-processing-simulator/
                 └── show-me-how/
                     ├── show-me-how.component.ts
                     ├── show-me-how.component.html
-                    ├── show-me-how.component.css
-                    └── show-me-how.component.spec.ts
+                    └── show-me-how.component.css
 ```
 
 ---

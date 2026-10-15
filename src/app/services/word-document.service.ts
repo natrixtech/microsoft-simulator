@@ -81,7 +81,8 @@ export class WordDocumentService {
     this.footer = '';
     this.numbering = false;
     this.styles = {};
-    this.comments = clone(data.comments || []).map((x: any) => ({
+    const rawComments = data?.comments || activity?.comments || [];
+    this.comments = clone(rawComments).map((x: any) => ({
       ...x,
       resolved: !!x.resolved,
       replies: Array.isArray(x.replies) ? x.replies : [],

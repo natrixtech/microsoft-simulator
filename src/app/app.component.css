@@ -3474,3 +3474,13 @@
   }
 }
 
+::highlight(find-all) {
+  background-color: #fff066;
+  color: #1f1f1f;
+}
+
+::highlight(find-current) {
+  background-color: #ff9900;
+  color: #ffffff;
+}
+

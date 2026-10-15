@@ -1761,7 +1761,7 @@
         <div class="nav-results-area" *ngIf="findTextQuery">
           <div class="nav-results-header">
             <span class="nav-results-badge">
-              {{ matchCount() > 0 ? ('Result 1 of ' + matchCount()) : '0 results' }}
+              {{ matchCount() > 0 ? ('Result ' + currentMatchIndex() + ' of ' + matchCount()) : '0 results' }}
             </span>
             <div class="nav-stepper-group">
               <button
@@ -1887,7 +1887,7 @@
         <div class="nav-results-area" *ngIf="findTextQuery">
           <div class="nav-results-header">
             <span class="nav-results-badge">
-              {{ matchCount() > 0 ? ('Result 1 of ' + matchCount()) : '0 results' }}
+              {{ matchCount() > 0 ? ('Result ' + currentMatchIndex() + ' of ' + matchCount()) : '0 results' }}
             </span>
             <div class="nav-stepper-group">
               <button

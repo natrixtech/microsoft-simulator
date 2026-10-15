@@ -101,20 +101,21 @@ export class PluginBridgeService {
 
   loadActivity(data: unknown): void {
     if (!this.currentKind) return;
+    let validated: ActivityPayload;
     try {
-      const validated = validateActivity(this.currentKind, data);
-      this.isCompleted.set(false);
-      this.isPaused.set(false);
-      this.theme.set(validated.theme || 'LIGHT');
-      this.applyThemeToDom(validated.theme || 'LIGHT');
-      this.activity.set(validated);
-      this.ngZone.run(() => {
-        this.activityCallbacks.forEach((cb) => cb(validated));
-      });
+      validated = validateActivity(this.currentKind, data);
     } catch (err: any) {
       this.sendError(err?.message || 'Invalid activity payload');
-      throw err;
+      return;
     }
+    this.isCompleted.set(false);
+    this.isPaused.set(false);
+    this.theme.set(validated.theme || 'LIGHT');
+    this.applyThemeToDom(validated.theme || 'LIGHT');
+    this.activity.set(validated);
+    this.ngZone.run(() => {
+      this.activityCallbacks.forEach((cb) => cb(validated));
+    });
   }
 
   private handleMessage(event: MessageEvent): void {

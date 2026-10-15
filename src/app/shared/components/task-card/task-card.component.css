@@ -32,7 +32,41 @@
   border: 2px solid #1a73e8;
   border-radius: 16px;
   box-shadow: 0 0 0 6px rgba(26, 115, 232, 0.14), 0 16px 40px rgba(26, 60, 120, 0.24), 0 2px 6px rgba(32, 48, 80, 0.1);
+}
+
+.task-card.play-enter {
   animation: cardEnter 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+.task-card::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 16px;
+  pointer-events: none;
+}
+
+.task-card.play-enter::before {
+  animation: ring 1.4s ease-out 0.5s 3 both;
+}
+
+:host-context(.dragging) .task-card::before,
+.task-card:has(.move:active)::before {
+  animation: none !important;
+  box-shadow: none !important;
+}
+
+:host-context(.dragging) .task-card {
+  animation: none !important;
+}
+
+@keyframes ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.55);
+  }
+  70%, 100% {
+    box-shadow: 0 0 0 22px rgba(26, 115, 232, 0);
+  }
 }
 
 @keyframes cardEnter {
@@ -216,6 +250,37 @@
   font-size: 13px;
   line-height: 1.4;
   color: #1f1f1f;
+  transition: background 0.25s, border-color 0.25s, box-shadow 0.25s;
+}
+
+.step.now {
+  background: #ffffff;
+  border: 2px solid #1a73e8;
+  color: #1f1f1f;
+  box-shadow: 0 4px 14px rgba(26, 115, 232, 0.2);
+}
+
+.step.now .n {
+  background: #1a73e8;
+  border-color: #1a73e8;
+  color: #ffffff;
+}
+
+.step.done {
+  background: #e6f4ea;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.step.done .n {
+  background: #188038;
+  border-color: #188038;
+  color: #ffffff;
+}
+
+.step.done .t {
+  text-decoration: line-through;
+  text-decoration-color: rgba(24, 128, 56, 0.5);
 }
 
 .n {
@@ -484,5 +549,52 @@
   color: #ffffff !important;
 }
 
+:host-context([data-theme='DARK']) .step.now,
+:host-context([data-theme='dark']) .step.now,
+:host-context(.dark-theme) .step.now {
+  background: #242424 !important;
+  border-color: #1a73e8 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(26, 115, 232, 0.3) !important;
+}
 
+:host-context([data-theme='DARK']) .step.now .n,
+:host-context([data-theme='dark']) .step.now .n,
+:host-context(.dark-theme) .step.now .n {
+  background: #1a73e8 !important;
+  border-color: #1a73e8 !important;
+  color: #ffffff !important;
+}
 
+:host-context([data-theme='DARK']) .step.done,
+:host-context([data-theme='dark']) .step.done,
+:host-context(.dark-theme) .step.done {
+  background: #123d1d !important;
+  border-color: transparent !important;
+  color: #d1d1d1 !important;
+  box-shadow: none !important;
+}
+
+:host-context([data-theme='DARK']) .step.done .n,
+:host-context([data-theme='dark']) .step.done .n,
+:host-context(.dark-theme) .step.done .n {
+  background: #188038 !important;
+  border-color: #188038 !important;
+  color: #ffffff !important;
+}
+
+:host-context([data-theme='DARK']) .step.done .t,
+:host-context([data-theme='dark']) .step.done .t,
+:host-context(.dark-theme) .step.done .t {
+  text-decoration: line-through !important;
+  text-decoration-color: rgba(109, 211, 138, 0.6) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
