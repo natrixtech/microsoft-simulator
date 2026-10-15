@@ -40,14 +40,13 @@ export class PluginBridgeService {
     };
   }
 
-  init(kind: AppKind): void {
+  init(): void {
     if (typeof window === 'undefined') return;
 
-    this.currentKind = kind;
-    const params = new URLSearchParams(window.location.search);
-    this.hostOrigin = params.get('parentOrigin') || null;
+    this.currentKind = null;
+    this.hostOrigin = null;
 
-    if (!this.hostOrigin && document.referrer) {
+    if (document.referrer) {
       try {
         this.hostOrigin = new URL(document.referrer).origin;
       } catch {
@@ -100,10 +99,36 @@ export class PluginBridgeService {
   }
 
   loadActivity(data: unknown): void {
-    if (!this.currentKind) return;
+    if (!data || typeof data !== 'object') {
+      this.sendError('Invalid activity payload');
+      return;
+    }
+
+    const raw = data as Record<string, unknown>;
+    const app = raw['app'];
+
+    if (!app || typeof app !== 'string') {
+      this.sendError('app is required: word, excel or powerpoint.');
+      return;
+    }
+
+    const validApps = ['word', 'excel', 'powerpoint'];
+    if (!validApps.includes(app)) {
+      this.sendError(`Unknown app: ${app}.`);
+      return;
+    }
+
+    if (app === 'excel' || app === 'powerpoint') {
+      this.sendError(`The ${app} editor is not available in this build.`);
+      return;
+    }
+
+    this.currentKind = 'word';
+
     let validated: ActivityPayload;
     try {
-      validated = validateActivity(this.currentKind, data);
+      validated = validateActivity('word', data);
+      validated.app = 'word';
     } catch (err: any) {
       this.sendError(err?.message || 'Invalid activity payload');
       return;
@@ -143,7 +168,9 @@ export class PluginBridgeService {
             break;
 
           case 'FORCE_FINISH':
-            this.forceFinishCallbacks.forEach((cb) => cb());
+            if (this.forceFinishCallbacks.length > 0) {
+              this.forceFinishCallbacks.forEach((cb) => cb());
+            }
             break;
 
           case 'PREFERENCE_CHANGED':

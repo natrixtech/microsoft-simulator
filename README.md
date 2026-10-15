@@ -6,9 +6,10 @@ An interactive, frontend-only Microsoft Word 365 learning simulator built with *
 
 ## 📋 Overview
 
-- **Learner App (The Simulator):** A high-fidelity Microsoft Word 365 interface featuring the Ribbon UI, document canvas, paragraph styles, editing dialogs, comments margin gutter, variables dialog, and a responsive floating task mascot card.
+- **Learner App (The Simulator):** A high-fidelity Microsoft 365 learning simulator featuring dynamic, lazy-loaded editors (Word 365 Ribbon UI, document canvas, paragraph styles, editing dialogs, comments gutter, variables, and floating task mascot card).
+- **Lightweight Dynamic Shell:** A minimal startup root shell (`AppComponent`) that listens for `PLUGIN_DATA_IN` messages and lazy-loads the corresponding editor bundle on demand based exclusively on the top-level `"app"` payload field (`"word" | "excel" | "powerpoint"`).
 - **QA Test Harness:** A parent-window host environment (`test-harness.html`) simulating the LMS platform. It enables loading lessons, assessments, theme switching, and live `postMessage` contract monitoring.
-- **Shared Application Architecture:** Normal application modules under `src/app/shared/` containing the iframe communication bridge (`PluginBridgeService`), task mascot card component, and the animated "Show Me How" interactive demo component with coherent scaling.
+- **Shared Application Architecture:** Reusable modules under `src/app/shared/` containing the iframe communication bridge (`PluginBridgeService`), contract models, task mascot card component, and the animated "Show Me How" interactive demo component.
 
 ---
 
@@ -36,7 +37,7 @@ npm start
 ```
 
 Once compiled, access the applications at:
-- **Learner Application (Simulator):** [http://localhost:4200/](http://localhost:4200/)
+- **Learner Application (Simulator Shell):** [http://localhost:4200/](http://localhost:4200/)
 - **QA Test Harness (Host & Curriculum Runner):** [http://localhost:4200/test-harness.html](http://localhost:4200/test-harness.html)
 
 ---
@@ -55,9 +56,10 @@ dist/word/
 ├── test-harness.html    # QA test harness for testing iframe integration
 ├── favicon.ico          # Application favicon
 ├── assets/              # Mascots, icons, and SVG resources
-├── main.*.js            # Angular compiled application bundle
+├── main.*.js            # Lightweight Angular shell bundle
+├── <chunk>.*.js         # Lazy-loaded Word editor component bundle
 ├── polyfills.*.js       # Browser polyfills
-└── styles.*.css         # Word 365 styling bundle
+└── styles.*.css         # Styling bundle
 ```
 
 ---
@@ -97,14 +99,18 @@ word-processing-simulator/
     ├── styles/
     │   └── theme.css            # Word 365 design tokens & dialog themes
     └── app/
-        ├── app.component.ts     # Word editor controller
-        ├── app.component.html   # Word 365 UI template (Ribbon, Document, Comments)
-        ├── app.component.css    # Word 365 component styles
+        ├── app.component.ts     # Lightweight startup shell (lazy loader)
+        ├── app.component.html   # Shell container & neutral waiting state
+        ├── app.component.css    # Shell layout styles
         ├── app.config.ts        # Application configuration providers
-        ├── word-lessons.data.ts # Lesson & assessment definitions
-        ├── services/            # Word core services
-        │   ├── rich-text.service.ts
-        │   └── word-document.service.ts
+        ├── word/                # Word 365 editor module (lazy-loaded chunk)
+        │   ├── word-editor.component.ts   # Word editor controller
+        │   ├── word-editor.component.html # Word 365 UI template
+        │   ├── word-editor.component.css  # Word 365 component styles
+        │   ├── word-lessons.data.ts       # Lesson & assessment curriculum
+        │   └── services/                  # Word document editing services
+        │       ├── rich-text.service.ts
+        │       └── word-document.service.ts
         └── shared/              # Shared application components & utilities
             ├── index.ts         # Public exports barrel
             ├── models/
@@ -158,11 +164,22 @@ All third-party libraries and direct dependencies utilized in this project are o
 
 ## 🏛️ Architecture & Engineering Decisions
 
+### Dynamic Lazy-Loading & Top-Level `app` Contract
+The application boots into a lightweight shell (`AppComponent`) that immediately announces readiness to the host via `pluginReady`. The editor to instantiate is determined strictly by the top-level `"app"` attribute within the incoming `PLUGIN_DATA_IN` message:
+- **No URL Reading:** The application never reads `window.location.search`, query parameters, or URL paths. The host is free to pass cache-busting parameters (e.g. `?v=...`) without impacting editor routing.
+- **Top-Level `app` Field Validation:**
+  - `app` is missing, null, or empty: Sends `pluginError` with message `"app is required: word, excel or powerpoint."`
+  - `app` is not an accepted value: Sends `pluginError` with message `"Unknown app: <value>."`
+  - `app` is `"excel"` or `"powerpoint"`: Sends `pluginError` with message `"The <app> editor is not available in this build."`
+  - `app` is `"word"`: Dynamically loads the `WordEditorComponent` chunk via `import('./word/word-editor.component')` and renders it into the shell container. Subsequent Word lessons reuse the existing mounted instance.
+- **Strict Bundle Separation:** The main startup bundle contains only the shell and messaging bridge, keeping startup download size minimal. Word-specific components, curriculum datasets, and editing services reside entirely inside the lazy chunk.
+
 ### Rich Text Editing Engine (`RichEditor` & `document.execCommand`)
-The document editor in `src/app/services/rich-text.service.ts` is implemented using browser DOM APIs and `document.execCommand` paired with custom DOM/Range tree walkers (`findText`, `styleMatches`), rather than an external heavyweight editor library (such as Quill, ProseMirror, or TipTap).
+The document editor in `src/app/word/services/rich-text.service.ts` is implemented using browser DOM APIs and `document.execCommand` paired with custom DOM/Range tree walkers (`findText`, `styleMatches`), rather than an external heavyweight editor library (such as Quill, ProseMirror, or TipTap).
 
 This deliberate architectural decision provides key operational advantages:
 1. **Zero Bundle Overhead:** Keeps the production bundle under ~100 KB gzipped, ensuring near-instantaneous load times inside sandboxed host iframes.
 2. **Direct DOM & Contract Alignment:** Generates clean, native semantic HTML elements (`<p>`, `<table>`, `<b>`, `<i>`, `<span>`, CSS styles, and `dataset` attributes) that map 1:1 to the 11 Word activity validation goal evaluators (`wordDoc.check(g)`) without intermediary virtual document models or AST abstractions.
 3. **Cross-Browser Stability:** Fully supported across modern Chromium (Chrome, Edge), Firefox, and WebKit (Safari) engines.
 4. **Encapsulated Abstraction Layer:** The editor logic is strictly encapsulated behind the `RichEditor` class. If headless schema constraints (e.g., TipTap/ProseMirror) are desired in future milestones, the editor engine can be swapped behind this service interface without altering the surrounding Ribbon UI, task card, or plugin bridge contract.
+

@@ -29,6 +29,7 @@ export interface LessonTask {
 }
 
 export interface ActivityPayload {
+  app?: 'word' | 'excel' | 'powerpoint';
   assetBaseUrl: string;
   theme: ThemePreference;
   mode?: 'lesson' | 'assessment';
