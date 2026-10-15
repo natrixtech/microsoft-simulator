@@ -26,33 +26,33 @@
       <p class="why">{{ explanation }}</p>
     </div>
 
-    <!-- Middle scrollable body: steps + Show me how + feedback -->
+    <!-- Middle body: scrollable steps only + Show me how + feedback -->
     <div class="c-body">
-      <ol class="steps">
-        <li
-          class="step"
-          *ngFor="let step of instructions; let i = index"
-          [class.now]="!isSuccess && i === 0"
-          [class.done]="isSuccess"
-        >
-          <span class="n">{{ isSuccess ? '✓' : (i + 1) }}</span>
-          <span class="t">
-            <ng-container *ngFor="let token of parseInstruction(step)">
-              <b *ngIf="token.type === 'code'">{{ token.content }}</b>
-              <button
-                type="button"
-                class="inline-reference"
-                *ngIf="token.type === 'cell'"
-                (click)="onCellClick(token.content)"
-              >
-                {{ token.content }}
-              </button>
-              <b *ngIf="token.type === 'bold'">{{ token.content }}</b>
-              <span *ngIf="token.type === 'text'">{{ token.content }}</span>
-            </ng-container>
-          </span>
-        </li>
-      </ol>
+      <div class="steps-scroll">
+        <ol class="steps">
+          <li
+            class="step"
+            *ngFor="let step of instructions; let i = index"
+          >
+            <span class="n">{{ i + 1 }}</span>
+            <span class="t">
+              <ng-container *ngFor="let token of parseInstruction(step)">
+                <b *ngIf="token.type === 'code'">{{ token.content }}</b>
+                <button
+                  type="button"
+                  class="inline-reference"
+                  *ngIf="token.type === 'cell'"
+                  (click)="onCellClick(token.content)"
+                >
+                  {{ token.content }}
+                </button>
+                <b *ngIf="token.type === 'bold'">{{ token.content }}</b>
+                <span *ngIf="token.type === 'text'">{{ token.content }}</span>
+              </ng-container>
+            </span>
+          </li>
+        </ol>
+      </div>
 
       <button
         type="button"
