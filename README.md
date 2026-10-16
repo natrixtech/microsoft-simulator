@@ -1,185 +1,42 @@
-# Word Processing Simulator (Microsoft Word 365)
+# Word Processing Simulator
 
-An interactive, frontend-only Microsoft Word 365 learning simulator built with **Angular 16** and standalone components. Designed to run as an embedded iframe plugin inside LMS platforms and web training applications.
+A Microsoft Word simulator that runs one activity at a time inside an iframe and communicates with the host through `window.postMessage`. Built with Angular 16.
 
----
+## Requirements
 
-## 📋 Overview
+- Node.js 18.10 or newer (tested with Node 22)
+- npm 10 or newer
 
-- **Learner App (The Simulator):** A high-fidelity Microsoft 365 learning simulator featuring dynamic, lazy-loaded editors (Word 365 Ribbon UI, document canvas, paragraph styles, editing dialogs, comments gutter, variables, and floating task mascot card).
-- **Lightweight Dynamic Shell:** A minimal startup root shell (`AppComponent`) that listens for `PLUGIN_DATA_IN` messages and lazy-loads the corresponding editor bundle on demand based exclusively on the top-level `"app"` payload field (`"word" | "excel" | "powerpoint"`).
-- **QA Test Harness:** A parent-window host environment (`test-harness.html`) simulating the LMS platform. It enables loading lessons, assessments, theme switching, and live `postMessage` contract monitoring.
-- **Shared Application Architecture:** Reusable modules under `src/app/shared/` containing the iframe communication bridge (`PluginBridgeService`), contract models, task mascot card component, and the animated "Show Me How" interactive demo component.
+## Run
 
----
-
-## 🛠️ System Requirements
-
-- **Node.js:** v20.x or v22.x (LTS recommended)
-- **npm:** v10.x or higher
-- **Modern Web Browser:** Chrome, Edge, Firefox, or Safari
-
----
-
-## 🚀 Getting Started
-
-### 1. Installation
-Clone the repository and install all dependencies:
 ```bash
 npm install
-```
-
-### 2. Development Server
-Start the Angular development server:
-```bash
 npm start
-# or: npx ng serve
 ```
 
-Once compiled, access the applications at:
-- **Learner Application (Simulator Shell):** [http://localhost:4200/](http://localhost:4200/)
-- **QA Test Harness (Host & Curriculum Runner):** [http://localhost:4200/test-harness.html](http://localhost:4200/test-harness.html)
+Open the test harness: http://localhost:4200/test-harness.html
 
----
+The harness loads the app in an iframe, sends sample Input objects (one lesson per goal type, plus a 3-task assessment) and shows the `activityCompleted` result it receives. It also has Light/Dark, Pause/Resume and Force Finish controls, and a box for sending custom Input JSON.
 
-## 📦 Building for Production
+Opening http://localhost:4200/ directly only shows "Waiting for an activity", because the app waits for the host to send `PLUGIN_DATA_IN`. The editor is chosen by the top-level `"app"` field of the Input object (currently `"word"`).
 
-Compile the production-ready distribution bundles:
+## Build
+
 ```bash
 npm run build
-# or: npm run build:word
-```
-The build output will be placed in:
-```text
-dist/word/
-├── index.html           # Main simulator plugin entry point
-├── test-harness.html    # QA test harness for testing iframe integration
-├── favicon.ico          # Application favicon
-├── assets/              # Mascots, icons, and SVG resources
-├── main.*.js            # Lightweight Angular shell bundle
-├── <chunk>.*.js         # Lazy-loaded Word editor component bundle
-├── polyfills.*.js       # Browser polyfills
-└── styles.*.css         # Styling bundle
 ```
 
----
+The production build is written to `dist/word/`: a folder with `index.html` and its files, loadable from any URL path. All code, fonts and images are bundled; nothing is loaded from external CDNs at runtime. `dist/word/3rdpartylicenses.txt` contains the license notices of all bundled libraries.
 
-## 🧪 QA Testing & Verification
+## Libraries and licenses
 
-Integration and iframe contract testing are performed using the interactive **QA Test Harness**:
-1. Run the development server:
-   ```bash
-   npm start
-   ```
-2. Navigate to [http://localhost:4200/test-harness.html](http://localhost:4200/test-harness.html) in your browser.
-3. Test iframe contract messaging (`PLUGIN_DATA_IN`, `FORCE_FINISH`, `THEME_CHANGE`), verify goal evaluation against active documents, inspect live `postMessage` event logs, and validate UI interactions.
+| Library | Version | License |
+|---|---|---|
+| Angular (`@angular/animations`, `common`, `compiler`, `core`, `forms`, `platform-browser`, `platform-browser-dynamic`, `router`) | 16.2 | MIT |
+| `canvas-confetti` | 1.9 | MIT |
+| `rxjs` | 7.8 | Apache-2.0 |
+| `tslib` | 2.x | 0BSD |
+| `zone.js` | 0.13 | MIT |
+| Lexend font (bundled) | variable | SIL Open Font License 1.1 |
 
----
-
-## 📂 Project Structure
-
-```text
-word-processing-simulator/
-├── angular.json                 # Angular application configuration
-├── package.json                 # Angular 16 dependencies and scripts
-├── package-lock.json            # Deterministic dependency tree
-├── tsconfig.json                # TypeScript compiler options & shared path mappings
-├── tsconfig.app.json            # Application build TypeScript configuration
-├── .editorconfig                # Coding style settings
-├── .gitignore                   # Git exclusion rules
-├── README.md                    # Project documentation
-├── public/                      # Static assets copied directly to root dist
-│   ├── favicon.ico
-│   ├── test-harness.html        # QA Test Harness runner
-│   └── assets/                  # Robot mascots (happy, neutral, sad) & app icons
-└── src/                         # Application source code
-    ├── index.html               # Simulator entry point HTML
-    ├── main.ts                  # Angular bootstrap entry
-    ├── styles.css               # Global application styles
-    ├── styles/
-    │   └── theme.css            # Word 365 design tokens & dialog themes
-    └── app/
-        ├── app.component.ts     # Lightweight startup shell (lazy loader)
-        ├── app.component.html   # Shell container & neutral waiting state
-        ├── app.component.css    # Shell layout styles
-        ├── app.config.ts        # Application configuration providers
-        ├── word/                # Word 365 editor module (lazy-loaded chunk)
-        │   ├── word-editor.component.ts   # Word editor controller
-        │   ├── word-editor.component.html # Word 365 UI template
-        │   ├── word-editor.component.css  # Word 365 component styles
-        │   ├── word-lessons.data.ts       # Lesson & assessment curriculum
-        │   └── services/                  # Word document editing services
-        │       ├── rich-text.service.ts
-        │       └── word-document.service.ts
-        └── shared/              # Shared application components & utilities
-            ├── index.ts         # Public exports barrel
-            ├── models/
-            │   └── activity.types.ts
-            ├── services/
-            │   ├── confetti.service.ts
-            │   ├── plugin-bridge.service.ts
-            │   └── theme.service.ts
-            ├── utils/
-            │   └── editor.utils.ts
-            ├── validators/
-            │   └── contract.validator.ts
-            └── components/
-                ├── mascot/
-                │   ├── mascot.component.ts
-                │   ├── mascot.component.html
-                │   └── mascot.component.css
-                ├── task-card/
-                │   ├── task-card.component.ts
-                │   ├── task-card.component.html
-                │   └── task-card.component.css
-                └── show-me-how/
-                    ├── show-me-how.component.ts
-                    ├── show-me-how.component.html
-                    └── show-me-how.component.css
-```
-
----
-
-## 📜 Third-Party Dependencies & Licenses
-
-All third-party libraries and direct dependencies utilized in this project are open-source and permissible for commercial embedding within learning management systems:
-
-| Package | Version | License | Purpose | Source / Repository |
-|---|---|---|---|---|
-| `canvas-confetti` | `^1.9.4` | MIT | Celebratory confetti particle animations on task completion | [GitHub](https://github.com/catdad/canvas-confetti) |
-| `@angular/animations` | `^16.2.12` | MIT | Animation engine and transitions primitives | [GitHub](https://github.com/angular/angular) |
-| `@angular/common` | `^16.2.12` | MIT | Common Angular directives, pipes, and utilities | [GitHub](https://github.com/angular/angular) |
-| `@angular/compiler` | `^16.2.12` | MIT | Ahead-of-Time and JIT template compiler | [GitHub](https://github.com/angular/angular) |
-| `@angular/core` | `^16.2.12` | MIT | Application framework & reactive signal primitives | [GitHub](https://github.com/angular/angular) |
-| `@angular/forms` | `^16.2.12` | MIT | Two-way data binding and form control primitives | [GitHub](https://github.com/angular/angular) |
-| `@angular/platform-browser` | `^16.2.12` | MIT | Browser rendering and DOM management | [GitHub](https://github.com/angular/angular) |
-| `@angular/platform-browser-dynamic` | `^16.2.12` | MIT | Browser bootstrap provider for JIT compilation | [GitHub](https://github.com/angular/angular) |
-| `@angular/router` | `^16.2.12` | MIT | Client-side routing and URL state management | [GitHub](https://github.com/angular/angular) |
-| `rxjs` | `~7.8.0` | Apache-2.0 | Reactive asynchronous event handling and stream primitives | [GitHub](https://github.com/ReactiveX/rxjs) |
-| `tslib` | `^2.3.0` | 0BSD | Runtime TypeScript helper library | [GitHub](https://github.com/microsoft/tslib) |
-| `zone.js` | `~0.13.3` | MIT | Zone execution context for change detection tracking | [GitHub](https://github.com/angular/angular) |
-| `Lexend` | Variable (100–900) | SIL OFL 1.1 | Modern typography for lesson task card UI | [Google Fonts / GitHub](https://github.com/googlefonts/lexend) |
-
----
-
-## 🏛️ Architecture & Engineering Decisions
-
-### Dynamic Lazy-Loading & Top-Level `app` Contract
-The application boots into a lightweight shell (`AppComponent`) that immediately announces readiness to the host via `pluginReady`. The editor to instantiate is determined strictly by the top-level `"app"` attribute within the incoming `PLUGIN_DATA_IN` message:
-- **No URL Reading:** The application never reads `window.location.search`, query parameters, or URL paths. The host is free to pass cache-busting parameters (e.g. `?v=...`) without impacting editor routing.
-- **Top-Level `app` Field Validation:**
-  - `app` is missing, null, or empty: Sends `pluginError` with message `"app is required: word, excel or powerpoint."`
-  - `app` is not an accepted value: Sends `pluginError` with message `"Unknown app: <value>."`
-  - `app` is `"excel"` or `"powerpoint"`: Sends `pluginError` with message `"The <app> editor is not available in this build."`
-  - `app` is `"word"`: Dynamically loads the `WordEditorComponent` chunk via `import('./word/word-editor.component')` and renders it into the shell container. Subsequent Word lessons reuse the existing mounted instance.
-- **Strict Bundle Separation:** The main startup bundle contains only the shell and messaging bridge, keeping startup download size minimal. Word-specific components, curriculum datasets, and editing services reside entirely inside the lazy chunk.
-
-### Rich Text Editing Engine (`RichEditor` & `document.execCommand`)
-The document editor in `src/app/word/services/rich-text.service.ts` is implemented using browser DOM APIs and `document.execCommand` paired with custom DOM/Range tree walkers (`findText`, `styleMatches`), rather than an external heavyweight editor library (such as Quill, ProseMirror, or TipTap).
-
-This deliberate architectural decision provides key operational advantages:
-1. **Zero Bundle Overhead:** Keeps the production bundle under ~100 KB gzipped, ensuring near-instantaneous load times inside sandboxed host iframes.
-2. **Direct DOM & Contract Alignment:** Generates clean, native semantic HTML elements (`<p>`, `<table>`, `<b>`, `<i>`, `<span>`, CSS styles, and `dataset` attributes) that map 1:1 to the 11 Word activity validation goal evaluators (`wordDoc.check(g)`) without intermediary virtual document models or AST abstractions.
-3. **Cross-Browser Stability:** Fully supported across modern Chromium (Chrome, Edge), Firefox, and WebKit (Safari) engines.
-4. **Encapsulated Abstraction Layer:** The editor logic is strictly encapsulated behind the `RichEditor` class. If headless schema constraints (e.g., TipTap/ProseMirror) are desired in future milestones, the editor engine can be swapped behind this service interface without altering the surrounding Ribbon UI, task card, or plugin bridge contract.
-
+Development-only tools (not part of the build): Angular CLI and build tools (MIT), TypeScript (Apache-2.0).
