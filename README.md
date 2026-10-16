@@ -26,7 +26,7 @@ Opening http://localhost:4200/ directly only shows "Waiting for an activity", be
 npm run build
 ```
 
-The production build is written to `dist/word/`: a folder with `index.html` and its files, loadable from any URL path. All code, fonts and images are bundled; nothing is loaded from external CDNs at runtime. `dist/word/3rdpartylicenses.txt` contains the license notices of all bundled libraries.
+The production build is written to `dist`: a folder with `index.html` and its files, loadable from any URL path. All code, fonts and images are bundled; nothing is loaded from external CDNs at runtime. `dist` contains the license notices of all bundled libraries.
 
 ## Libraries and licenses
 
