@@ -104,6 +104,8 @@ export class RichEditor {
   private saved: Range | null = null;
   private lastPasteTime = 0;
   private lastCopyTime = 0;
+  taskStartHtml: string | null = null;
+  getDocumentHtml?: () => string;
 
   private onInput = () => this.changed();
   private onMouseUp = () => this.capture();
@@ -126,6 +128,10 @@ export class RichEditor {
           this.command('redo');
           this.action('redo');
         } else {
+          const currentHtml = this.getDocumentHtml ? this.getDocumentHtml() : this.root.innerHTML;
+          if (this.taskStartHtml !== null && currentHtml === this.taskStartHtml) {
+            return;
+          }
           this.command('undo');
           this.action('undo');
         }

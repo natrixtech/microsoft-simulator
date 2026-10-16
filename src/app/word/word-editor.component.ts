@@ -146,6 +146,8 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly selectedImageEl = signal<HTMLImageElement | null>(null);
   readonly selectedTableEl = signal<HTMLTableElement | null>(null);
   readonly selectedTocEl = signal<HTMLElement | null>(null);
+  private lastTocNavigated = false;
+  private taskStartHtml: string | null = null;
   readonly selectedPageNum = signal<boolean>(false);
 
   readonly showTablePicker = signal<boolean>(false);
@@ -156,144 +158,33 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   readonly showFontColorPicker = signal<boolean>(false);
   readonly showHighlightColorPicker = signal<boolean>(false);
-  readonly activeFontColor = signal<string>('#000000');
-  readonly activeHighlightColor = signal<string>('#ffff00');
+  readonly activeFontColor = signal<string>(COLORS['black']);
+  readonly activeHighlightColor = signal<string>(COLORS['yellow']);
 
-  readonly schemeBaseColors = [
-    { name: 'White, Background 1', hex: '#ffffff', key: 'white' },
-    { name: 'Black, Text 1', hex: '#000000', key: 'black' },
-    { name: 'Gray 25%', hex: '#e7e6e6', key: 'lightGray' },
-    { name: 'Dark Blue, Text 2', hex: '#44546a', key: 'darkBlue' },
-    { name: 'Blue, Accent 1', hex: '#4472c4', key: 'blue' },
-    { name: 'Orange, Accent 2', hex: '#ed7d31', key: 'orange' },
-    { name: 'Gray, Accent 3', hex: '#a5a5a5', key: 'gray' },
-    { name: 'Gold, Accent 4', hex: '#ffc000', key: 'yellow' },
-    { name: 'Blue, Accent 5', hex: '#5b9bd5', key: 'cyan' },
-    { name: 'Green, Accent 6', hex: '#70ad47', key: 'green' },
+  readonly baseColors: Array<{ key: string; name: string; hex: string }> = [
+    { key: 'black', name: 'Black', hex: COLORS['black'] },
+    { key: 'darkGray', name: 'Dark Gray', hex: COLORS['darkGray'] },
+    { key: 'gray', name: 'Gray', hex: COLORS['gray'] },
+    { key: 'white', name: 'White', hex: COLORS['white'] },
+    { key: 'red', name: 'Red', hex: COLORS['red'] },
+    { key: 'orange', name: 'Orange', hex: COLORS['orange'] },
+    { key: 'yellow', name: 'Yellow', hex: COLORS['yellow'] },
+    { key: 'green', name: 'Green', hex: COLORS['green'] },
+    { key: 'cyan', name: 'Cyan', hex: COLORS['cyan'] },
+    { key: 'blue', name: 'Blue', hex: COLORS['blue'] },
+    { key: 'purple', name: 'Purple', hex: COLORS['purple'] },
+    { key: 'magenta', name: 'Magenta', hex: COLORS['magenta'] },
   ];
 
-  readonly schemeColumns = [
-    {
-      shades: [
-        { name: 'White, Darker 5%', hex: '#f2f2f2', key: 'white' },
-        { name: 'White, Darker 15%', hex: '#d9d9d9', key: 'lightGray' },
-        { name: 'White, Darker 25%', hex: '#bfbfbf', key: 'gray' },
-        { name: 'White, Darker 35%', hex: '#a6a6a6', key: 'gray' },
-        { name: 'White, Darker 50%', hex: '#7f7f7f', key: 'darkGray' },
-      ],
-    },
-    {
-      shades: [
-        { name: 'Black, Lighter 50%', hex: '#7f7f7f', key: 'darkGray' },
-        { name: 'Black, Lighter 35%', hex: '#595959', key: 'darkGray' },
-        { name: 'Black, Lighter 25%', hex: '#3f3f3f', key: 'darkGray' },
-        { name: 'Black, Lighter 15%', hex: '#262626', key: 'black' },
-        { name: 'Black, Lighter 5%', hex: '#0c0c0c', key: 'black' },
-      ],
-    },
-    {
-      shades: [
-        { name: 'Gray, Lighter 80%', hex: '#f2f2f2', key: 'lightGray' },
-        { name: 'Gray, Lighter 60%', hex: '#d9d9d9', key: 'lightGray' },
-        { name: 'Gray, Lighter 40%', hex: '#bfbfbf', key: 'gray' },
-        { name: 'Gray, Darker 25%', hex: '#7f7f7f', key: 'gray' },
-        { name: 'Gray, Darker 50%', hex: '#595959', key: 'darkGray' },
-      ],
-    },
-    {
-      shades: [
-        { name: 'Dark Blue, Lighter 80%', hex: '#d6dce4', key: 'lightBlue' },
-        { name: 'Dark Blue, Lighter 60%', hex: '#acb9ca', key: 'lightBlue' },
-        { name: 'Dark Blue, Lighter 40%', hex: '#8497b0', key: 'blue' },
-        { name: 'Dark Blue, Darker 25%', hex: '#2f3b4c', key: 'darkBlue' },
-        { name: 'Dark Blue, Darker 50%', hex: '#1f2733', key: 'darkBlue' },
-      ],
-    },
-    {
-      shades: [
-        { name: 'Blue, Lighter 80%', hex: '#d9e1f2', key: 'lightBlue' },
-        { name: 'Blue, Lighter 60%', hex: '#b4c6e7', key: 'lightBlue' },
-        { name: 'Blue, Lighter 40%', hex: '#8ea9db', key: 'blue' },
-        { name: 'Blue, Darker 25%', hex: '#2f5597', key: 'blue' },
-        { name: 'Blue, Darker 50%', hex: '#1f3864', key: 'darkBlue' },
-      ],
-    },
-    {
-      shades: [
-        { name: 'Orange, Lighter 80%', hex: '#fce4d6', key: 'lightOrange' },
-        { name: 'Orange, Lighter 60%', hex: '#f8cbad', key: 'lightOrange' },
-        { name: 'Orange, Lighter 40%', hex: '#f4b084', key: 'orange' },
-        { name: 'Orange, Darker 25%', hex: '#c65911', key: 'orange' },
-        { name: 'Orange, Darker 50%', hex: '#833c0c', key: 'orange' },
-      ],
-    },
-    {
-      shades: [
-        { name: 'Gray, Lighter 80%', hex: '#ededed', key: 'lightGray' },
-        { name: 'Gray, Lighter 60%', hex: '#dbdbdb', key: 'lightGray' },
-        { name: 'Gray, Lighter 40%', hex: '#c4c4c4', key: 'gray' },
-        { name: 'Gray, Darker 25%', hex: '#7b7b7b', key: 'gray' },
-        { name: 'Gray, Darker 50%', hex: '#525252', key: 'darkGray' },
-      ],
-    },
-    {
-      shades: [
-        { name: 'Gold, Lighter 80%', hex: '#fff2cc', key: 'lightYellow' },
-        { name: 'Gold, Lighter 60%', hex: '#ffe699', key: 'lightYellow' },
-        { name: 'Gold, Lighter 40%', hex: '#ffd966', key: 'yellow' },
-        { name: 'Gold, Darker 25%', hex: '#bf8f00', key: 'yellow' },
-        { name: 'Gold, Darker 50%', hex: '#7f6000', key: 'yellow' },
-      ],
-    },
-    {
-      shades: [
-        { name: 'Accent Blue, Lighter 80%', hex: '#deebf7', key: 'lightCyan' },
-        { name: 'Accent Blue, Lighter 60%', hex: '#bdd7ee', key: 'lightBlue' },
-        { name: 'Accent Blue, Lighter 40%', hex: '#9dc3e6', key: 'cyan' },
-        { name: 'Accent Blue, Darker 25%', hex: '#2e75b6', key: 'blue' },
-        { name: 'Accent Blue, Darker 50%', hex: '#1e4e79', key: 'darkBlue' },
-      ],
-    },
-    {
-      shades: [
-        { name: 'Green, Lighter 80%', hex: '#e2efda', key: 'lightGreen' },
-        { name: 'Green, Lighter 60%', hex: '#c6e0b4', key: 'lightGreen' },
-        { name: 'Green, Lighter 40%', hex: '#a9d08e', key: 'green' },
-        { name: 'Green, Darker 25%', hex: '#548235', key: 'green' },
-        { name: 'Green, Darker 50%', hex: '#375623', key: 'green' },
-      ],
-    },
-  ];
-
-  readonly standardColors = [
-    { name: 'Dark Red', hex: '#c00000', key: 'darkRed' },
-    { name: 'Red', hex: '#cc0000', key: 'red' },
-    { name: 'Orange', hex: '#e69138', key: 'orange' },
-    { name: 'Yellow', hex: '#f1c232', key: 'yellow' },
-    { name: 'Light Green', hex: '#d9ead3', key: 'lightGreen' },
-    { name: 'Green', hex: '#6aa84f', key: 'green' },
-    { name: 'Light Blue', hex: '#cfe2f3', key: 'lightBlue' },
-    { name: 'Blue', hex: '#3d85c6', key: 'blue' },
-    { name: 'Dark Blue', hex: '#185abd', key: 'darkBlue' },
-    { name: 'Purple', hex: '#674ea7', key: 'purple' },
-  ];
-
-  readonly highlightColors = [
-    { name: 'Yellow', hex: '#ffff00', key: 'yellow' },
-    { name: 'Bright Green', hex: '#00ff00', key: 'green' },
-    { name: 'Turquoise', hex: '#00ffff', key: 'cyan' },
-    { name: 'Pink', hex: '#ff00ff', key: 'magenta' },
-    { name: 'Blue', hex: '#0000ff', key: 'blue' },
-    { name: 'Red', hex: '#ff0000', key: 'red' },
-    { name: 'Dark Blue', hex: '#000080', key: 'darkBlue' },
-    { name: 'Teal', hex: '#008080', key: 'cyan' },
-    { name: 'Green', hex: '#008000', key: 'green' },
-    { name: 'Violet', hex: '#800080', key: 'purple' },
-    { name: 'Dark Red', hex: '#800000', key: 'darkRed' },
-    { name: 'Dark Yellow', hex: '#808000', key: 'yellow' },
-    { name: '50% Gray', hex: '#808080', key: 'gray' },
-    { name: '25% Gray', hex: '#c0c0c0', key: 'gray' },
-    { name: 'Black', hex: '#000000', key: 'black' },
+  readonly lightColors: Array<{ key: string; name: string; hex: string }> = [
+    { key: 'lightRed', name: 'Light Red', hex: COLORS['lightRed'] },
+    { key: 'lightOrange', name: 'Light Orange', hex: COLORS['lightOrange'] },
+    { key: 'lightYellow', name: 'Light Yellow', hex: COLORS['lightYellow'] },
+    { key: 'lightGreen', name: 'Light Green', hex: COLORS['lightGreen'] },
+    { key: 'lightCyan', name: 'Light Cyan', hex: COLORS['lightCyan'] },
+    { key: 'lightBlue', name: 'Light Blue', hex: COLORS['lightBlue'] },
+    { key: 'lightPurple', name: 'Light Purple', hex: COLORS['lightPurple'] },
+    { key: 'lightMagenta', name: 'Light Magenta', hex: COLORS['lightMagenta'] },
   ];
 
   tempSetup: PageSetup = {
@@ -386,6 +277,7 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         this.wordDoc.init(task, act, this.editorRef.nativeElement);
         this.docSetup.set(clone(this.wordDoc.setup));
         this.captureTaskStartSnapshot(this.taskIndex(), act, task);
+        this.updateTaskStartSnapshot();
       }
     }
 
@@ -608,6 +500,22 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.clearFindHighlights();
   }
 
+  getCurrentDocumentHtml(): string {
+    const p1 = this.editorRef?.nativeElement.innerHTML || '';
+    if (this.hasPageBreak() && this.page2EditorRef?.nativeElement) {
+      return p1 + '<hr data-element="pageBreak" style="display:none">' + this.page2EditorRef.nativeElement.innerHTML;
+    }
+    return p1;
+  }
+
+  private updateTaskStartSnapshot(): void {
+    this.taskStartHtml = this.getCurrentDocumentHtml();
+    if (this.wordDoc.rich) {
+      this.wordDoc.rich.taskStartHtml = this.taskStartHtml;
+      this.wordDoc.rich.getDocumentHtml = () => this.getCurrentDocumentHtml();
+    }
+  }
+
   private setupDocumentForTask(task: LessonTask, act: ActivityPayload): void {
     if (!this.editorRef) return;
     this.selectedImageEl.set(null);
@@ -636,6 +544,7 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
           }
           this.updateHeaderFooterDom();
           this.syncDocumentContent();
+          this.updateTaskStartSnapshot();
         });
         return;
       }
@@ -669,6 +578,7 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     this.updateHeaderFooterDom();
     this.updateWordCount();
+    this.updateTaskStartSnapshot();
   }
 
   loadFallbackActivity(index: number = 0): void {
@@ -886,6 +796,7 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   openHeaderEdit(e?: MouseEvent): void {
     if (e) e.stopPropagation();
     this.activeRegion.set('header');
+    this.cdr.detectChanges();
     setTimeout(() => {
       this.headerRef?.nativeElement?.focus();
     });
@@ -894,6 +805,7 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   openFooterEdit(e?: MouseEvent): void {
     if (e) e.stopPropagation();
     this.activeRegion.set('footer');
+    this.cdr.detectChanges();
     setTimeout(() => {
       this.footerRef?.nativeElement?.focus();
     });
@@ -918,6 +830,12 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   formatCmd(cmd: string, val?: string): void {
+    if (cmd === 'undo') {
+      const currentHtml = this.getCurrentDocumentHtml();
+      if (this.taskStartHtml !== null && currentHtml === this.taskStartHtml) {
+        return;
+      }
+    }
     this.wordDoc.rich?.command(cmd, val);
     if (cmd === 'undo' || cmd === 'redo') {
       this.wordDoc.logAction(cmd);
@@ -960,7 +878,7 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   applyHighlight(colorNameOrHex: string, colorKey?: string): void {
     const c = COLORS[colorNameOrHex] || colorNameOrHex;
     this.wordDoc.rich?.applyHighlight(c);
-    this.activeHighlightColor.set(c && c !== 'transparent' ? c : '#ffff00');
+    this.activeHighlightColor.set(c && c !== 'transparent' ? c : COLORS['yellow']);
     this.wordDoc.logAction('highlight', colorKey || colorNameOrHex);
     this.onEditorInput();
   }
@@ -994,15 +912,15 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   applyAutomaticFontColor(): void {
-    this.activeFontColor.set('#000000');
+    this.activeFontColor.set(COLORS['black']);
     this.showFontColorPicker.set(false);
-    this.wordDoc.rich?.applyColor('#000000');
+    this.wordDoc.rich?.applyColor(COLORS['black']);
     this.wordDoc.logAction('fontColor', 'automatic');
     this.onEditorInput();
   }
 
   applyNoHighlight(): void {
-    this.activeHighlightColor.set('#ffff00');
+    this.activeHighlightColor.set(COLORS['yellow']);
     this.showHighlightColorPicker.set(false);
     this.wordDoc.rich?.applyHighlight('transparent');
     this.wordDoc.logAction('highlight', 'none');
@@ -1052,7 +970,31 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     img.dataset['align'] = 'left';
     img.style.maxWidth = '300px';
     img.style.cursor = 'pointer';
-    this.editorRef?.nativeElement.append(img);
+
+    const sel = window.getSelection();
+    const ed1 = this.editorRef?.nativeElement;
+    const ed2 = this.page2EditorRef?.nativeElement;
+    let inserted = false;
+
+    if (sel && sel.rangeCount > 0 && sel.anchorNode && ed1) {
+      const node = sel.anchorNode;
+      const targetEditor = ed1.contains(node) ? ed1 : (ed2?.contains(node) ? ed2 : null);
+      if (targetEditor) {
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        range.insertNode(img);
+        range.setStartAfter(img);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        inserted = true;
+      }
+    }
+
+    if (!inserted) {
+      ed1?.append(img);
+    }
+
     this.wordDoc.logAction('insertImage', file);
     this.showImageDialog.set(false);
     this.onEditorInput();
@@ -1134,11 +1076,19 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   onPage1Click(event: MouseEvent): void {
     this.activePageNum.set(1);
     this.onEditorClick(event);
+    const target = event.target as HTMLElement | null;
+    if (this.lastTocNavigated || target?.closest('.table-of-contents a, .doc-toc a')) {
+      this.selectedTocEl.set(null);
+    }
   }
 
   onPage2Click(event: MouseEvent): void {
     this.activePageNum.set(2);
     this.onEditorClick(event);
+    const target = event.target as HTMLElement | null;
+    if (this.lastTocNavigated || target?.closest('.table-of-contents a, .doc-toc a')) {
+      this.selectedTocEl.set(null);
+    }
   }
 
   onPaperClick(event: MouseEvent): void {
@@ -1279,7 +1229,35 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         c.innerHTML = '<br>';
       }
     }
-    this.editorRef?.nativeElement.append(table);
+
+    const sel = window.getSelection();
+    const ed1 = this.editorRef?.nativeElement;
+    const ed2 = this.page2EditorRef?.nativeElement;
+    let targetBlock: HTMLElement | null = null;
+    let targetEditor = ed1;
+
+    if (sel && sel.rangeCount > 0 && sel.anchorNode && ed1) {
+      const node = sel.anchorNode;
+      const inEd = ed1.contains(node) ? ed1 : (ed2?.contains(node) ? ed2 : null);
+      if (inEd) {
+        targetEditor = inEd;
+        let curr: HTMLElement | null = node.nodeType === Node.ELEMENT_NODE ? (node as HTMLElement) : node.parentElement;
+        while (curr && curr !== targetEditor) {
+          if (curr.parentElement === targetEditor) {
+            targetBlock = curr;
+            break;
+          }
+          curr = curr.parentElement;
+        }
+      }
+    }
+
+    if (targetBlock) {
+      targetBlock.after(table);
+    } else {
+      targetEditor?.append(table);
+    }
+
     this.wordDoc.logAction('insertTable');
     this.showTablePicker.set(false);
     this.closeMenus();
@@ -1334,6 +1312,7 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const text = this.wordDoc.header || 'Document Header';
     this.wordDoc.header = text;
     this.activeRegion.set('header');
+    this.cdr.detectChanges();
     this.wordDoc.logAction('header', text);
     this.closeMenus();
     setTimeout(() => {
@@ -1346,6 +1325,7 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const text = this.wordDoc.footer || 'Document Footer';
     this.wordDoc.footer = text;
     this.activeRegion.set('footer');
+    this.cdr.detectChanges();
     this.wordDoc.logAction('footer', text);
     this.closeMenus();
     setTimeout(() => {
@@ -1392,11 +1372,101 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       });
     }
 
-    this.editorRef.nativeElement.prepend(toc);
+    const sel = window.getSelection();
+    const ed1 = this.editorRef.nativeElement;
+    const ed2 = this.page2EditorRef?.nativeElement;
+    let targetBlock: HTMLElement | null = null;
+    let targetEditor = ed1;
+
+    if (sel && sel.rangeCount > 0 && sel.anchorNode) {
+      const node = sel.anchorNode;
+      const inEd = ed1.contains(node) ? ed1 : (ed2?.contains(node) ? ed2 : null);
+      if (inEd) {
+        targetEditor = inEd;
+        let curr: HTMLElement | null = node.nodeType === Node.ELEMENT_NODE ? (node as HTMLElement) : node.parentElement;
+        while (curr && curr !== targetEditor) {
+          if (curr.parentElement === targetEditor) {
+            targetBlock = curr;
+            break;
+          }
+          curr = curr.parentElement;
+        }
+      }
+    }
+
+    if (targetBlock) {
+      targetBlock.after(toc);
+    } else {
+      targetEditor.prepend(toc);
+    }
+
     this.wordDoc.logAction('tableOfContents');
-    this.wordDoc.logAction('navigateToc');
     this.closeMenus();
     this.onEditorInput();
+  }
+
+  handleTocClick(event: MouseEvent): boolean {
+    this.lastTocNavigated = false;
+    if (this.bridge.isPaused() || this.isDemoOpen()) {
+      return false;
+    }
+
+    const target = event.target as HTMLElement | null;
+    const link = target?.closest('.table-of-contents a, .doc-toc a') as HTMLAnchorElement | null;
+    if (!link) {
+      return false;
+    }
+
+    event.preventDefault();
+
+    const href = link.getAttribute('href') || '';
+    const targetId = href.startsWith('#') ? href.slice(1) : href;
+    if (!targetId) {
+      return false;
+    }
+
+    const editor1 = this.editorRef?.nativeElement;
+    const editor2 = this.page2EditorRef?.nativeElement;
+    let targetHeading: HTMLElement | null = null;
+    if (editor1) {
+      targetHeading = editor1.querySelector('#' + CSS.escape(targetId)) as HTMLElement | null;
+    }
+    if (!targetHeading && editor2) {
+      targetHeading = editor2.querySelector('#' + CSS.escape(targetId)) as HTMLElement | null;
+    }
+    if (!targetHeading) {
+      targetHeading = document.getElementById(targetId);
+    }
+
+    if (!targetHeading) {
+      return false;
+    }
+
+    targetHeading.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    const range = document.createRange();
+    range.selectNodeContents(targetHeading);
+    range.collapse(true);
+    const sel = window.getSelection();
+    if (sel) {
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+    const headingEditor = targetHeading.closest('.document-editor') as HTMLElement | null;
+    if (headingEditor) {
+      headingEditor.focus();
+      if (editor2 && headingEditor === editor2) {
+        this.activePageNum.set(2);
+      } else {
+        this.activePageNum.set(1);
+      }
+    }
+
+    this.wordDoc.logAction('navigateToc');
+    this.updateActiveFormatting();
+    this.selectedTocEl.set(null);
+    this.lastTocNavigated = true;
+    return true;
   }
 
   insertFootnote(): void {

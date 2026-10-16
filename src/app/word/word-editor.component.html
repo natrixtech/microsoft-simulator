@@ -227,17 +227,35 @@
 
             <!-- Highlight Swatches Popover -->
             <div class="color-popover highlight-popover" *ngIf="showHighlightColorPicker()" (mousedown)="$event.preventDefault()">
-              <div class="popover-grid highlight-grid">
-                <button
-                  type="button"
-                  *ngFor="let h of highlightColors"
-                  class="swatch-cell"
-                  [class.selected]="activeHighlightColor() === h.hex"
-                  [style.background-color]="h.hex"
-                  [title]="h.name"
-                  [attr.aria-label]="h.name"
-                  (click)="selectHighlightColor(h.hex, h.key)"
-                ></button>
+              <div class="swatches-grid">
+                <div class="swatches-row base-row">
+                  <button
+                    type="button"
+                    *ngFor="let c of baseColors"
+                    class="swatch-cell"
+                    [class.selected]="activeHighlightColor() === c.hex"
+                    [style.background-color]="c.hex"
+                    [title]="c.name"
+                    [attr.aria-label]="c.name"
+                    [attr.data-color]="c.key"
+                    [attr.data-demo-target]="'swatch-' + c.key"
+                    (click)="selectHighlightColor(c.hex, c.key)"
+                  ></button>
+                </div>
+                <div class="swatches-row light-row">
+                  <button
+                    type="button"
+                    *ngFor="let c of lightColors"
+                    class="swatch-cell"
+                    [class.selected]="activeHighlightColor() === c.hex"
+                    [style.background-color]="c.hex"
+                    [title]="c.name"
+                    [attr.aria-label]="c.name"
+                    [attr.data-color]="c.key"
+                    [attr.data-demo-target]="'swatch-' + c.key"
+                    (click)="selectHighlightColor(c.hex, c.key)"
+                  ></button>
+                </div>
               </div>
               <div class="popover-divider"></div>
               <button
@@ -284,50 +302,35 @@
               </button>
               <div class="popover-divider"></div>
 
-              <!-- Scheme Colors Section -->
-              <div class="popover-section-title">Scheme Colors</div>
-              <!-- Row of Base Colors -->
-              <div class="scheme-base-row">
-                <button
-                  type="button"
-                  *ngFor="let sc of schemeBaseColors"
-                  class="swatch-cell base-cell"
-                  [class.selected]="activeFontColor() === sc.hex"
-                  [style.background-color]="sc.hex"
-                  [title]="sc.name"
-                  [attr.aria-label]="sc.name"
-                  (click)="selectFontColor(sc.hex, sc.key)"
-                ></button>
-              </div>
-              <!-- Aligned columns of lighter/darker shades -->
-              <div class="scheme-shades-matrix">
-                <div class="scheme-column" *ngFor="let col of schemeColumns">
+              <div class="swatches-grid">
+                <div class="swatches-row base-row">
                   <button
                     type="button"
-                    *ngFor="let shade of col.shades"
-                    class="swatch-cell shade-cell"
-                    [class.selected]="activeFontColor() === shade.hex"
-                    [style.background-color]="shade.hex"
-                    [title]="shade.name"
-                    [attr.aria-label]="shade.name"
-                    (click)="selectFontColor(shade.hex, shade.key)"
+                    *ngFor="let c of baseColors"
+                    class="swatch-cell"
+                    [class.selected]="activeFontColor() === c.hex"
+                    [style.background-color]="c.hex"
+                    [title]="c.name"
+                    [attr.aria-label]="c.name"
+                    [attr.data-color]="c.key"
+                    [attr.data-demo-target]="'swatch-' + c.key"
+                    (click)="selectFontColor(c.hex, c.key)"
                   ></button>
                 </div>
-              </div>
-
-              <!-- Standard Colors Section -->
-              <div class="popover-section-title" style="margin-top: 8px;">Standard Colors</div>
-              <div class="standard-colors-row">
-                <button
-                  type="button"
-                  *ngFor="let st of standardColors"
-                  class="swatch-cell base-cell"
-                  [class.selected]="activeFontColor() === st.hex"
-                  [style.background-color]="st.hex"
-                  [title]="st.name"
-                  [attr.aria-label]="st.name"
-                  (click)="selectFontColor(st.hex, st.key)"
-                ></button>
+                <div class="swatches-row light-row">
+                  <button
+                    type="button"
+                    *ngFor="let c of lightColors"
+                    class="swatch-cell"
+                    [class.selected]="activeFontColor() === c.hex"
+                    [style.background-color]="c.hex"
+                    [title]="c.name"
+                    [attr.aria-label]="c.name"
+                    [attr.data-color]="c.key"
+                    [attr.data-demo-target]="'swatch-' + c.key"
+                    (click)="selectFontColor(c.hex, c.key)"
+                  ></button>
+                </div>
               </div>
             </div>
           </div>
@@ -1942,13 +1945,13 @@
             class="page-header"
             [class.editing-header]="activeRegion() === 'header'"
             [class.has-content]="wordDoc.header || wordDoc.numbering"
-            (click)="openHeaderEdit($event)"
+            (dblclick)="openHeaderEdit($event)"
           >
             <span class="hf-tab-badge" *ngIf="activeRegion() === 'header'">Header</span>
             <div
               #headerEl
               class="header-content"
-              contenteditable="true"
+              [attr.contenteditable]="activeRegion() === 'header' ? 'true' : 'false'"
               (input)="onHeaderInput($event)"
               (focus)="activeRegion.set('header')"
               (blur)="onHeaderBlur()"
@@ -1977,7 +1980,7 @@
             aria-multiline="true"
             aria-label="Document editor"
             (input)="onEditorInput()"
-            (click)="onPage1Click($event)"
+            (click)="handleTocClick($event); onPage1Click($event)"
             (mouseup)="updateActiveFormatting()"
             (keyup)="updateActiveFormatting()"
             (keydown)="onEditorKeydown($event)"
@@ -1988,13 +1991,13 @@
             class="page-footer"
             [class.editing-footer]="activeRegion() === 'footer'"
             [class.has-content]="wordDoc.footer || wordDoc.numbering"
-            (click)="openFooterEdit($event)"
+            (dblclick)="openFooterEdit($event)"
           >
             <span class="hf-tab-badge" *ngIf="activeRegion() === 'footer'">Footer</span>
             <div
               #footerEl
               class="footer-content"
-              contenteditable="true"
+              [attr.contenteditable]="activeRegion() === 'footer' ? 'true' : 'false'"
               (input)="onFooterInput($event)"
               (focus)="activeRegion.set('footer')"
               (blur)="onFooterBlur()"
@@ -2028,12 +2031,12 @@
             class="page-header"
             [class.editing-header]="activeRegion() === 'header'"
             [class.has-content]="wordDoc.header || wordDoc.numbering"
-            (click)="openHeaderEdit($event)"
+            (dblclick)="openHeaderEdit($event)"
           >
             <span class="hf-tab-badge" *ngIf="activeRegion() === 'header'">Header</span>
             <div
               class="header-content"
-              contenteditable="true"
+              [attr.contenteditable]="activeRegion() === 'header' ? 'true' : 'false'"
               (input)="onHeaderInput($event)"
               (focus)="activeRegion.set('header')"
               (blur)="onHeaderBlur()"
@@ -2062,7 +2065,7 @@
             aria-multiline="true"
             aria-label="Document editor page 2"
             (input)="onPage2Input()"
-            (click)="onPage2Click($event)"
+            (click)="handleTocClick($event); onPage2Click($event)"
             (mouseup)="updateActiveFormatting()"
             (keyup)="updateActiveFormatting()"
             (keydown)="onPage2Keydown($event)"
@@ -2073,12 +2076,12 @@
             class="page-footer"
             [class.editing-footer]="activeRegion() === 'footer'"
             [class.has-content]="wordDoc.footer || wordDoc.numbering"
-            (click)="openFooterEdit($event)"
+            (dblclick)="openFooterEdit($event)"
           >
             <span class="hf-tab-badge" *ngIf="activeRegion() === 'footer'">Footer</span>
             <div
               class="footer-content"
-              contenteditable="true"
+              [attr.contenteditable]="activeRegion() === 'footer' ? 'true' : 'false'"
               (input)="onFooterInput($event)"
               (focus)="activeRegion.set('footer')"
               (blur)="onFooterBlur()"
