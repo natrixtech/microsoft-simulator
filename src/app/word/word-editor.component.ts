@@ -267,6 +267,18 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         this.cdr.markForCheck();
       })
     );
+
+    this.bridgeUnsubscribes.push(
+      this.bridge.onThemeChange(() => {
+        this.cdr.detectChanges();
+      })
+    );
+
+    this.bridgeUnsubscribes.push(
+      this.bridge.onPauseChange(() => {
+        this.cdr.detectChanges();
+      })
+    );
   }
 
   ngAfterViewInit(): void {

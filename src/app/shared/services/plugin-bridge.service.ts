@@ -20,6 +20,8 @@ export class PluginBridgeService {
 
   private activityCallbacks: Array<(activity: ActivityPayload) => void> = [];
   private forceFinishCallbacks: Array<() => void> = [];
+  private themeChangeCallbacks: Array<(theme: ThemePreference) => void> = [];
+  private pauseChangeCallbacks: Array<(isPaused: boolean) => void> = [];
 
   private hostOrigin: string | null = null;
   private currentKind: AppKind | null = null;
@@ -37,6 +39,20 @@ export class PluginBridgeService {
     this.forceFinishCallbacks.push(callback);
     return () => {
       this.forceFinishCallbacks = this.forceFinishCallbacks.filter((cb) => cb !== callback);
+    };
+  }
+
+  onThemeChange(callback: (theme: ThemePreference) => void): () => void {
+    this.themeChangeCallbacks.push(callback);
+    return () => {
+      this.themeChangeCallbacks = this.themeChangeCallbacks.filter((cb) => cb !== callback);
+    };
+  }
+
+  onPauseChange(callback: (isPaused: boolean) => void): () => void {
+    this.pauseChangeCallbacks.push(callback);
+    return () => {
+      this.pauseChangeCallbacks = this.pauseChangeCallbacks.filter((cb) => cb !== callback);
     };
   }
 
@@ -165,6 +181,7 @@ export class PluginBridgeService {
 
           case 'PAUSE':
             this.isPaused.set(!!data.payload?.pause);
+            this.pauseChangeCallbacks.forEach((cb) => cb(this.isPaused()));
             break;
 
           case 'FORCE_FINISH':
@@ -177,6 +194,7 @@ export class PluginBridgeService {
             if (data.payload?.type === 'theme') {
               this.theme.set(data.payload.value);
               this.applyThemeToDom(data.payload.value);
+              this.themeChangeCallbacks.forEach((cb) => cb(data.payload.value));
             }
             break;
         }
