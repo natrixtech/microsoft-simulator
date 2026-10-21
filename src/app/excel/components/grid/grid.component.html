@@ -1,0 +1,363 @@
+<div class="excel-grid-container" #gridScroll tabindex="0" role="grid" aria-label="Worksheet Grid">
+  <table class="excel-table">
+    <!-- Column headers row -->
+    <thead>
+      <tr class="header-row">
+        <!-- Select All corner -->
+        <th class="corner-header" (click)="state.selectAll()" title="Select All" data-demo-target="select-all-btn">
+          <div class="corner-triangle"></div>
+        </th>
+
+        <!-- Column Letters -->
+        <th
+          *ngFor="let col of cols"
+          class="col-header"
+          [style.width.px]="getColWidth(col.letter)"
+          [style.min-width.px]="getColWidth(col.letter)"
+          [style.max-width.px]="getColWidth(col.letter)"
+          [attr.data-col-letter]="col.letter"
+          (click)="state.selectColumn(col.index)"
+        >
+          <div class="col-header-content">
+            <span class="col-letter">{{ col.letter }}</span>
+
+            <!-- Filter toggle button on column header if filter active -->
+            <button
+              type="button"
+              class="col-filter-btn"
+              *ngIf="isHeaderCellWithFilter(0, col.index)"
+              (click)="onFilterButtonClick(col.index, $event)"
+              title="Filter Column"
+              [attr.data-demo-target]="'filter-btn-col-' + col.letter"
+            >
+              ▾
+            </button>
+          </div>
+
+          <!-- Column resize handle -->
+          <div
+            class="col-resize-handle"
+            (mousedown)="onResizeHandleMouseDown(col.index, $event)"
+            title="Resize Column"
+          ></div>
+        </th>
+      </tr>
+    </thead>
+
+    <!-- Table body with data rows -->
+    <tbody>
+      <ng-container *ngFor="let row of rows">
+        <tr class="grid-row" [class.hidden-row]="isRowHidden(row.index)" [style.height.px]="rowHeight">
+          <!-- Row Number Header -->
+          <th class="row-header" (click)="state.selectRow(row.index)">
+            {{ row.num }}
+          </th>
+
+          <!-- Cells -->
+          <td
+            *ngFor="let col of cols"
+            class="excel-cell"
+            [class.selected]="isCellSelected(row.index, col.index)"
+            [class.active-cell]="isActiveCell(row.index, col.index)"
+            [ngStyle]="getCellStyle(row.index, col.index)"
+            [attr.data-cell-address]="col.letter + row.num"
+            (mousedown)="onCellMouseDown(row.index, col.index, $event)"
+            (mouseenter)="onCellMouseEnter(row.index, col.index)"
+            (dblclick)="onCellDblClick(row.index, col.index)"
+          >
+            <!-- Cell content or Inline editor -->
+            <ng-container *ngIf="state.isEditing() && state.editingAddress() === (col.letter + row.num); else readOnlyCell">
+              <input
+                #cellEditorInput
+                type="text"
+                class="inline-cell-editor"
+                [ngModel]="state.editInput()"
+                (ngModelChange)="state.editInput.set($event)"
+                (input)="state.editInput.set($any($event.target).value)"
+                (keydown)="onCellEditorKeyDown($event)"
+                data-demo-target="cell-inline-editor"
+              />
+            </ng-container>
+
+            <ng-template #readOnlyCell>
+              <span class="cell-text">{{ getCellDisplay(row.index, col.index) }}</span>
+            </ng-template>
+
+            <!-- Comment marker triangle -->
+            <div
+              class="comment-marker"
+              *ngIf="hasComment(row.index, col.index)"
+              (click)="openCommentPopup.emit(col.letter + row.num); $event.stopPropagation()"
+              title="View Comment"
+            ></div>
+
+            <!-- Data validation dropdown arrow button -->
+            <button
+              type="button"
+              class="cell-validation-arrow"
+              *ngIf="hasValidation(row.index, col.index)"
+              (click)="onValidationArrowClick(row.index, col.index, $event)"
+              title="List options"
+            >
+              ▾
+            </button>
+
+            <!-- Active cell fill handle -->
+            <div class="fill-handle" *ngIf="isActiveCell(row.index, col.index)"></div>
+          </td>
+        </tr>
+      </ng-container>
+    </tbody>
+  </table>
+
+  <!-- Floating Charts Overlay -->
+  <div
+    *ngFor="let chart of state.charts()"
+    class="chart-overlay-box"
+    [class.active-chart]="state.selectedChartId() === chart.id"
+    [style.left.px]="chart.x"
+    [style.top.px]="chart.y"
+    [style.width.px]="chart.width"
+    [style.height.px]="chart.height"
+    (mousedown)="onChartMouseDown(chart, $event)"
+    data-demo-target="sheet-chart"
+  >
+    <div class="chart-header">
+      <span class="chart-title">{{ chart.title }}</span>
+      <button
+        type="button"
+        class="chart-delete-btn"
+        (click)="state.deleteChart(chart.id); $event.stopPropagation()"
+        title="Delete Chart"
+      >
+        ✕
+      </button>
+    </div>
+
+    <div class="chart-content">
+      <!-- SVG Column Chart -->
+      <svg *ngIf="chart.chartType === 'column' && getChartRenderData(chart, state.cells()) as d" viewBox="0 0 300 170" class="chart-svg">
+        <!-- Optional Legend for Multi-series -->
+        <g *ngIf="d.hasMultipleSeries" class="chart-legend">
+          <ng-container *ngFor="let item of d.legendItems">
+            <rect [attr.x]="item.x" y="6" width="8" height="8" [attr.fill]="item.color" rx="1"/>
+            <text [attr.x]="item.x + 11" y="13" class="legend-text">{{ item.name }}</text>
+          </ng-container>
+        </g>
+
+        <!-- Horizontal Gridlines & Y-Axis Tick Labels -->
+        <g class="chart-gridlines">
+          <ng-container *ngFor="let gl of d.gridlines">
+            <line [attr.x1]="gl.x1" [attr.y1]="gl.y1" [attr.x2]="gl.x2" [attr.y2]="gl.y2" class="grid-line"/>
+          </ng-container>
+          <line *ngIf="d.zeroLine" [attr.x1]="d.zeroLine.x1" [attr.y1]="d.zeroLine.y1" [attr.x2]="d.zeroLine.x2" [attr.y2]="d.zeroLine.y2" class="zero-line"/>
+          <ng-container *ngFor="let t of d.ticks">
+            <text [attr.x]="t.x" [attr.y]="t.y" text-anchor="end" class="axis-text">{{ t.label }}</text>
+          </ng-container>
+        </g>
+
+        <!-- Bars -->
+        <g class="chart-bars">
+          <rect
+            *ngFor="let bar of d.bars"
+            [attr.x]="bar.x"
+            [attr.y]="bar.y"
+            [attr.width]="bar.width"
+            [attr.height]="bar.height"
+            [attr.fill]="bar.fill"
+            rx="1"
+          />
+        </g>
+
+        <!-- Category Labels along X-Axis -->
+        <g class="chart-categories">
+          <text
+            *ngFor="let cat of d.categoryLabels"
+            [attr.x]="cat.x"
+            [attr.y]="cat.y"
+            [attr.text-anchor]="cat.anchor"
+            class="axis-text category-text"
+          >{{ cat.text }}</text>
+        </g>
+      </svg>
+
+      <!-- SVG Bar Chart -->
+      <svg *ngIf="chart.chartType === 'bar' && getChartRenderData(chart, state.cells()) as d" viewBox="0 0 300 170" class="chart-svg">
+        <!-- Optional Legend for Multi-series -->
+        <g *ngIf="d.hasMultipleSeries" class="chart-legend">
+          <ng-container *ngFor="let item of d.legendItems">
+            <rect [attr.x]="item.x" y="6" width="8" height="8" [attr.fill]="item.color" rx="1"/>
+            <text [attr.x]="item.x + 11" y="13" class="legend-text">{{ item.name }}</text>
+          </ng-container>
+        </g>
+
+        <!-- Vertical Gridlines & X-Axis Value Numbers -->
+        <g class="chart-gridlines">
+          <ng-container *ngFor="let gl of d.gridlines">
+            <line [attr.x1]="gl.x1" [attr.y1]="gl.y1" [attr.x2]="gl.x2" [attr.y2]="gl.y2" class="grid-line"/>
+          </ng-container>
+          <line *ngIf="d.zeroLine" [attr.x1]="d.zeroLine.x1" [attr.y1]="d.zeroLine.y1" [attr.x2]="d.zeroLine.x2" [attr.y2]="d.zeroLine.y2" class="zero-line"/>
+          <ng-container *ngFor="let t of d.ticks">
+            <text [attr.x]="t.x" [attr.y]="t.y" text-anchor="middle" class="axis-text">{{ t.label }}</text>
+          </ng-container>
+        </g>
+
+        <!-- Bars -->
+        <g class="chart-bars">
+          <rect
+            *ngFor="let bar of d.bars"
+            [attr.x]="bar.x"
+            [attr.y]="bar.y"
+            [attr.width]="bar.width"
+            [attr.height]="bar.height"
+            [attr.fill]="bar.fill"
+            rx="1"
+          />
+        </g>
+
+        <!-- Category Labels beside Bars (on the left) -->
+        <g class="chart-categories">
+          <text
+            *ngFor="let cat of d.categoryLabels"
+            [attr.x]="cat.x"
+            [attr.y]="cat.y"
+            [attr.text-anchor]="cat.anchor"
+            class="axis-text category-text"
+          >{{ cat.text }}</text>
+        </g>
+      </svg>
+
+      <!-- SVG Line Chart -->
+      <svg *ngIf="chart.chartType === 'line' && getChartRenderData(chart, state.cells()) as d" viewBox="0 0 300 170" class="chart-svg">
+        <!-- Optional Legend for Multi-series -->
+        <g *ngIf="d.hasMultipleSeries" class="chart-legend">
+          <ng-container *ngFor="let item of d.legendItems">
+            <rect [attr.x]="item.x" y="6" width="8" height="8" [attr.fill]="item.color" rx="1"/>
+            <text [attr.x]="item.x + 11" y="13" class="legend-text">{{ item.name }}</text>
+          </ng-container>
+        </g>
+
+        <!-- Horizontal Gridlines & Y-Axis Tick Labels -->
+        <g class="chart-gridlines">
+          <ng-container *ngFor="let gl of d.gridlines">
+            <line [attr.x1]="gl.x1" [attr.y1]="gl.y1" [attr.x2]="gl.x2" [attr.y2]="gl.y2" class="grid-line"/>
+          </ng-container>
+          <line *ngIf="d.zeroLine" [attr.x1]="d.zeroLine.x1" [attr.y1]="d.zeroLine.y1" [attr.x2]="d.zeroLine.x2" [attr.y2]="d.zeroLine.y2" class="zero-line"/>
+          <ng-container *ngFor="let t of d.ticks">
+            <text [attr.x]="t.x" [attr.y]="t.y" text-anchor="end" class="axis-text">{{ t.label }}</text>
+          </ng-container>
+        </g>
+
+        <!-- Lines and Points -->
+        <g class="chart-lines">
+          <ng-container *ngFor="let s of d.lineSeries">
+            <polyline
+              [attr.points]="s.polylinePoints"
+              fill="none"
+              [attr.stroke]="s.color"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <circle
+              *ngFor="let pt of s.points"
+              [attr.cx]="pt.x"
+              [attr.cy]="pt.y"
+              r="3.5"
+              [attr.fill]="s.color"
+              stroke="#ffffff"
+              stroke-width="1"
+            />
+          </ng-container>
+        </g>
+
+        <!-- Category Labels along X-Axis -->
+        <g class="chart-categories">
+          <text
+            *ngFor="let cat of d.categoryLabels"
+            [attr.x]="cat.x"
+            [attr.y]="cat.y"
+            [attr.text-anchor]="cat.anchor"
+            class="axis-text category-text"
+          >{{ cat.text }}</text>
+        </g>
+      </svg>
+
+      <!-- SVG Pie Chart -->
+      <svg *ngIf="chart.chartType === 'pie' && getChartRenderData(chart, state.cells()) as d" viewBox="0 0 300 170" class="chart-svg">
+        <text *ngIf="d.isPieEmpty" x="150" y="85" text-anchor="middle" class="axis-text">No positive data</text>
+
+        <g *ngIf="!d.isPieEmpty">
+          <!-- Pie Slices -->
+          <g class="chart-pie-slices">
+            <ng-container *ngFor="let slice of d.pieSlices">
+              <circle
+                *ngIf="slice.isFullCircle"
+                [attr.cx]="d.pieCenter?.cx"
+                [attr.cy]="d.pieCenter?.cy"
+                [attr.r]="d.pieCenter?.r"
+                [attr.fill]="slice.color"
+              />
+              <path
+                *ngIf="!slice.isFullCircle"
+                [attr.d]="slice.pathD"
+                [attr.fill]="slice.color"
+                stroke="#ffffff"
+                stroke-width="1"
+              />
+            </ng-container>
+          </g>
+
+          <!-- Pie Legend on the right -->
+          <g class="chart-pie-legend">
+            <ng-container *ngFor="let slice of d.pieSlices; let idx = index">
+              <rect x="155" [attr.y]="18 + idx * 16" width="8" height="8" [attr.fill]="slice.color" rx="1"/>
+              <text x="167" [attr.y]="25 + idx * 16" class="legend-text">{{ truncateText(slice.label, 9) }} ({{ slice.percentageLabel }})</text>
+            </ng-container>
+          </g>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Floating PivotTables Overlay -->
+  <div *ngFor="let pt of state.pivotTables()" class="pivot-table-overlay" data-demo-target="sheet-pivottable">
+    <div class="pt-title">PivotTable: {{ pt.rowsField }} & {{ pt.valuesField }}</div>
+    <table class="pt-table">
+      <thead>
+        <tr>
+          <th>{{ pt.headers.rowLabel }}</th>
+          <th>{{ pt.headers.valueLabel }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of pt.rows">
+          <td>{{ r.rowLabel }}</td>
+          <td>{{ r.value }}</td>
+        </tr>
+        <tr class="pt-grand-total">
+          <td>Grand Total</td>
+          <td>{{ pt.grandTotal }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Active Data Validation Dropdown Menu -->
+  <div
+    class="validation-popup-menu"
+    *ngIf="activeValidationMenu()"
+    [style.left.px]="activeValidationMenu()!.x"
+    [style.top.px]="activeValidationMenu()!.y"
+    (click)="$event.stopPropagation()"
+  >
+    <button
+      type="button"
+      class="val-menu-item"
+      *ngFor="let opt of activeValidationMenu()!.allowed"
+      (click)="selectValidationOption(opt)"
+    >
+      {{ opt }}
+    </button>
+  </div>
+</div>

@@ -1,0 +1,652 @@
+:host {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  --excel-user-border: #000000;
+}
+
+:host-context([data-theme="dark"]),
+:host-context(.dark-theme) {
+  --excel-user-border: #d1d1d1;
+}
+
+.excel-grid-container {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+  position: relative;
+  background: var(--canvas, #f3f2f1);
+  outline: none;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 10pt;
+  user-select: none;
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+  scroll-padding-top: 24px;
+  scroll-padding-left: 44px;
+}
+
+.excel-grid-container::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.excel-grid-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.excel-grid-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border: 2px solid #f1f1f1;
+  border-radius: 6px;
+}
+
+.excel-grid-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.excel-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  background: var(--surface, #ffffff);
+}
+
+/* Header Row & Sticky Headers */
+.header-row {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.corner-header {
+  position: sticky;
+  left: 0;
+  top: 0;
+  z-index: 30;
+  width: 44px;
+  min-width: 44px;
+  height: 24px;
+  background: var(--soft, #f3f2f1);
+  border-right: 1px solid var(--line, #d1d1d1);
+  border-bottom: 1px solid var(--line, #d1d1d1);
+  cursor: pointer;
+  padding: 0;
+}
+
+.corner-triangle {
+  width: 0;
+  height: 0;
+  margin-left: auto;
+  margin-top: auto;
+  border-left: 9px solid transparent;
+  border-bottom: 9px solid var(--muted, #8a8886);
+}
+
+.col-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  height: 24px;
+  background: var(--soft, #f3f2f1);
+  border-right: 1px solid var(--line, #d1d1d1);
+  border-bottom: 1px solid var(--line, #d1d1d1);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text, #323130);
+  text-align: center;
+  position: relative;
+  padding: 0;
+  user-select: none;
+}
+
+.col-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  position: relative;
+  padding: 0 4px;
+}
+
+.col-letter {
+  flex: 1;
+}
+
+.col-filter-btn {
+  background: #ffffff;
+  border: 1px solid #107c41;
+  color: #107c41;
+  border-radius: 2px;
+  padding: 0 3px;
+  font-size: 9px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: absolute;
+  right: 4px;
+}
+
+.col-filter-btn:hover {
+  background: #e7f4ea;
+}
+
+.col-resize-handle {
+  position: absolute;
+  right: -3px;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 25;
+}
+
+/* Row Headers */
+.row-header {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  width: 44px;
+  min-width: 44px;
+  background: var(--soft, #f3f2f1);
+  border-right: 1px solid var(--line, #d1d1d1);
+  border-bottom: 1px solid var(--line, #d1d1d1);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text, #323130);
+  text-align: center;
+  padding: 0;
+  user-select: none;
+}
+
+/* Cells */
+.excel-cell {
+  border-right: 1px solid var(--line, #e1dfdd);
+  border-bottom: 1px solid var(--line, #e1dfdd);
+  padding: 2px 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+  font-size: 10pt;
+  color: var(--text, #000000);
+  background: var(--surface, #ffffff);
+  cursor: cell;
+}
+
+.excel-cell.selected {
+  background-color: rgba(16, 124, 65, 0.08);
+}
+
+.excel-cell.active-cell {
+  outline: 2px solid #107c41;
+  outline-offset: -2px;
+  z-index: 5;
+  background-color: var(--surface, #ffffff);
+}
+
+.cell-text {
+  display: inline-block;
+  width: 100%;
+  pointer-events: none;
+}
+
+/* Inline cell editor */
+.inline-cell-editor {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 2px solid #107c41;
+  padding: 2px 4px;
+  font-family: inherit;
+  font-size: 10pt;
+  outline: none;
+  background: var(--surface, #ffffff);
+  color: var(--text, #000000);
+  box-sizing: border-box;
+  z-index: 10;
+}
+
+/* Fill handle */
+.fill-handle {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 6px;
+  height: 6px;
+  background: #107c41;
+  border: 1px solid #ffffff;
+  cursor: crosshair;
+  z-index: 6;
+}
+
+/* Comment marker */
+.comment-marker {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 8px 8px 0;
+  border-color: transparent #d83b01 transparent transparent;
+  cursor: pointer;
+  z-index: 7;
+}
+
+/* Data validation arrow */
+.cell-validation-arrow {
+  position: absolute;
+  right: 1px;
+  top: 1px;
+  bottom: 1px;
+  width: 18px;
+  background: var(--soft, #f3f2f1);
+  border: 1px solid var(--line, #d1d1d1);
+  color: var(--muted, #616161);
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  z-index: 6;
+}
+
+.cell-validation-arrow:hover {
+  background: #e7f4ea;
+  color: #107c41;
+}
+
+.hidden-row {
+  display: none !important;
+}
+
+/* Floating Charts */
+.chart-overlay-box {
+  position: absolute;
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--line, #d1d1d1);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  z-index: 40;
+  cursor: move;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chart-overlay-box.active-chart {
+  outline: 2px solid #107c41;
+}
+
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: var(--soft, #f8f8f8);
+  border-bottom: 1px solid var(--line, #e0e0e0);
+}
+
+.chart-title {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.chart-delete-btn {
+  background: transparent;
+  border: none;
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--muted, #616161);
+  padding: 2px 4px;
+}
+
+.chart-delete-btn:hover {
+  color: #c42b1c;
+}
+
+.chart-content {
+  flex: 1;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chart-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.axis-text {
+  font-size: 9px;
+  fill: #616161;
+  font-family: inherit;
+  user-select: none;
+}
+
+.category-text {
+  font-size: 8.5px;
+}
+
+.legend-text {
+  font-size: 9px;
+  fill: #424242;
+  font-family: inherit;
+  user-select: none;
+}
+
+.grid-line {
+  stroke: #e0e0e0;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.zero-line {
+  stroke: #8a8886;
+  stroke-width: 1.2;
+  shape-rendering: crispEdges;
+}
+
+/* Floating PivotTables */
+.pivot-table-overlay {
+  position: absolute;
+  bottom: 20px;
+  left: 60px;
+  background: var(--surface, #ffffff);
+  border: 1px solid #107c41;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  border-radius: 2px;
+  z-index: 35;
+  padding: 8px;
+  font-size: 11px;
+}
+
+.pt-title {
+  font-weight: 600;
+  color: #107c41;
+  margin-bottom: 6px;
+}
+
+.pt-table {
+  border-collapse: collapse;
+}
+
+.pt-table th,
+.pt-table td {
+  border: 1px solid var(--line, #d1d1d1);
+  padding: 4px 8px;
+}
+
+.pt-table th {
+  background: #107c41;
+  color: #ffffff;
+}
+
+.pt-grand-total {
+  font-weight: bold;
+  background: var(--soft, #f3f2f1);
+}
+
+/* Validation menu */
+.validation-popup-menu {
+  position: fixed;
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--line, #d1d1d1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+  z-index: 100;
+  max-height: 150px;
+  overflow-y: auto;
+  min-width: 90px;
+}
+
+.val-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  color: var(--text, #242424);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.val-menu-item:hover {
+  background: #e7f4ea;
+  color: #107c41;
+}
+
+/* Dark Theme Overrides */
+:host-context([data-theme="dark"]),
+:host-context(.dark-theme) {
+  --excel-user-border: #d1d1d1;
+}
+
+:host-context([data-theme="dark"]) .excel-grid-container,
+:host-context(.dark-theme) .excel-grid-container {
+  background: #1f1f1f;
+  scrollbar-color: #484644 #1f1f1f;
+}
+
+:host-context([data-theme="dark"]) .excel-grid-container::-webkit-scrollbar-track,
+:host-context(.dark-theme) .excel-grid-container::-webkit-scrollbar-track {
+  background: #1f1f1f;
+}
+
+:host-context([data-theme="dark"]) .excel-grid-container::-webkit-scrollbar-thumb,
+:host-context(.dark-theme) .excel-grid-container::-webkit-scrollbar-thumb {
+  background: #484644;
+  border: 2px solid #1f1f1f;
+}
+
+:host-context([data-theme="dark"]) .excel-grid-container::-webkit-scrollbar-thumb:hover,
+:host-context(.dark-theme) .excel-grid-container::-webkit-scrollbar-thumb:hover {
+  background: #5a5856;
+}
+
+:host-context([data-theme="dark"]) .excel-table,
+:host-context(.dark-theme) .excel-table {
+  background: #1f1f1f;
+}
+
+:host-context([data-theme="dark"]) .corner-header,
+:host-context(.dark-theme) .corner-header {
+  background: #2b2b2b;
+  border-right-color: #3b3a39;
+  border-bottom-color: #3b3a39;
+}
+
+:host-context([data-theme="dark"]) .corner-triangle,
+:host-context(.dark-theme) .corner-triangle {
+  border-bottom-color: #8a8886;
+}
+
+:host-context([data-theme="dark"]) .col-header,
+:host-context(.dark-theme) .col-header {
+  background: #2b2b2b;
+  color: #f3f2f1;
+  border-right-color: #3b3a39;
+  border-bottom-color: #3b3a39;
+}
+
+:host-context([data-theme="dark"]) .col-filter-btn,
+:host-context(.dark-theme) .col-filter-btn {
+  background: #242424;
+  border-color: #107c41;
+  color: #52b99d;
+}
+
+:host-context([data-theme="dark"]) .col-filter-btn:hover,
+:host-context(.dark-theme) .col-filter-btn:hover {
+  background: #1e3a29;
+}
+
+:host-context([data-theme="dark"]) .row-header,
+:host-context(.dark-theme) .row-header {
+  background: #2b2b2b;
+  color: #f3f2f1;
+  border-right-color: #3b3a39;
+  border-bottom-color: #3b3a39;
+}
+
+:host-context([data-theme="dark"]) .excel-cell,
+:host-context(.dark-theme) .excel-cell {
+  background-color: #1f1f1f;
+  color: #f3f2f1;
+  border-right: 1px solid #3b3a39;
+  border-bottom: 1px solid #3b3a39;
+}
+
+:host-context([data-theme="dark"]) .excel-cell.selected,
+:host-context(.dark-theme) .excel-cell.selected {
+  background-color: rgba(16, 124, 65, 0.28);
+}
+
+:host-context([data-theme="dark"]) .excel-cell.active-cell,
+:host-context(.dark-theme) .excel-cell.active-cell {
+  outline: 2px solid #107c41;
+  background-color: #1f1f1f;
+}
+
+:host-context([data-theme="dark"]) .excel-cell.selected.active-cell,
+:host-context(.dark-theme) .excel-cell.selected.active-cell {
+  background-color: rgba(16, 124, 65, 0.28);
+}
+
+/* Filled cells with no explicit text color: show dark text so it stays readable like light mode */
+:host-context([data-theme="dark"]) .excel-cell[style*="background"]:not([style^="color"]):not([style*="; color"]):not([style*=";color"]),
+:host-context(.dark-theme) .excel-cell[style*="background"]:not([style^="color"]):not([style*="; color"]):not([style*=";color"]) {
+  color: #242424 !important;
+}
+
+:host-context([data-theme="dark"]) .inline-cell-editor,
+:host-context(.dark-theme) .inline-cell-editor {
+  background: #2b2b2b;
+  color: #f3f2f1;
+  border-color: #107c41;
+}
+
+:host-context([data-theme="dark"]) .fill-handle,
+:host-context(.dark-theme) .fill-handle {
+  background: #107c41;
+  border-color: #1f1f1f;
+}
+
+:host-context([data-theme="dark"]) .cell-validation-arrow,
+:host-context(.dark-theme) .cell-validation-arrow {
+  background: #2b2b2b;
+  border-color: #3b3a39;
+  color: #c8c6c4;
+}
+
+:host-context([data-theme="dark"]) .cell-validation-arrow:hover,
+:host-context(.dark-theme) .cell-validation-arrow:hover {
+  background: #323130;
+  color: #52b99d;
+}
+
+/* Charts */
+:host-context([data-theme="dark"]) .chart-overlay-box,
+:host-context(.dark-theme) .chart-overlay-box {
+  background: #242424;
+  border-color: #3b3a39;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+}
+
+:host-context([data-theme="dark"]) .chart-header,
+:host-context(.dark-theme) .chart-header {
+  background: #1f1f1f;
+  border-bottom-color: #3b3a39;
+}
+
+:host-context([data-theme="dark"]) .chart-title,
+:host-context(.dark-theme) .chart-title {
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .chart-delete-btn,
+:host-context(.dark-theme) .chart-delete-btn {
+  color: #c8c6c4;
+}
+
+:host-context([data-theme="dark"]) .chart-delete-btn:hover,
+:host-context(.dark-theme) .chart-delete-btn:hover {
+  color: #f1707b;
+}
+
+:host-context([data-theme="dark"]) .chart-svg line,
+:host-context(.dark-theme) .chart-svg line {
+  stroke: #484644;
+}
+
+:host-context([data-theme="dark"]) .chart-svg text,
+:host-context(.dark-theme) .chart-svg text {
+  fill: #c8c6c4;
+}
+
+/* Floating PivotTables */
+:host-context([data-theme="dark"]) .pivot-table-overlay,
+:host-context(.dark-theme) .pivot-table-overlay {
+  background: #242424;
+  border-color: #107c41;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .pt-title,
+:host-context(.dark-theme) .pt-title {
+  color: #52b99d;
+}
+
+:host-context([data-theme="dark"]) .pt-table th,
+:host-context([data-theme="dark"]) .pt-table td,
+:host-context(.dark-theme) .pt-table th,
+:host-context(.dark-theme) .pt-table td {
+  border-color: #3b3a39;
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .pt-table th,
+:host-context(.dark-theme) .pt-table th {
+  background: #107c41;
+  color: #ffffff;
+}
+
+:host-context([data-theme="dark"]) .pt-grand-total,
+:host-context(.dark-theme) .pt-grand-total {
+  background: #2b2b2b;
+  color: #f3f2f1;
+}
+
+/* Validation Menu */
+:host-context([data-theme="dark"]) .validation-popup-menu,
+:host-context(.dark-theme) .validation-popup-menu {
+  background: #242424;
+  border: 1px solid #484644;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+}
+
+:host-context([data-theme="dark"]) .val-menu-item,
+:host-context(.dark-theme) .val-menu-item {
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .val-menu-item:hover,
+:host-context(.dark-theme) .val-menu-item:hover {
+  background: #2b2b2b;
+  color: #52b99d;
+}

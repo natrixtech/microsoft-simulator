@@ -1,0 +1,49 @@
+<div class="modal-backdrop" (click)="onCancel()">
+  <div class="excel-dialog" (click)="$event.stopPropagation()" role="dialog" aria-labelledby="fnDialogTitle">
+    <div class="dialog-header">
+      <span id="fnDialogTitle" class="dialog-title">Insert Function</span>
+      <button type="button" class="close-btn" (click)="onCancel()" aria-label="Close">✕</button>
+    </div>
+
+    <div class="dialog-body">
+      <div class="form-row">
+        <label for="fnCategorySelect">Or select a category:</label>
+        <select
+          id="fnCategorySelect"
+          class="select-input"
+          [ngModel]="selectedCategory()"
+          (ngModelChange)="selectedCategory.set($event)"
+          data-demo-target="fn-category-select"
+        >
+          <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label>Select a function:</label>
+        <div class="functions-list">
+          <button
+            type="button"
+            *ngFor="let fn of filteredFunctions"
+            class="fn-item"
+            [class.active]="selectedFunction().name === fn.name"
+            [attr.data-demo-target]="'fn-item-' + fn.name"
+            (click)="onSelect(fn)"
+          >
+            {{ fn.name }}
+          </button>
+        </div>
+      </div>
+
+      <div class="fn-doc-box">
+        <div class="fn-syntax"><strong>{{ selectedFunction().syntax }}</strong></div>
+        <div class="fn-desc">{{ selectedFunction().description }}</div>
+      </div>
+    </div>
+
+    <div class="dialog-footer">
+      <button type="button" class="btn btn-primary" (click)="onApply()" data-demo-target="fn-ok-btn">OK</button>
+      <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+    </div>
+  </div>
+</div>

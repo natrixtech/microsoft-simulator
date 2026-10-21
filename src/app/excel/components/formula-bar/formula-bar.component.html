@@ -1,0 +1,77 @@
+<div class="excel-formula-bar" role="toolbar" aria-label="Formula Bar">
+  <!-- Name Box -->
+  <div class="name-box-container">
+    <label class="sr-only" for="nameBoxInput">Cell address or range</label>
+    <input
+      #nameBoxInput
+      id="nameBoxInput"
+      type="text"
+      class="name-box-input"
+      [ngModel]="nameBoxValue()"
+      (ngModelChange)="nameBoxValue.set($event)"
+      (keydown)="onNameBoxKeydown($event)"
+      aria-label="Name Box"
+      data-demo-target="name-box"
+    />
+    <span class="name-box-arrow" aria-hidden="true">▾</span>
+  </div>
+
+  <div class="bar-separator" aria-hidden="true"></div>
+
+  <!-- Action buttons: Cancel, Enter, fx -->
+  <div class="formula-actions">
+    <button
+      type="button"
+      class="action-btn cancel-btn"
+      [disabled]="!isEditing"
+      (click)="onCancel()"
+      title="Cancel (Esc)"
+      aria-label="Cancel formula edit"
+      data-demo-target="formula-cancel-btn"
+    >
+      ✕
+    </button>
+    <button
+      type="button"
+      class="action-btn enter-btn"
+      [disabled]="!isEditing"
+      (click)="onCommit()"
+      title="Enter"
+      aria-label="Enter formula"
+      data-demo-target="formula-enter-btn"
+    >
+      ✓
+    </button>
+    <button
+      type="button"
+      class="action-btn fx-btn"
+      (click)="onFxClick()"
+      title="Insert Function"
+      aria-label="Insert Function"
+      data-demo-target="formula-fx-btn"
+    >
+      fx
+    </button>
+  </div>
+
+  <div class="bar-separator" aria-hidden="true"></div>
+
+  <!-- Formula Input Area -->
+  <div class="formula-input-container">
+    <label class="sr-only" for="formulaMainInput">Formula or cell contents</label>
+    <input
+      #formulaInput
+      id="formulaMainInput"
+      type="text"
+      class="formula-input"
+      [value]="inputValue()"
+      (input)="onInput($event)"
+      (keydown)="onInputKeydown($event)"
+      aria-label="Formula Bar Input"
+      data-demo-target="formula-input"
+    />
+    <button type="button" class="expand-btn" title="Expand formula bar" aria-label="Expand formula bar">
+      ▾
+    </button>
+  </div>
+</div>

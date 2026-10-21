@@ -1,0 +1,37 @@
+<div class="modal-backdrop" (click)="onCancel()">
+  <div class="excel-dialog comment-popup" (click)="$event.stopPropagation()" role="dialog" aria-labelledby="commentDialogTitle">
+    <div class="dialog-header">
+      <span id="commentDialogTitle" class="dialog-title">Comment on {{ cellAddress }}</span>
+      <button type="button" class="close-btn" (click)="onCancel()" aria-label="Close">✕</button>
+    </div>
+
+    <div class="dialog-body">
+      <label class="sr-only" for="commentTextArea">Comment text</label>
+      <textarea
+        id="commentTextArea"
+        class="comment-textarea"
+        placeholder="Type a comment..."
+        rows="4"
+        [ngModel]="commentText()"
+        (ngModelChange)="commentText.set($event)"
+        data-demo-target="comment-text-input"
+      ></textarea>
+    </div>
+
+    <div class="dialog-footer">
+      <button
+        type="button"
+        class="btn btn-danger"
+        *ngIf="commentText()"
+        (click)="onDelete()"
+        style="margin-right: auto;"
+      >
+        Delete
+      </button>
+      <button type="button" class="btn btn-primary" (click)="onSave()" data-demo-target="comment-save-btn">
+        Post
+      </button>
+      <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+    </div>
+  </div>
+</div>

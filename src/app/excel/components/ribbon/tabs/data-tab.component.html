@@ -1,0 +1,268 @@
+<div class="ribbon-tab-content data-tab" role="region" aria-label="Data Ribbon">
+  <!-- 1. Get & Transform Data -->
+  <div class="ribbon-group group-get-data">
+    <div class="group-controls">
+      <button type="button" class="ribbon-btn btn-large disabled" disabled title="Get Data" tabindex="-1">
+        <app-excel-icon name="getData" [size]="28"></app-excel-icon>
+        <span class="btn-label-with-arrow">
+          Get Data <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </span>
+      </button>
+
+      <div class="grid-2rows-3cols">
+        <!-- Row 1 -->
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="From Text/CSV" tabindex="-1">
+          <app-excel-icon name="fromTextCsv" [size]="15"></app-excel-icon>
+          <span class="btn-text">From Text/CSV</span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="From Web" tabindex="-1">
+          <app-excel-icon name="fromWeb" [size]="15"></app-excel-icon>
+          <span class="btn-text">From Web</span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="From Table/Range" tabindex="-1">
+          <app-excel-icon name="fromTableRange" [size]="15"></app-excel-icon>
+          <span class="btn-text">From Table/Range</span>
+        </button>
+
+        <!-- Row 2 -->
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="From Picture" tabindex="-1">
+          <app-excel-icon name="fromPicture" [size]="15"></app-excel-icon>
+          <span class="btn-text">From Picture <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon></span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Recent Sources" tabindex="-1">
+          <app-excel-icon name="recentSources" [size]="15"></app-excel-icon>
+          <span class="btn-text">Recent Sources</span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Existing Connections" tabindex="-1">
+          <app-excel-icon name="existingConnections" [size]="15"></app-excel-icon>
+          <span class="btn-text">Existing Connections</span>
+        </button>
+      </div>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Get & Transform Data</span>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- 2. Queries & Connections -->
+  <div class="ribbon-group group-queries">
+    <div class="group-controls">
+      <button type="button" class="ribbon-btn btn-large disabled" disabled title="Refresh All (Ctrl+Alt+F5)" tabindex="-1">
+        <app-excel-icon name="refreshAll" [size]="28"></app-excel-icon>
+        <span class="btn-label-with-arrow">
+          Refresh All <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </span>
+      </button>
+
+      <div class="subgroup-3rows">
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Queries & Connections" tabindex="-1">
+          <app-excel-icon name="queriesConnections" [size]="15"></app-excel-icon>
+          <span class="btn-text">Queries & Connections</span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Properties" tabindex="-1">
+          <app-excel-icon name="properties" [size]="15"></app-excel-icon>
+          <span class="btn-text">Properties</span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Workbook Links" tabindex="-1">
+          <app-excel-icon name="workbookLinks" [size]="15"></app-excel-icon>
+          <span class="btn-text">Workbook Links</span>
+        </button>
+      </div>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Queries & Connections</span>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- 3. Sort & Filter -->
+  <div class="ribbon-group group-sort-filter">
+    <div class="group-controls">
+      <!-- Quick Sort Stack (A to Z, Z to A) -->
+      <div class="subgroup-2rows-compact">
+        <button
+          type="button"
+          class="ribbon-btn btn-square"
+          (click)="sortAsc.emit()"
+          title="Sort A to Z"
+          data-demo-target="data-sort-asc-btn"
+        >
+          <app-excel-icon name="sortAsc" [size]="18"></app-excel-icon>
+        </button>
+        <button
+          type="button"
+          class="ribbon-btn btn-square"
+          (click)="sortDesc.emit()"
+          title="Sort Z to A"
+          data-demo-target="data-sort-desc-btn"
+        >
+          <app-excel-icon name="sortDesc" [size]="18"></app-excel-icon>
+        </button>
+      </div>
+
+      <!-- Sort Dialog Button -->
+      <button
+        type="button"
+        class="ribbon-btn btn-large"
+        (click)="openSortDialog.emit()"
+        title="Sort"
+        data-demo-target="data-sort-dialog-btn"
+      >
+        <app-excel-icon name="sortDialog" [size]="28"></app-excel-icon>
+        <span class="btn-text-sub">Sort</span>
+      </button>
+
+      <!-- Filter Toggle Button -->
+      <button
+        type="button"
+        class="ribbon-btn btn-large"
+        [class.active]="hasFilterActive"
+        (click)="toggleFilter.emit()"
+        title="Filter (Ctrl+Shift+L)"
+        data-demo-target="data-filter-btn"
+      >
+        <app-excel-icon name="filter" [size]="28"></app-excel-icon>
+        <span class="btn-text-sub">Filter</span>
+      </button>
+
+      <!-- Clear, Reapply, Advanced -->
+      <div class="subgroup-3rows">
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Clear Filter" tabindex="-1">
+          <app-excel-icon name="clearFilter" [size]="15"></app-excel-icon>
+          <span class="btn-text">Clear</span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Reapply Filter (Ctrl+Alt+L)" tabindex="-1">
+          <app-excel-icon name="reapplyFilter" [size]="15"></app-excel-icon>
+          <span class="btn-text">Reapply</span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Advanced Filter" tabindex="-1">
+          <app-excel-icon name="advancedFilter" [size]="15"></app-excel-icon>
+          <span class="btn-text">Advanced</span>
+        </button>
+      </div>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Sort & Filter</span>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- 4. Data Tools -->
+  <div class="ribbon-group group-data-tools">
+    <div class="group-controls">
+      <button type="button" class="ribbon-btn btn-large disabled" disabled title="Text to Columns" tabindex="-1">
+        <app-excel-icon name="textToColumns" [size]="28"></app-excel-icon>
+        <span class="btn-label-multi">Text to<br/>Columns</span>
+      </button>
+
+      <button type="button" class="ribbon-btn btn-large disabled" disabled title="Flash Fill (Ctrl+E)" tabindex="-1">
+        <app-excel-icon name="flashFill" [size]="28"></app-excel-icon>
+        <span class="btn-label-multi">Flash<br/>Fill</span>
+      </button>
+
+      <button
+        type="button"
+        class="ribbon-btn btn-large"
+        (click)="openRemoveDuplicates.emit()"
+        title="Remove Duplicates"
+        data-demo-target="data-remove-duplicates-btn"
+      >
+        <app-excel-icon name="removeDuplicates" [size]="28"></app-excel-icon>
+        <span class="btn-label-multi">Remove<br/>Duplicates</span>
+      </button>
+
+      <div class="subgroup-3rows">
+        <button
+          type="button"
+          class="ribbon-btn btn-row"
+          (click)="openDataValidation.emit()"
+          title="Data Validation"
+          data-demo-target="data-validation-btn"
+        >
+          <app-excel-icon name="dataValidation" [size]="15"></app-excel-icon>
+          <span class="btn-text">Data Validation <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon></span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Consolidate" tabindex="-1">
+          <app-excel-icon name="consolidate" [size]="15"></app-excel-icon>
+          <span class="btn-text">Consolidate</span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Manage Data Model" tabindex="-1">
+          <app-excel-icon name="manageDataModel" [size]="15"></app-excel-icon>
+          <span class="btn-text">Data Model</span>
+        </button>
+      </div>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Data Tools</span>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- 5. Analyze Data -->
+  <div class="ribbon-group group-analyze-data">
+    <div class="group-controls">
+      <button type="button" class="ribbon-btn btn-large disabled" disabled title="Analyze Data" tabindex="-1">
+        <app-excel-icon name="analyzeData" [size]="28"></app-excel-icon>
+        <span class="btn-label-multi">Analyze<br/>Data</span>
+      </button>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Data Analysis</span>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- 6. Forecast -->
+  <div class="ribbon-group group-forecast">
+    <div class="group-controls">
+      <button type="button" class="ribbon-btn btn-large disabled" disabled title="What-If Analysis" tabindex="-1">
+        <app-excel-icon name="whatIfAnalysis" [size]="28"></app-excel-icon>
+        <span class="btn-label-multi">
+          What-If<br/>Analysis <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </span>
+      </button>
+
+      <button type="button" class="ribbon-btn btn-large disabled" disabled title="Forecast Sheet" tabindex="-1">
+        <app-excel-icon name="forecastSheet" [size]="28"></app-excel-icon>
+        <span class="btn-label-multi">Forecast<br/>Sheet</span>
+      </button>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Forecast</span>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- 7. Outline -->
+  <div class="ribbon-group group-outline">
+    <div class="group-controls">
+      <div class="subgroup-3rows">
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Group (Shift+Alt+Right)" tabindex="-1">
+          <app-excel-icon name="groupRows" [size]="15"></app-excel-icon>
+          <span class="btn-text">Group <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon></span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Ungroup (Shift+Alt+Left)" tabindex="-1">
+          <app-excel-icon name="ungroupRows" [size]="15"></app-excel-icon>
+          <span class="btn-text">Ungroup <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon></span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Subtotal" tabindex="-1">
+          <app-excel-icon name="subtotal" [size]="15"></app-excel-icon>
+          <span class="btn-text">Subtotal</span>
+        </button>
+      </div>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Outline</span>
+      <button type="button" class="dialog-launcher-btn" title="Outline Options" disabled tabindex="-1">
+        <app-excel-icon name="dialogLauncher" [size]="10"></app-excel-icon>
+      </button>
+    </div>
+  </div>
+</div>

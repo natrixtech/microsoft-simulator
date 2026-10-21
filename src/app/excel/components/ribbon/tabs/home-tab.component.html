@@ -1,0 +1,670 @@
+<div class="ribbon-tab-content home-tab" role="region" aria-label="Home Ribbon">
+  <!-- 0. Undo Group -->
+  <div class="ribbon-group group-undo">
+    <div class="group-controls">
+      <div class="undo-column">
+        <button
+          type="button"
+          class="ribbon-btn undo-btn"
+          [disabled]="!canUndo"
+          (click)="undo.emit()"
+          title="Undo (Ctrl+Z)"
+          aria-label="Undo"
+          data-demo-target="qa-undo-btn"
+        >
+          <app-excel-icon name="undo" [size]="16"></app-excel-icon>
+        </button>
+        <button
+          type="button"
+          class="ribbon-btn undo-btn"
+          [disabled]="!canRedo"
+          (click)="redo.emit()"
+          title="Redo (Ctrl+Y)"
+          aria-label="Redo"
+          data-demo-target="qa-redo-btn"
+        >
+          <app-excel-icon name="redo" [size]="16"></app-excel-icon>
+        </button>
+        <div class="undo-spacer" aria-hidden="true"></div>
+      </div>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Undo</span>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- 1. Clipboard -->
+  <div class="ribbon-group group-clipboard">
+    <div class="group-controls">
+      <button
+        type="button"
+        class="ribbon-btn btn-large"
+        (click)="paste.emit()"
+        title="Paste (Ctrl+V)"
+        data-demo-target="paste-btn"
+      >
+        <app-excel-icon name="paste" [size]="32"></app-excel-icon>
+        <span class="btn-label-with-arrow">
+          Paste <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </span>
+      </button>
+
+      <div class="subgroup-3rows">
+        <button
+          type="button"
+          class="ribbon-btn btn-row"
+          (click)="cut.emit()"
+          title="Cut (Ctrl+X)"
+          data-demo-target="cut-btn"
+        >
+          <app-excel-icon name="cut" [size]="18"></app-excel-icon>
+          <span class="btn-text">Cut</span>
+        </button>
+        <button
+          type="button"
+          class="ribbon-btn btn-row"
+          (click)="copy.emit()"
+          title="Copy (Ctrl+C)"
+          data-demo-target="copy-btn"
+        >
+          <app-excel-icon name="copy" [size]="18"></app-excel-icon>
+          <span class="btn-text">Copy <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon></span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Format Painter">
+          <app-excel-icon name="formatPainter" [size]="18"></app-excel-icon>
+          <span class="btn-text">Format Painter</span>
+        </button>
+      </div>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Clipboard</span>
+      <button type="button" class="dialog-launcher-btn" title="Clipboard Options" disabled tabindex="-1">
+        <app-excel-icon name="dialogLauncher" [size]="10"></app-excel-icon>
+      </button>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- 2. Font -->
+  <div class="ribbon-group group-font">
+    <div class="group-controls font-controls-box">
+      <!-- Row 1: Font Comboboxes & Size Scaling -->
+      <div class="control-row">
+        <select class="ribbon-select font-family-select" disabled title="Font" tabindex="-1">
+          <option>Calibri</option>
+        </select>
+
+        <select
+          class="ribbon-select font-size-select"
+          [ngModel]="fontSize"
+          (ngModelChange)="setFontSize($event)"
+          title="Font Size"
+          data-demo-target="font-size-select"
+        >
+          <option *ngFor="let s of fontSizes" [value]="s">{{ s }}</option>
+        </select>
+
+        <button
+          type="button"
+          class="ribbon-btn btn-square"
+          (click)="increaseFontSize()"
+          title="Increase Font Size"
+          data-demo-target="increase-font-size-btn"
+        >
+          <app-excel-icon name="increaseFont" [size]="16"></app-excel-icon>
+        </button>
+        <button
+          type="button"
+          class="ribbon-btn btn-square"
+          (click)="decreaseFontSize()"
+          title="Decrease Font Size"
+          data-demo-target="decrease-font-size-btn"
+        >
+          <app-excel-icon name="decreaseFont" [size]="16"></app-excel-icon>
+        </button>
+      </div>
+
+      <!-- Row 2: B, I, U, Borders, Fill, Font Color -->
+      <div class="control-row">
+        <button
+          type="button"
+          class="ribbon-btn btn-square btn-neutral-toggle"
+          [class.active]="isBold"
+          [attr.aria-pressed]="isBold"
+          (click)="toggleBold()"
+          title="Bold (Ctrl+B)"
+          data-demo-target="bold-btn"
+        >
+          <app-excel-icon name="bold" [size]="16"></app-excel-icon>
+        </button>
+        <button
+          type="button"
+          class="ribbon-btn btn-square"
+          [class.active]="isItalic"
+          [attr.aria-pressed]="isItalic"
+          (click)="toggleItalic()"
+          title="Italic (Ctrl+I)"
+          data-demo-target="italic-btn"
+        >
+          <app-excel-icon name="italic" [size]="16"></app-excel-icon>
+        </button>
+        <button
+          type="button"
+          class="ribbon-btn btn-square btn-square-dropdown"
+          [class.active]="isUnderline"
+          [attr.aria-pressed]="isUnderline"
+          (click)="toggleUnderline()"
+          title="Underline (Ctrl+U)"
+          data-demo-target="underline-btn"
+        >
+          <app-excel-icon name="underline" [size]="16"></app-excel-icon>
+          <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </button>
+        <button
+          type="button"
+          class="ribbon-btn btn-square btn-square-dropdown"
+          (click)="toggleBordersMenu($event)"
+          title="Borders"
+          data-demo-target="borders-btn"
+        >
+          <app-excel-icon name="borders" [size]="16"></app-excel-icon>
+          <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </button>
+
+        <!-- Fill Color -->
+        <button
+          type="button"
+          class="ribbon-btn btn-square btn-square-dropdown"
+          (click)="toggleFillColorPicker($event)"
+          title="Fill Color"
+          data-demo-target="fill-color-btn"
+        >
+          <app-excel-icon name="fillColor" [size]="16"></app-excel-icon>
+          <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </button>
+
+        <!-- Font Color -->
+        <button
+          type="button"
+          class="ribbon-btn btn-square btn-square-dropdown"
+          (click)="toggleTextColorPicker($event)"
+          title="Font Color"
+          data-demo-target="text-color-btn"
+        >
+          <app-excel-icon name="fontColor" [size]="16"></app-excel-icon>
+          <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </button>
+      </div>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Font</span>
+      <button type="button" class="dialog-launcher-btn" title="Font Settings" disabled tabindex="-1">
+        <app-excel-icon name="dialogLauncher" [size]="10"></app-excel-icon>
+      </button>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- 3. Alignment -->
+  <div class="ribbon-group group-alignment">
+    <div class="group-controls alignment-controls-box">
+      <!-- Row 1: Top Align, Middle Align, Bottom Align, Orientation, Wrap Text -->
+      <div class="control-row">
+        <button type="button" class="ribbon-btn btn-square disabled" disabled title="Top Align" tabindex="-1">
+          <app-excel-icon name="alignTop" [size]="16"></app-excel-icon>
+        </button>
+        <button type="button" class="ribbon-btn btn-square disabled" disabled title="Middle Align" tabindex="-1">
+          <app-excel-icon name="alignMiddle" [size]="16"></app-excel-icon>
+        </button>
+        <button type="button" class="ribbon-btn btn-square disabled" disabled title="Bottom Align" tabindex="-1">
+          <app-excel-icon name="alignBottom" [size]="16"></app-excel-icon>
+        </button>
+        <button type="button" class="ribbon-btn btn-square btn-square-dropdown disabled" disabled title="Orientation" tabindex="-1">
+          <app-excel-icon name="orientation" [size]="16"></app-excel-icon>
+          <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </button>
+        <button type="button" class="ribbon-btn btn-text-btn disabled" disabled title="Wrap Text" tabindex="-1">
+          <app-excel-icon name="wrapText" [size]="16"></app-excel-icon>
+          <span class="btn-text">Wrap Text</span>
+        </button>
+      </div>
+
+      <!-- Row 2: Left Align, Center, Right Align, Decrease Indent, Increase Indent, Merge & Center -->
+      <div class="control-row">
+        <button
+          type="button"
+          class="ribbon-btn btn-square btn-neutral-toggle"
+          [class.active]="currentAlign === 'left'"
+          [attr.aria-pressed]="currentAlign === 'left'"
+          (click)="setAlign('left')"
+          title="Align Left"
+          data-demo-target="align-left-btn"
+        >
+          <app-excel-icon name="alignLeft" [size]="16"></app-excel-icon>
+        </button>
+        <button
+          type="button"
+          class="ribbon-btn btn-square"
+          [class.active]="currentAlign === 'center'"
+          [attr.aria-pressed]="currentAlign === 'center'"
+          (click)="setAlign('center')"
+          title="Center"
+          data-demo-target="align-center-btn"
+        >
+          <app-excel-icon name="alignCenter" [size]="16"></app-excel-icon>
+        </button>
+        <button
+          type="button"
+          class="ribbon-btn btn-square"
+          [class.active]="currentAlign === 'right'"
+          [attr.aria-pressed]="currentAlign === 'right'"
+          (click)="setAlign('right')"
+          title="Align Right"
+          data-demo-target="align-right-btn"
+        >
+          <app-excel-icon name="alignRight" [size]="16"></app-excel-icon>
+        </button>
+        <button type="button" class="ribbon-btn btn-square disabled" disabled title="Decrease Indent" tabindex="-1">
+          <app-excel-icon name="decreaseIndent" [size]="16"></app-excel-icon>
+        </button>
+        <button type="button" class="ribbon-btn btn-square disabled" disabled title="Increase Indent" tabindex="-1">
+          <app-excel-icon name="increaseIndent" [size]="16"></app-excel-icon>
+        </button>
+        <button type="button" class="ribbon-btn btn-text-btn disabled" disabled title="Merge & Center" tabindex="-1">
+          <app-excel-icon name="mergeCenter" [size]="16"></app-excel-icon>
+          <span class="btn-text">Merge & Center <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon></span>
+        </button>
+      </div>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Alignment</span>
+      <button type="button" class="dialog-launcher-btn" title="Alignment Settings" disabled tabindex="-1">
+        <app-excel-icon name="dialogLauncher" [size]="10"></app-excel-icon>
+      </button>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- 4. Number -->
+  <div class="ribbon-group group-number">
+    <div class="group-controls number-controls-box">
+      <!-- Row 1: Number Format dropdown -->
+      <div class="control-row">
+        <select
+          class="ribbon-select number-format-select"
+          [ngModel]="currentNumberFormat"
+          (ngModelChange)="onNumberFormatChange($event)"
+          title="Number Format"
+          data-demo-target="number-format-select"
+        >
+          <option value="automatic">Automatic</option>
+          <option value="currency">Currency</option>
+          <option value="percent">Percent</option>
+          <option value="date">Date</option>
+        </select>
+      </div>
+
+      <!-- Row 2: $, %, ,, Increase, Decrease -->
+      <div class="control-row">
+        <button
+          type="button"
+          class="ribbon-btn btn-square btn-square-dropdown"
+          (click)="setNumberFormat('currency')"
+          title="Accounting Number Format"
+          data-demo-target="format-currency-btn"
+        >
+          <app-excel-icon name="accounting" [size]="18"></app-excel-icon>
+          <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </button>
+        <button
+          type="button"
+          class="ribbon-btn btn-square"
+          (click)="setNumberFormat('percent')"
+          title="Percent Style (Ctrl+Shift+%)"
+          data-demo-target="format-percent-btn"
+        >
+          <app-excel-icon name="percent" [size]="18"></app-excel-icon>
+        </button>
+        <button
+          type="button"
+          class="ribbon-btn btn-square disabled"
+          disabled
+          tabindex="-1"
+          (click)="setCommaStyle()"
+          title="Comma Style"
+          data-demo-target="format-comma-btn"
+        >
+          <app-excel-icon name="comma" [size]="18"></app-excel-icon>
+        </button>
+        <button
+          type="button"
+          class="ribbon-btn btn-square disabled"
+          disabled
+          tabindex="-1"
+          (click)="increaseDecimal()"
+          title="Increase Decimal"
+          data-demo-target="format-increase-decimal-btn"
+        >
+          <app-excel-icon name="increaseDecimal" [size]="19"></app-excel-icon>
+        </button>
+        <button
+          type="button"
+          class="ribbon-btn btn-square disabled"
+          disabled
+          tabindex="-1"
+          (click)="decreaseDecimal()"
+          title="Decrease Decimal"
+          data-demo-target="format-decrease-decimal-btn"
+        >
+          <app-excel-icon name="decreaseDecimal" [size]="19"></app-excel-icon>
+        </button>
+      </div>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Number</span>
+      <button type="button" class="dialog-launcher-btn" title="Number Format Settings" disabled tabindex="-1">
+        <app-excel-icon name="dialogLauncher" [size]="10"></app-excel-icon>
+      </button>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- 5. Styles -->
+  <div class="ribbon-group group-styles">
+    <div class="group-controls">
+      <button
+        type="button"
+        class="ribbon-btn btn-large"
+        (click)="openConditionalFormat.emit()"
+        title="Conditional Formatting"
+        data-demo-target="conditional-format-btn"
+      >
+        <app-excel-icon name="conditionalFormatting" [size]="30"></app-excel-icon>
+        <span class="btn-label-multi">
+          Conditional<br/>Formatting <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </span>
+      </button>
+
+      <button type="button" class="ribbon-btn btn-large disabled" disabled title="Format as Table" tabindex="-1">
+        <app-excel-icon name="formatAsTable" [size]="30"></app-excel-icon>
+        <span class="btn-label-multi">
+          Format as<br/>Table <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </span>
+      </button>
+
+      <button type="button" class="ribbon-btn btn-large disabled" disabled title="Cell Styles" tabindex="-1">
+        <app-excel-icon name="cellStyles" [size]="30"></app-excel-icon>
+        <span class="btn-label-multi">
+          Cell<br/>Styles <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </span>
+      </button>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Styles</span>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- 6. Cells -->
+  <div class="ribbon-group group-cells">
+    <div class="group-controls">
+      <button type="button" class="ribbon-btn btn-medium disabled" disabled title="Insert Cells" tabindex="-1">
+        <app-excel-icon name="insertCells" [size]="28"></app-excel-icon>
+        <span class="btn-text-sub">Insert <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon></span>
+      </button>
+      <button type="button" class="ribbon-btn btn-medium disabled" disabled title="Delete Cells" tabindex="-1">
+        <app-excel-icon name="deleteCells" [size]="28"></app-excel-icon>
+        <span class="btn-text-sub">Delete <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon></span>
+      </button>
+      <button type="button" class="ribbon-btn btn-medium disabled" disabled title="Format Cells" tabindex="-1">
+        <app-excel-icon name="formatCells" [size]="28"></app-excel-icon>
+        <span class="btn-text-sub">Format <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon></span>
+      </button>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Cells</span>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- 7. Editing -->
+  <div class="ribbon-group group-editing">
+    <div class="group-controls">
+      <!-- Column 1: AutoSum, Fill, Clear -->
+      <div class="subgroup-3rows">
+        <div class="split-btn-row">
+          <button
+            type="button"
+            class="ribbon-btn btn-row btn-split-main"
+            (click)="autoSum.emit('SUM')"
+            title="AutoSum"
+            data-demo-target="autosum-btn"
+          >
+            <app-excel-icon name="autoSum" [size]="18"></app-excel-icon>
+            <span class="btn-text">AutoSum</span>
+          </button>
+          <button
+            type="button"
+            class="ribbon-btn btn-row btn-split-arrow"
+            (click)="toggleAutoSumMenu($event)"
+            title="More AutoSum options"
+            data-demo-target="autosum-menu-btn"
+          >
+            <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+          </button>
+        </div>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Fill" tabindex="-1">
+          <app-excel-icon name="fill" [size]="18"></app-excel-icon>
+          <span class="btn-text">Fill <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon></span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Clear" tabindex="-1">
+          <app-excel-icon name="clear" [size]="18"></app-excel-icon>
+          <span class="btn-text">Clear <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon></span>
+        </button>
+      </div>
+
+      <!-- Column 2: Sort & Filter, Find & Select -->
+      <div class="subgroup-2cols">
+        <button
+          type="button"
+          class="ribbon-btn btn-medium"
+          (click)="toggleSortMenu($event)"
+          title="Sort & Filter"
+          data-demo-target="sort-filter-btn"
+        >
+          <app-excel-icon name="sortFilter" [size]="26"></app-excel-icon>
+          <span class="btn-label-multi">Sort &<br/>Filter <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon></span>
+        </button>
+        <button type="button" class="ribbon-btn btn-medium disabled" disabled title="Find & Select" tabindex="-1">
+          <app-excel-icon name="findSelect" [size]="26"></app-excel-icon>
+          <span class="btn-label-multi">Find &<br/>Select <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon></span>
+        </button>
+      </div>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Editing</span>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- 8. Add-ins -->
+  <div class="ribbon-group group-addins">
+    <div class="group-controls">
+      <button type="button" class="ribbon-btn btn-large disabled" disabled title="Add-ins" tabindex="-1">
+        <app-excel-icon name="addIns" [size]="30"></app-excel-icon>
+        <span class="btn-text-sub">Add-ins</span>
+      </button>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Add-ins</span>
+    </div>
+  </div>
+</div>
+
+<!-- FIXED POSITION OVERLAYS (escapes ribbon overflow container!) -->
+
+<!-- Fill Color Palette Popover -->
+<div
+  class="color-dropdown-menu fixed-popover"
+  *ngIf="showFillColorPicker()"
+  [style.top.px]="fillPickerPos().top"
+  [style.left.px]="fillPickerPos().left"
+>
+  <button
+    type="button"
+    class="palette-action-btn"
+    (click)="setFillColor('')"
+    data-demo-target="fill-no-fill"
+  >
+    <span class="no-fill-icon">✕</span>
+    <span>No Fill</span>
+  </button>
+  <div class="palette-header">Theme Colors</div>
+  <div class="palette-grid">
+    <button
+      type="button"
+      *ngFor="let c of colorPalette"
+      class="palette-swatch"
+      [style.background-color]="c.hex"
+      [attr.data-demo-target]="'fill-color-' + c.key"
+      [title]="c.key"
+      (click)="setFillColor(c.key)"
+    ></button>
+  </div>
+</div>
+
+<!-- Text Color Palette Popover -->
+<div
+  class="color-dropdown-menu fixed-popover"
+  *ngIf="showTextColorPicker()"
+  [style.top.px]="textPickerPos().top"
+  [style.left.px]="textPickerPos().left"
+>
+  <button
+    type="button"
+    class="palette-action-btn"
+    (click)="setTextColor('')"
+    data-demo-target="text-color-automatic"
+  >
+    <span class="auto-color-indicator"></span>
+    <span>Automatic</span>
+  </button>
+  <div class="palette-header">Theme Colors</div>
+  <div class="palette-grid">
+    <button
+      type="button"
+      *ngFor="let c of colorPalette"
+      class="palette-swatch"
+      [style.background-color]="c.hex"
+      [attr.data-demo-target]="'text-color-' + c.key"
+      [title]="c.key"
+      (click)="setTextColor(c.key)"
+    ></button>
+  </div>
+</div>
+
+<!-- Borders Menu Popover -->
+<div
+  class="context-dropdown-menu fixed-popover"
+  *ngIf="showBordersMenu()"
+  [style.top.px]="bordersMenuPos().top"
+  [style.left.px]="bordersMenuPos().left"
+>
+  <button type="button" class="menu-item" (click)="applyBorder('bottom')">
+    <app-excel-icon name="borderBottom" [size]="16"></app-excel-icon>
+    <span>Bottom</span>
+  </button>
+  <button type="button" class="menu-item" (click)="applyBorder('top')">
+    <app-excel-icon name="borderTop" [size]="16"></app-excel-icon>
+    <span>Top</span>
+  </button>
+  <button type="button" class="menu-item" (click)="applyBorder('left')">
+    <app-excel-icon name="borderLeft" [size]="16"></app-excel-icon>
+    <span>Left</span>
+  </button>
+  <button type="button" class="menu-item" (click)="applyBorder('right')">
+    <app-excel-icon name="borderRight" [size]="16"></app-excel-icon>
+    <span>Right</span>
+  </button>
+  <div class="menu-divider"></div>
+  <button type="button" class="menu-item" (click)="applyBorder('noBorder')">
+    <app-excel-icon name="borderNone" [size]="16"></app-excel-icon>
+    <span>No Border</span>
+  </button>
+  <button type="button" class="menu-item" (click)="applyBorder('all')">
+    <app-excel-icon name="borderAll" [size]="16"></app-excel-icon>
+    <span>All Borders</span>
+  </button>
+  <button type="button" class="menu-item" (click)="applyBorder('outside')">
+    <app-excel-icon name="borderOutside" [size]="16"></app-excel-icon>
+    <span>Outside Borders</span>
+  </button>
+  <button type="button" class="menu-item" (click)="applyBorder('thickOutside')">
+    <app-excel-icon name="borderThickOutside" [size]="16"></app-excel-icon>
+    <span>Thick Outside Borders</span>
+  </button>
+</div>
+
+<!-- Sort & Filter Menu Popover -->
+<div
+  class="context-dropdown-menu fixed-popover"
+  *ngIf="showSortMenu()"
+  [style.top.px]="sortMenuPos().top"
+  [style.left.px]="sortMenuPos().left"
+>
+  <button type="button" class="menu-item" (click)="quickSort.emit('asc'); showSortMenu.set(false)">
+    <app-excel-icon name="sortAsc" [size]="16"></app-excel-icon>
+    <span>Sort A to Z</span>
+  </button>
+  <button type="button" class="menu-item" (click)="quickSort.emit('desc'); showSortMenu.set(false)">
+    <app-excel-icon name="sortDesc" [size]="16"></app-excel-icon>
+    <span>Sort Z to A</span>
+  </button>
+  <div class="menu-divider"></div>
+  <button type="button" class="menu-item" (click)="openSortDialog.emit(); showSortMenu.set(false)">
+    <app-excel-icon name="sortDialog" [size]="16"></app-excel-icon>
+    <span>Custom Sort...</span>
+  </button>
+  <button type="button" class="menu-item" (click)="toggleFilter.emit(); showSortMenu.set(false)" data-demo-target="home-filter-btn">
+    <app-excel-icon name="filter" [size]="16"></app-excel-icon>
+    <span>Filter</span>
+  </button>
+</div>
+
+<!-- AutoSum Menu Popover -->
+<div
+  class="context-dropdown-menu fixed-popover"
+  *ngIf="showAutoSumMenu()"
+  [style.top.px]="autoSumMenuPos().top"
+  [style.left.px]="autoSumMenuPos().left"
+>
+  <button type="button" class="menu-item" (click)="onSelectAutoSum('SUM')" data-demo-target="autosum-sum">
+    <span>Sum</span>
+  </button>
+  <button type="button" class="menu-item" (click)="onSelectAutoSum('AVERAGE')" data-demo-target="autosum-average">
+    <span>Average</span>
+  </button>
+  <button type="button" class="menu-item" (click)="onSelectAutoSum('COUNT')" data-demo-target="autosum-count">
+    <span>Count Numbers</span>
+  </button>
+  <button type="button" class="menu-item" (click)="onSelectAutoSum('MAX')" data-demo-target="autosum-max">
+    <span>Max</span>
+  </button>
+  <button type="button" class="menu-item" (click)="onSelectAutoSum('MIN')" data-demo-target="autosum-min">
+    <span>Min</span>
+  </button>
+  <div class="menu-divider"></div>
+  <button type="button" class="menu-item" (click)="onSelectMoreFunctions()" data-demo-target="autosum-more">
+    <span>More Functions…</span>
+  </button>
+</div>
+

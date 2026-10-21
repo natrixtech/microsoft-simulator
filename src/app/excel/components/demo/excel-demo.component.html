@@ -1,0 +1,118 @@
+<div class="demo-modal-backdrop" (click)="onClose()">
+  <div class="demo-dialog-window" (click)="$event.stopPropagation()" role="dialog" aria-labelledby="demoTitle">
+    <!-- Header -->
+    <header class="demo-header">
+      <div>
+        <h2 id="demoTitle" class="demo-task-title">{{ title }}</h2>
+        <span class="demo-subtitle">{{ description || 'Watch how to solve this task step by step.' }}</span>
+      </div>
+      <button type="button" class="demo-close-btn" (click)="onClose()" aria-label="Close demo">✕</button>
+    </header>
+
+    <!-- Body: Left Column (Steps) + Right Area (Excel Replica) -->
+    <div class="demo-body">
+      <!-- Left Column: Steps -->
+      <div class="demo-steps-column">
+        <ol class="demo-steps-list">
+          <li
+            *ngFor="let step of steps(); let idx = index"
+            class="demo-step-row"
+            [class.active]="step.state === 'active'"
+            [class.done]="step.state === 'done'"
+          >
+            <span class="step-num-circle">
+              <ng-container *ngIf="step.state !== 'done'">{{ idx + 1 }}</ng-container>
+              <ng-container *ngIf="step.state === 'done'">✓</ng-container>
+            </span>
+            <span class="step-label-text">{{ step.label }}</span>
+          </li>
+        </ol>
+
+        <button type="button" class="demo-replay-btn" (click)="replay()">
+          <span>↺</span> Replay
+        </button>
+      </div>
+
+      <!-- Right Area: Scaled Excel Replica with Animated Cursor -->
+      <div class="demo-replica-area" #demoReplicaArea>
+        <!-- End Toast Message -->
+        <div class="demo-completion-toast" *ngIf="showToast()">
+          ✨ That's how you {{ getToastTitle() }}!
+        </div>
+
+        <div class="replica-excel-window">
+          <!-- Mini Ribbon Tabs -->
+          <div class="replica-ribbon-tabs">
+            <span class="mini-tab" [class.active]="replicaActiveTab() === 'home'" data-demo-target="tab-home">Home</span>
+            <span class="mini-tab" [class.active]="replicaActiveTab() === 'insert'" data-demo-target="tab-insert">Insert</span>
+            <span class="mini-tab" [class.active]="replicaActiveTab() === 'formulas'" data-demo-target="tab-formulas">Formulas</span>
+            <span class="mini-tab" [class.active]="replicaActiveTab() === 'data'" data-demo-target="tab-data">Data</span>
+          </div>
+
+          <!-- Mini Ribbon Toolbar Controls for targets -->
+          <div class="replica-toolbar">
+            <button type="button" class="mini-tool" data-demo-target="paste-btn">📋 Paste</button>
+            <button type="button" class="mini-tool" data-demo-target="copy-btn">📑 Copy</button>
+            <button type="button" class="mini-tool" data-demo-target="bold-btn"><b>B</b></button>
+            <button type="button" class="mini-tool" data-demo-target="italic-btn"><i>I</i></button>
+            <button type="button" class="mini-tool" data-demo-target="underline-btn"><u>U</u></button>
+            <button type="button" class="mini-tool" data-demo-target="currency-btn">$</button>
+            <button type="button" class="mini-tool" data-demo-target="percent-btn">%</button>
+            <button type="button" class="mini-tool" data-demo-target="fill-color-btn">🪣</button>
+            <button type="button" class="mini-tool" data-demo-target="conditional-formatting-btn">📊 Rules</button>
+            <button type="button" class="mini-tool" data-demo-target="insert-chart-column-btn">📊 Chart</button>
+            <button type="button" class="mini-tool" data-demo-target="insert-pivottable-btn">🗂️ Pivot</button>
+            <button type="button" class="mini-tool" data-demo-target="insert-comment-btn">💬 Comment</button>
+            <button type="button" class="mini-tool" data-demo-target="data-sort-asc-btn">⬆ A-Z</button>
+            <button type="button" class="mini-tool" data-demo-target="data-filter-btn">🌪️ Filter</button>
+            <button type="button" class="mini-tool" data-demo-target="data-validation-btn">☑️ Valid</button>
+            <button type="button" class="mini-tool" data-demo-target="data-remove-duplicates-btn">🗑️ Dups</button>
+          </div>
+
+          <!-- Mini Formula Bar -->
+          <div class="replica-formula-bar">
+            <span class="mini-namebox" data-demo-target="name-box">{{ replicaActiveCell() }}</span>
+            <span class="mini-fx">fx</span>
+            <span class="mini-formulainput">{{ replicaFormulaText() }}</span>
+          </div>
+
+          <!-- Mini Grid with Cells -->
+          <div class="replica-grid">
+            <div class="mini-row mini-header">
+              <span class="mini-corner"></span>
+              <span class="mini-colhead">A</span>
+              <span class="mini-colhead">B</span>
+              <span class="mini-colhead">C</span>
+              <span class="mini-colhead">D</span>
+            </div>
+
+            <div class="mini-row" *ngFor="let r of [1, 2, 3, 4, 5, 6, 7]">
+              <span class="mini-rowhead">{{ r }}</span>
+              <span
+                *ngFor="let c of ['A', 'B', 'C', 'D']"
+                class="mini-cell"
+                [attr.data-demo-target]="'replica-cell-' + c + r"
+                [class.active-cell]="replicaActiveCell() === (c + r)"
+              >
+                {{ replicaCells().get(c + r)?.display || '' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Animated Floating Cursor -->
+        <div
+          class="demo-cursor"
+          [class.clicking]="isClicking()"
+          [style.left.px]="cursorPixelX()"
+          [style.top.px]="cursorPixelY()"
+          aria-hidden="true"
+        >
+          <svg viewBox="0 0 24 24" class="cursor-svg">
+            <path d="M4 2l16 11-7 2 5 7-3 1-5-7-6 5V2z" fill="#107c41" stroke="#ffffff" stroke-width="1.5"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

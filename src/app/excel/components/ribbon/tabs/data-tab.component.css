@@ -1,0 +1,250 @@
+.ribbon-tab-content {
+  display: flex;
+  align-items: stretch;
+  height: 98px;
+  max-height: 98px;
+  box-sizing: border-box;
+  background: var(--surface, #ffffff);
+  padding: 2px 6px 2px 6px;
+  gap: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  user-select: none;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  scrollbar-width: thin;
+}
+
+.ribbon-tab-content::-webkit-scrollbar {
+  height: 4px;
+}
+
+.ribbon-tab-content::-webkit-scrollbar-thumb {
+  background: var(--line, #e1dfdd);
+  border-radius: 2px;
+}
+
+.ribbon-group {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0 4px;
+  height: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.group-controls {
+  display: flex;
+  align-items: center;
+  height: 72px;
+  flex-shrink: 0;
+  gap: 3px;
+}
+
+.group-footer {
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  margin-top: auto;
+}
+
+.group-label {
+  font-size: 10px;
+  color: var(--muted, #616161);
+  letter-spacing: 0.1px;
+  white-space: nowrap;
+}
+
+.dialog-launcher-btn {
+  position: absolute;
+  right: 0;
+  bottom: 1px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  width: 12px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted, #8a8886);
+  cursor: default;
+  opacity: 0.6;
+}
+
+.ribbon-separator {
+  width: 1px;
+  height: 68px;
+  background: var(--line, #e1dfdd);
+  margin: 0 3px;
+  align-self: center;
+  flex-shrink: 0;
+}
+
+/* Button Variants */
+.ribbon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text, #242424);
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  padding: 1px 3px;
+  transition: background 0.1s, border-color 0.1s;
+  box-sizing: border-box;
+}
+
+.ribbon-btn:hover:not(:disabled) {
+  background: var(--soft, #f3f2f1);
+  border-color: var(--line, #d1d1d1);
+}
+
+.ribbon-btn.active {
+  background: #c8e6d1;
+  border-color: #107c41;
+  color: #107c41;
+}
+
+.ribbon-btn:disabled,
+.ribbon-btn.disabled {
+  opacity: 0.45;
+  cursor: default;
+  pointer-events: none;
+}
+
+.btn-large {
+  flex-direction: column;
+  gap: 2px;
+  min-width: 44px;
+  height: 68px;
+  padding: 2px 4px;
+}
+
+.btn-square {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  gap: 1px;
+}
+
+.btn-row {
+  height: 20px;
+  gap: 4px;
+  padding: 1px 4px;
+  justify-content: flex-start;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.btn-text {
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.btn-text-sub {
+  font-size: 10px;
+  text-align: center;
+  line-height: 1.1;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.btn-label-with-arrow {
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.btn-label-multi {
+  font-size: 10px;
+  text-align: center;
+  line-height: 1.1;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Grids and Subgroups */
+.grid-2rows-3cols {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  grid-template-rows: repeat(2, 26px);
+  gap: 2px 6px;
+  align-items: center;
+}
+
+.subgroup-2rows-compact {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  height: 66px;
+}
+
+.subgroup-3rows {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 66px;
+}
+
+/* Dark Theme Overrides */
+:host-context([data-theme="dark"]) .ribbon-tab-content,
+:host-context(.dark-theme) .ribbon-tab-content {
+  background: #1f1f1f;
+  border-color: #3b3a39;
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .ribbon-separator,
+:host-context(.dark-theme) .ribbon-separator {
+  background: #3b3a39;
+}
+
+:host-context([data-theme="dark"]) .ribbon-btn,
+:host-context(.dark-theme) .ribbon-btn {
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .ribbon-btn:hover:not(:disabled),
+:host-context(.dark-theme) .ribbon-btn:hover:not(:disabled) {
+  background: #2b2b2b;
+  border-color: #484644;
+}
+
+:host-context([data-theme="dark"]) .ribbon-btn:disabled,
+:host-context([data-theme="dark"]) .ribbon-btn.disabled,
+:host-context(.dark-theme) .ribbon-btn:disabled,
+:host-context(.dark-theme) .ribbon-btn.disabled {
+  color: #8a8886;
+  opacity: 0.45;
+}
+
+:host-context([data-theme="dark"]) .ribbon-btn.active,
+:host-context(.dark-theme) .ribbon-btn.active {
+  background: #1e3a29;
+  border-color: #107c41;
+  color: #52b99d;
+}
+
+:host-context([data-theme="dark"]) .group-label,
+:host-context(.dark-theme) .group-label {
+  color: #c8c6c4;
+}
+
+:host-context([data-theme="dark"]) .dialog-launcher-btn,
+:host-context(.dark-theme) .dialog-launcher-btn {
+  color: #c8c6c4;
+}
+

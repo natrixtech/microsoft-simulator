@@ -1,0 +1,242 @@
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.excel-dialog {
+  background: var(--surface, #ffffff);
+  color: var(--text, #242424);
+  width: 480px;
+  max-width: 95vw;
+  border-radius: 4px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--line, #d1d1d1);
+  display: flex;
+  flex-direction: column;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  font-size: 13px;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line, #e0e0e0);
+  background: var(--surface, #ffffff);
+}
+
+.dialog-title {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--muted, #616161);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.close-btn:hover {
+  background: var(--soft, #f3f3f3);
+}
+
+.dialog-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.header-option {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  user-select: none;
+}
+
+.sort-table-box {
+  border: 1px solid var(--line, #d1d1d1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.sort-table-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  background: var(--soft, #f3f2f1);
+  padding: 8px 10px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--line, #d1d1d1);
+}
+
+.sort-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  padding: 8px 10px;
+  gap: 8px;
+  align-items: center;
+  background: var(--surface, #ffffff);
+}
+
+.sort-cell select {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid var(--line, #d1d1d1);
+  border-radius: 2px;
+  background: var(--surface, #ffffff);
+  color: var(--text, #242424);
+  font-size: 12px;
+}
+
+.sort-cell select:focus {
+  outline: 2px solid #107c41;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--line, #e0e0e0);
+  background: var(--soft, #f8f8f8);
+}
+
+.btn {
+  padding: 6px 18px;
+  font-size: 13px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-weight: 500;
+  min-width: 75px;
+}
+
+.btn-primary {
+  background: #107c41;
+  color: #ffffff;
+  border: 1px solid #107c41;
+}
+
+.btn-primary:hover {
+  background: #0e6b38;
+}
+
+.btn-secondary {
+  background: var(--surface, #ffffff);
+  color: var(--text, #242424);
+  border: 1px solid var(--line, #d1d1d1);
+}
+
+.btn-secondary:hover {
+  background: var(--soft, #f3f3f3);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* Dark Theme Overrides */
+:host-context([data-theme="dark"]) .modal-backdrop,
+:host-context(.dark-theme) .modal-backdrop {
+  background: rgba(0, 0, 0, 0.65);
+}
+
+:host-context([data-theme="dark"]) .excel-dialog,
+:host-context(.dark-theme) .excel-dialog {
+  background: #242424;
+  color: #f3f2f1;
+  border-color: #3b3a39;
+}
+
+:host-context([data-theme="dark"]) .dialog-header,
+:host-context(.dark-theme) .dialog-header {
+  background: #242424;
+  border-bottom-color: #3b3a39;
+}
+
+:host-context([data-theme="dark"]) .dialog-title,
+:host-context(.dark-theme) .dialog-title {
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .close-btn,
+:host-context(.dark-theme) .close-btn {
+  color: #c8c6c4;
+}
+
+:host-context([data-theme="dark"]) .close-btn:hover,
+:host-context(.dark-theme) .close-btn:hover {
+  background: #323130;
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .checkbox-label,
+:host-context(.dark-theme) .checkbox-label {
+  color: #c8c6c4;
+}
+
+:host-context([data-theme="dark"]) .sort-table-box,
+:host-context(.dark-theme) .sort-table-box {
+  border-color: #3b3a39;
+}
+
+:host-context([data-theme="dark"]) .sort-table-header,
+:host-context(.dark-theme) .sort-table-header {
+  background: #1f1f1f;
+  color: #c8c6c4;
+  border-bottom-color: #3b3a39;
+}
+
+:host-context([data-theme="dark"]) .sort-row,
+:host-context(.dark-theme) .sort-row {
+  background: #242424;
+}
+
+:host-context([data-theme="dark"]) .sort-cell select,
+:host-context(.dark-theme) .sort-cell select {
+  background: #2b2b2b;
+  color: #f3f2f1;
+  border-color: #484644;
+}
+
+:host-context([data-theme="dark"]) .dialog-footer,
+:host-context(.dark-theme) .dialog-footer {
+  background: #1f1f1f;
+  border-top-color: #3b3a39;
+}
+
+:host-context([data-theme="dark"]) .btn-secondary,
+:host-context(.dark-theme) .btn-secondary {
+  background: #2b2b2b;
+  color: #f3f2f1;
+  border-color: #484644;
+}
+
+:host-context([data-theme="dark"]) .btn-secondary:hover,
+:host-context(.dark-theme) .btn-secondary:hover {
+  background: #323130;
+}

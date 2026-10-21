@@ -1,0 +1,69 @@
+<div class="modal-backdrop" (click)="onCancel()">
+  <div class="excel-dialog" (click)="$event.stopPropagation()" role="dialog" aria-labelledby="sortDialogTitle">
+    <div class="dialog-header">
+      <span id="sortDialogTitle" class="dialog-title">Sort</span>
+      <button type="button" class="close-btn" (click)="onCancel()" aria-label="Close">✕</button>
+    </div>
+
+    <div class="dialog-body">
+      <div class="header-option">
+        <label class="checkbox-label">
+          <input
+            type="checkbox"
+            [checked]="hasHeader()"
+            (change)="onHasHeaderChange($any($event.target).checked)"
+            data-demo-target="sort-has-headers-chk"
+          />
+          <span>My data has headers</span>
+        </label>
+      </div>
+
+      <div class="sort-table-box">
+        <div class="sort-table-header">
+          <span class="col-head">Column</span>
+          <span class="col-head">Sort On</span>
+          <span class="col-head">Order</span>
+        </div>
+        <div class="sort-row">
+          <div class="sort-cell">
+            <label class="sr-only" for="sortColumnSelect">Sort by Column</label>
+            <select
+              id="sortColumnSelect"
+              [ngModel]="selectedColumn()"
+              (ngModelChange)="selectedColumn.set($event)"
+              data-demo-target="sort-column-select"
+            >
+              <option *ngFor="let col of availableColumns()" [value]="col.letter">
+                {{ col.label }}
+              </option>
+            </select>
+          </div>
+
+          <div class="sort-cell">
+            <select disabled>
+              <option>Cell Values</option>
+            </select>
+          </div>
+
+          <div class="sort-cell">
+            <label class="sr-only" for="sortOrderSelect">Sort Order</label>
+            <select
+              id="sortOrderSelect"
+              [ngModel]="selectedOrder()"
+              (ngModelChange)="selectedOrder.set($event)"
+              data-demo-target="sort-order-select"
+            >
+              <option value="asc">A to Z</option>
+              <option value="desc">Z to A</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dialog-footer">
+      <button type="button" class="btn btn-primary" (click)="onApply()" data-demo-target="sort-ok-btn">OK</button>
+      <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+    </div>
+  </div>
+</div>

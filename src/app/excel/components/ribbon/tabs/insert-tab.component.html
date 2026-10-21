@@ -1,0 +1,332 @@
+<div class="ribbon-tab-content insert-tab" role="region" aria-label="Insert Ribbon">
+  <!-- 1. Tables -->
+  <div class="ribbon-group group-tables">
+    <div class="group-controls">
+      <button
+        type="button"
+        class="ribbon-btn btn-large"
+        (click)="openPivotTableDialog.emit()"
+        title="Insert PivotTable"
+        data-demo-target="insert-pivottable-btn"
+      >
+        <app-excel-icon name="pivotTable" [size]="28"></app-excel-icon>
+        <span class="btn-label-with-arrow">
+          PivotTable <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </span>
+      </button>
+
+      <button type="button" class="ribbon-btn btn-large disabled" disabled title="Recommended PivotTables" tabindex="-1">
+        <app-excel-icon name="recommendedPivotTables" [size]="28"></app-excel-icon>
+        <span class="btn-label-multi">Recommended<br/>PivotTables</span>
+      </button>
+
+      <button type="button" class="ribbon-btn btn-large disabled" disabled title="Table (Ctrl+T)" tabindex="-1">
+        <app-excel-icon name="table" [size]="28"></app-excel-icon>
+        <span class="btn-text-sub">Table</span>
+      </button>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Tables</span>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- Standalone Forms Button -->
+  <div class="ribbon-group group-forms">
+    <div class="group-controls">
+      <button type="button" class="ribbon-btn btn-large disabled" disabled title="Forms" tabindex="-1">
+        <app-excel-icon name="forms" [size]="28"></app-excel-icon>
+        <span class="btn-label-with-arrow">
+          Forms <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </span>
+      </button>
+    </div>
+    <div class="group-footer">
+      <span class="group-label"></span>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- 2. Illustrations -->
+  <div class="ribbon-group group-illustrations">
+    <div class="group-controls">
+      <div class="grid-2rows-3cols">
+        <!-- Row 1: Pictures, Shapes, Icons -->
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Pictures" tabindex="-1">
+          <app-excel-icon name="pictures" [size]="15"></app-excel-icon>
+          <span class="btn-text">Pictures <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon></span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Shapes" tabindex="-1">
+          <app-excel-icon name="shapes" [size]="15"></app-excel-icon>
+          <span class="btn-text">Shapes <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon></span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Icons" tabindex="-1">
+          <app-excel-icon name="icons" [size]="15"></app-excel-icon>
+          <span class="btn-text">Icons</span>
+        </button>
+
+        <!-- Row 2: 3D Models, SmartArt, Screenshot -->
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="3D Models" tabindex="-1">
+          <app-excel-icon name="models3d" [size]="15"></app-excel-icon>
+          <span class="btn-text">3D Models <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon></span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="SmartArt" tabindex="-1">
+          <app-excel-icon name="smartArt" [size]="15"></app-excel-icon>
+          <span class="btn-text">SmartArt</span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Screenshot" tabindex="-1">
+          <app-excel-icon name="screenshot" [size]="15"></app-excel-icon>
+          <span class="btn-text">Screenshot <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon></span>
+        </button>
+      </div>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Illustrations</span>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- 3. Controls (Checkbox) -->
+  <div class="ribbon-group group-controls-sec">
+    <div class="group-controls">
+      <button type="button" class="ribbon-btn btn-large disabled" disabled title="Checkbox" tabindex="-1">
+        <app-excel-icon name="checkbox" [size]="26"></app-excel-icon>
+        <span class="btn-text-sub">Checkbox</span>
+      </button>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Controls</span>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- 4. Charts -->
+  <div class="ribbon-group group-charts">
+    <div class="group-controls">
+      <button type="button" class="ribbon-btn btn-large disabled" disabled title="Recommended Charts" tabindex="-1">
+        <app-excel-icon name="recommendedCharts" [size]="28"></app-excel-icon>
+        <span class="btn-label-multi">Recommended<br/>Charts</span>
+      </button>
+
+      <!-- 4x2 Category Chart Dropdowns Grid -->
+      <div class="charts-categories-grid">
+        <!-- Col 1: Column, Line -->
+        <button
+          type="button"
+          class="ribbon-btn btn-chart-tile"
+          (click)="openChartDialog.emit('column')"
+          title="Insert Column or Bar Chart"
+          data-demo-target="insert-chart-column-btn"
+        >
+          <app-excel-icon name="chartColumn" [size]="16"></app-excel-icon>
+          <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon>
+        </button>
+        <button
+          type="button"
+          class="ribbon-btn btn-chart-tile"
+          (click)="openChartDialog.emit('line')"
+          title="Insert Line or Area Chart"
+          data-demo-target="insert-chart-line-btn"
+        >
+          <app-excel-icon name="chartLine" [size]="16"></app-excel-icon>
+          <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon>
+        </button>
+
+        <!-- Col 2: Hierarchy, Statistic -->
+        <button type="button" class="ribbon-btn btn-chart-tile disabled" disabled title="Insert Hierarchy Chart" tabindex="-1">
+          <app-excel-icon name="chartHierarchy" [size]="16"></app-excel-icon>
+          <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon>
+        </button>
+        <button type="button" class="ribbon-btn btn-chart-tile disabled" disabled title="Insert Statistic Chart" tabindex="-1">
+          <app-excel-icon name="chartStatistic" [size]="16"></app-excel-icon>
+          <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon>
+        </button>
+
+        <!-- Col 3: Waterfall, Combo -->
+        <button type="button" class="ribbon-btn btn-chart-tile disabled" disabled title="Insert Waterfall or Stock Chart" tabindex="-1">
+          <app-excel-icon name="chartWaterfall" [size]="16"></app-excel-icon>
+          <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon>
+        </button>
+        <button type="button" class="ribbon-btn btn-chart-tile disabled" disabled title="Insert Combo Chart" tabindex="-1">
+          <app-excel-icon name="chartCombo" [size]="16"></app-excel-icon>
+          <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon>
+        </button>
+
+        <!-- Col 4: Pie, Scatter / Bar -->
+        <button
+          type="button"
+          class="ribbon-btn btn-chart-tile"
+          (click)="openChartDialog.emit('pie')"
+          title="Insert Pie or Doughnut Chart"
+          data-demo-target="insert-chart-pie-btn"
+        >
+          <app-excel-icon name="chartPie" [size]="16"></app-excel-icon>
+          <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon>
+        </button>
+        <button
+          type="button"
+          class="ribbon-btn btn-chart-tile disabled"
+          disabled
+          title="Insert Scatter or Bar Chart"
+          tabindex="-1"
+          data-demo-target="insert-chart-bar-btn"
+        >
+          <app-excel-icon name="chartScatter" [size]="16"></app-excel-icon>
+          <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon>
+        </button>
+      </div>
+
+      <button type="button" class="ribbon-btn btn-large disabled" disabled title="Maps" tabindex="-1">
+        <app-excel-icon name="maps" [size]="28"></app-excel-icon>
+        <span class="btn-label-with-arrow">
+          Maps <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </span>
+      </button>
+
+      <button type="button" class="ribbon-btn btn-large disabled" disabled title="PivotChart" tabindex="-1">
+        <app-excel-icon name="pivotChart" [size]="28"></app-excel-icon>
+        <span class="btn-label-with-arrow">
+          PivotChart <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </span>
+      </button>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Charts</span>
+      <button type="button" class="dialog-launcher-btn" title="Chart Options" disabled tabindex="-1">
+        <app-excel-icon name="dialogLauncher" [size]="10"></app-excel-icon>
+      </button>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- 5. Sparklines -->
+  <div class="ribbon-group group-sparklines">
+    <div class="group-controls">
+      <div class="subgroup-3rows">
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Line Sparkline" tabindex="-1">
+          <app-excel-icon name="sparklineLine" [size]="15"></app-excel-icon>
+          <span class="btn-text">Line</span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Column Sparkline" tabindex="-1">
+          <app-excel-icon name="sparklineColumn" [size]="15"></app-excel-icon>
+          <span class="btn-text">Column</span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Win/Loss Sparkline" tabindex="-1">
+          <app-excel-icon name="sparklineWinLoss" [size]="15"></app-excel-icon>
+          <span class="btn-text">Win/Loss</span>
+        </button>
+      </div>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Sparklines</span>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- 6. Filters -->
+  <div class="ribbon-group group-filters">
+    <div class="group-controls">
+      <div class="subgroup-2rows">
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Insert Slicer" tabindex="-1">
+          <app-excel-icon name="slicer" [size]="15"></app-excel-icon>
+          <span class="btn-text">Slicer</span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Insert Timeline" tabindex="-1">
+          <app-excel-icon name="timeline" [size]="15"></app-excel-icon>
+          <span class="btn-text">Timeline</span>
+        </button>
+      </div>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Filters</span>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- 7. Links -->
+  <div class="ribbon-group group-links">
+    <div class="group-controls">
+      <button type="button" class="ribbon-btn btn-large disabled" disabled title="Link (Ctrl+K)" tabindex="-1">
+        <app-excel-icon name="link" [size]="26"></app-excel-icon>
+        <span class="btn-text-sub">Link</span>
+      </button>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Links</span>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- 8. Comments -->
+  <div class="ribbon-group group-comments">
+    <div class="group-controls">
+      <button
+        type="button"
+        class="ribbon-btn btn-large"
+        (click)="openCommentDialog.emit()"
+        title="New Comment"
+        data-demo-target="insert-comment-btn"
+      >
+        <app-excel-icon name="comment" [size]="26"></app-excel-icon>
+        <span class="btn-text-sub">Comment</span>
+      </button>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Comments</span>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- 9. Text -->
+  <div class="ribbon-group group-text">
+    <div class="group-controls">
+      <div class="subgroup-3rows">
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Text Box" tabindex="-1">
+          <app-excel-icon name="textBox" [size]="15"></app-excel-icon>
+          <span class="btn-text">Text Box</span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Header & Footer" tabindex="-1">
+          <app-excel-icon name="headerFooter" [size]="15"></app-excel-icon>
+          <span class="btn-text">Header & Footer</span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="WordArt" tabindex="-1">
+          <app-excel-icon name="wordArt" [size]="15"></app-excel-icon>
+          <span class="btn-text">WordArt <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon></span>
+        </button>
+      </div>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Text</span>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- 10. Symbols -->
+  <div class="ribbon-group group-symbols">
+    <div class="group-controls">
+      <div class="subgroup-2rows">
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Equation" tabindex="-1">
+          <app-excel-icon name="equation" [size]="15"></app-excel-icon>
+          <span class="btn-text">Equation</span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Symbol" tabindex="-1">
+          <app-excel-icon name="symbol" [size]="15"></app-excel-icon>
+          <span class="btn-text">Symbol</span>
+        </button>
+      </div>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Symbols</span>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,59 @@
+<div class="modal-backdrop" (click)="onCancel()">
+  <div class="excel-dialog" (click)="$event.stopPropagation()" role="dialog" aria-labelledby="dvDialogTitle">
+    <div class="dialog-header">
+      <span id="dvDialogTitle" class="dialog-title">Data Validation</span>
+      <button type="button" class="close-btn" (click)="onCancel()" aria-label="Close">✕</button>
+    </div>
+
+    <div class="dialog-body">
+      <div class="form-row">
+        <label for="dvRangeInput">Cell range</label>
+        <input
+          id="dvRangeInput"
+          type="text"
+          class="text-input"
+          [ngModel]="range()"
+          (ngModelChange)="range.set($event)"
+          data-demo-target="dv-range-input"
+        />
+      </div>
+
+      <div class="form-row">
+        <label for="dvCriteriaSelect">Allow (Criteria)</label>
+        <select id="dvCriteriaSelect" class="select-input" data-demo-target="dv-criteria-select">
+          <option value="list">List of items</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label for="dvSourceInput">Source (comma-separated items)</label>
+        <input
+          id="dvSourceInput"
+          type="text"
+          class="text-input"
+          placeholder="e.g. Yes, No, Maybe"
+          [ngModel]="itemsText()"
+          (ngModelChange)="itemsText.set($event)"
+          data-demo-target="dv-allowed-input"
+        />
+      </div>
+
+      <div class="form-row">
+        <label class="checkbox-label">
+          <input
+            type="checkbox"
+            [checked]="rejectInvalid()"
+            (change)="rejectInvalid.set($any($event.target).checked)"
+            data-demo-target="dv-reject-chk"
+          />
+          <span>Reject input that doesn't match list</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="dialog-footer">
+      <button type="button" class="btn btn-primary" (click)="onApply()" data-demo-target="dv-done-btn">OK</button>
+      <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+    </div>
+  </div>
+</div>

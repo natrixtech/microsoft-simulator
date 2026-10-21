@@ -1,0 +1,68 @@
+<div class="modal-backdrop" (click)="onCancel()">
+  <div class="excel-dialog" (click)="$event.stopPropagation()" role="dialog" aria-labelledby="ptDialogTitle">
+    <div class="dialog-header">
+      <span id="ptDialogTitle" class="dialog-title">Create PivotTable</span>
+      <button type="button" class="close-btn" (click)="onCancel()" aria-label="Close">✕</button>
+    </div>
+
+    <div class="dialog-body">
+      <div class="form-row">
+        <label for="ptRangeInput">Table/Range</label>
+        <input
+          id="ptRangeInput"
+          type="text"
+          class="text-input"
+          [ngModel]="range()"
+          (ngModelChange)="onRangeChange($event)"
+          data-demo-target="pt-range-input"
+        />
+      </div>
+
+      <div class="form-row">
+        <label for="ptRowsSelect">Rows Field</label>
+        <select
+          id="ptRowsSelect"
+          class="select-input"
+          [ngModel]="selectedRowField()"
+          (ngModelChange)="selectedRowField.set($event)"
+          data-demo-target="pt-rows-select"
+        >
+          <option *ngFor="let f of availableFields()" [value]="f">{{ f }}</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label for="ptValuesSelect">Values Field</label>
+        <select
+          id="ptValuesSelect"
+          class="select-input"
+          [ngModel]="selectedValueField()"
+          (ngModelChange)="selectedValueField.set($event)"
+          data-demo-target="pt-values-select"
+        >
+          <option *ngFor="let f of availableFields()" [value]="f">{{ f }}</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label for="ptSummarizeSelect">Summarize Values By</label>
+        <select
+          id="ptSummarizeSelect"
+          class="select-input"
+          [ngModel]="selectedSummarize()"
+          (ngModelChange)="selectedSummarize.set($event)"
+          data-demo-target="pt-summarize-select"
+        >
+          <option value="SUM">SUM</option>
+          <option value="COUNT">COUNT</option>
+          <option value="AVERAGE">AVERAGE</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="dialog-footer">
+      <button type="button" class="btn btn-primary" (click)="onApply()" data-demo-target="pt-ok-btn">OK</button>
+      <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+    </div>
+  </div>
+</div>

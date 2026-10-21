@@ -17,7 +17,7 @@ export interface LessonTask {
   instructions: string[];
   hint?: string;
   goals: TaskGoal[];
-  showMeHow?: boolean;
+  showMeHow?: boolean | { description?: string; sampleSheet?: any };
   startingDocument?: string | null;
   startingSheet?: any | null;
   startingDeck?: any | null;

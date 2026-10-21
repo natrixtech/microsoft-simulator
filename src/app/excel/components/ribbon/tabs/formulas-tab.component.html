@@ -1,0 +1,288 @@
+<div class="ribbon-tab-content formulas-tab" role="region" aria-label="Formulas Ribbon">
+  <!-- 1. Function Library -->
+  <div class="ribbon-group group-function-library">
+    <div class="group-controls">
+      <button
+        type="button"
+        class="ribbon-btn btn-large"
+        (click)="openInsertFunction.emit()"
+        title="Insert Function (Shift+F3)"
+        data-demo-target="formulas-insert-fn-btn"
+      >
+        <app-excel-icon name="insertFunction" [size]="28"></app-excel-icon>
+        <span class="btn-label-multi">Insert<br/>Function</span>
+      </button>
+
+      <button
+        type="button"
+        class="ribbon-btn btn-large"
+        (click)="autoSum.emit()"
+        title="AutoSum"
+        data-demo-target="formulas-autosum-btn"
+      >
+        <app-excel-icon name="autoSum" [size]="28"></app-excel-icon>
+        <span class="btn-label-with-arrow">
+          AutoSum <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </span>
+      </button>
+
+      <button type="button" class="ribbon-btn btn-large disabled" disabled title="Recently Used" tabindex="-1">
+        <app-excel-icon name="recentlyUsed" [size]="28"></app-excel-icon>
+        <span class="btn-label-multi">
+          Recently<br/>Used <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </span>
+      </button>
+
+      <button type="button" class="ribbon-btn btn-large disabled" disabled title="Financial" tabindex="-1">
+        <app-excel-icon name="financial" [size]="28"></app-excel-icon>
+        <span class="btn-label-with-arrow">
+          Financial <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </span>
+      </button>
+
+      <!-- Logical Category Button -->
+      <button
+        type="button"
+        class="ribbon-btn btn-large"
+        [class.active]="openCategory() === 'logical'"
+        (click)="toggleCategory('logical', $event)"
+        title="Logical"
+        data-demo-target="formulas-logical-btn"
+      >
+        <app-excel-icon name="logical" [size]="28"></app-excel-icon>
+        <span class="btn-label-with-arrow">
+          Logical <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </span>
+      </button>
+
+      <!-- Text Category Button -->
+      <button
+        type="button"
+        class="ribbon-btn btn-large"
+        [class.active]="openCategory() === 'text'"
+        (click)="toggleCategory('text', $event)"
+        title="Text"
+        data-demo-target="formulas-text-btn"
+      >
+        <app-excel-icon name="textFunction" [size]="28"></app-excel-icon>
+        <span class="btn-label-with-arrow">
+          Text <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </span>
+      </button>
+
+      <!-- Date & Time Category Button -->
+      <button
+        type="button"
+        class="ribbon-btn btn-large"
+        [class.active]="openCategory() === 'date'"
+        (click)="toggleCategory('date', $event)"
+        title="Date & Time"
+        data-demo-target="formulas-date-btn"
+      >
+        <app-excel-icon name="dateTime" [size]="28"></app-excel-icon>
+        <span class="btn-label-multi">
+          Date &<br/>Time <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </span>
+      </button>
+
+      <!-- Lookup & Reference Category Button -->
+      <button
+        type="button"
+        class="ribbon-btn btn-large"
+        [class.active]="openCategory() === 'lookup'"
+        (click)="toggleCategory('lookup', $event)"
+        title="Lookup & Reference"
+        data-demo-target="formulas-lookup-btn"
+      >
+        <app-excel-icon name="lookupRef" [size]="28"></app-excel-icon>
+        <span class="btn-label-multi">
+          Lookup &<br/>Reference <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </span>
+      </button>
+
+      <!-- Math & Trig Category Button -->
+      <button
+        type="button"
+        class="ribbon-btn btn-large"
+        [class.active]="openCategory() === 'math'"
+        (click)="toggleCategory('math', $event)"
+        title="Math & Trig"
+      >
+        <app-excel-icon name="mathTrig" [size]="28"></app-excel-icon>
+        <span class="btn-label-multi">
+          Math &<br/>Trig <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </span>
+      </button>
+
+      <button type="button" class="ribbon-btn btn-large disabled" disabled title="More Functions" tabindex="-1">
+        <app-excel-icon name="moreFunctions" [size]="28"></app-excel-icon>
+        <span class="btn-label-multi">
+          More<br/>Functions <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </span>
+      </button>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Function Library</span>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- 2. Defined Names -->
+  <div class="ribbon-group group-defined-names">
+    <div class="group-controls">
+      <button type="button" class="ribbon-btn btn-large disabled" disabled title="Name Manager (Ctrl+F3)" tabindex="-1">
+        <app-excel-icon name="nameManager" [size]="28"></app-excel-icon>
+        <span class="btn-label-multi">Name<br/>Manager</span>
+      </button>
+
+      <div class="subgroup-3rows">
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Define Name" tabindex="-1">
+          <app-excel-icon name="defineName" [size]="15"></app-excel-icon>
+          <span class="btn-text">Define Name <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon></span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Use in Formula" tabindex="-1">
+          <app-excel-icon name="useInFormula" [size]="15"></app-excel-icon>
+          <span class="btn-text">Use in Formula <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon></span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Create from Selection" tabindex="-1">
+          <app-excel-icon name="createFromSelection" [size]="15"></app-excel-icon>
+          <span class="btn-text">Create from Selection</span>
+        </button>
+      </div>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Defined Names</span>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- 3. Formula Auditing -->
+  <div class="ribbon-group group-formula-auditing">
+    <div class="group-controls">
+      <!-- Col 1: Trace Precedents, Dependents, Remove Arrows -->
+      <div class="subgroup-3rows">
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Trace Precedents" tabindex="-1">
+          <app-excel-icon name="tracePrecedents" [size]="15"></app-excel-icon>
+          <span class="btn-text">Trace Precedents</span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Trace Dependents" tabindex="-1">
+          <app-excel-icon name="traceDependents" [size]="15"></app-excel-icon>
+          <span class="btn-text">Trace Dependents</span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Remove Arrows" tabindex="-1">
+          <app-excel-icon name="removeArrows" [size]="15"></app-excel-icon>
+          <span class="btn-text">Remove Arrows <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon></span>
+        </button>
+      </div>
+
+      <!-- Col 2: Show Formulas, Error Checking, Evaluate Formula -->
+      <div class="subgroup-3rows">
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Show Formulas (Ctrl+`)" tabindex="-1">
+          <app-excel-icon name="showFormulas" [size]="15"></app-excel-icon>
+          <span class="btn-text">Show Formulas</span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Error Checking" tabindex="-1">
+          <app-excel-icon name="errorChecking" [size]="15"></app-excel-icon>
+          <span class="btn-text">Error Checking <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon></span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Evaluate Formula" tabindex="-1">
+          <app-excel-icon name="evaluateFormula" [size]="15"></app-excel-icon>
+          <span class="btn-text">Evaluate Formula</span>
+        </button>
+      </div>
+
+      <!-- Col 3: Watch Window -->
+      <button type="button" class="ribbon-btn btn-large disabled" disabled title="Watch Window" tabindex="-1">
+        <app-excel-icon name="watchWindow" [size]="28"></app-excel-icon>
+        <span class="btn-label-multi">Watch<br/>Window</span>
+      </button>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Formula Auditing</span>
+    </div>
+  </div>
+
+  <div class="ribbon-separator"></div>
+
+  <!-- 4. Calculation -->
+  <div class="ribbon-group group-calculation">
+    <div class="group-controls">
+      <button type="button" class="ribbon-btn btn-large disabled" disabled title="Calculation Options" tabindex="-1">
+        <app-excel-icon name="calcOptions" [size]="28"></app-excel-icon>
+        <span class="btn-label-multi">
+          Calculation<br/>Options <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon>
+        </span>
+      </button>
+
+      <div class="subgroup-2rows">
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Calculate Now (F9)" tabindex="-1">
+          <app-excel-icon name="calculateNow" [size]="15"></app-excel-icon>
+          <span class="btn-text">Calculate Now</span>
+        </button>
+        <button type="button" class="ribbon-btn btn-row disabled" disabled title="Calculate Sheet (Shift+F9)" tabindex="-1">
+          <app-excel-icon name="calculateSheet" [size]="15"></app-excel-icon>
+          <span class="btn-text">Calculate Sheet</span>
+        </button>
+      </div>
+    </div>
+    <div class="group-footer">
+      <span class="group-label">Calculation</span>
+    </div>
+  </div>
+</div>
+
+<!-- FIXED POSITION FUNCTION CATEGORY DROPDOWNS -->
+<div
+  class="cat-dropdown fixed-popover"
+  *ngIf="openCategory() === 'logical'"
+  [style.top.px]="catMenuPos().top"
+  [style.left.px]="catMenuPos().left"
+>
+  <button type="button" class="cat-item" (click)="onPickFunction('IF')">IF</button>
+</div>
+
+<div
+  class="cat-dropdown fixed-popover"
+  *ngIf="openCategory() === 'text'"
+  [style.top.px]="catMenuPos().top"
+  [style.left.px]="catMenuPos().left"
+>
+  <button type="button" class="cat-item" (click)="onPickFunction('TEXT')">TEXT</button>
+  <button type="button" class="cat-item" (click)="onPickFunction('CONCATENATE')">CONCATENATE</button>
+</div>
+
+<div
+  class="cat-dropdown fixed-popover"
+  *ngIf="openCategory() === 'date'"
+  [style.top.px]="catMenuPos().top"
+  [style.left.px]="catMenuPos().left"
+>
+  <button type="button" class="cat-item" (click)="onPickFunction('DATE')">DATE</button>
+  <button type="button" class="cat-item" (click)="onPickFunction('TODAY')">TODAY</button>
+  <button type="button" class="cat-item" (click)="onPickFunction('YEAR')">YEAR</button>
+  <button type="button" class="cat-item" (click)="onPickFunction('MONTH')">MONTH</button>
+  <button type="button" class="cat-item" (click)="onPickFunction('DAY')">DAY</button>
+</div>
+
+<div
+  class="cat-dropdown fixed-popover"
+  *ngIf="openCategory() === 'lookup'"
+  [style.top.px]="catMenuPos().top"
+  [style.left.px]="catMenuPos().left"
+>
+  <button type="button" class="cat-item" (click)="onPickFunction('VLOOKUP')">VLOOKUP</button>
+</div>
+
+<div
+  class="cat-dropdown fixed-popover"
+  *ngIf="openCategory() === 'math'"
+  [style.top.px]="catMenuPos().top"
+  [style.left.px]="catMenuPos().left"
+>
+  <button type="button" class="cat-item" (click)="onPickFunction('ROUND')">ROUND</button>
+  <button type="button" class="cat-item" (click)="onPickFunction('SUMIF')">SUMIF</button>
+  <button type="button" class="cat-item" (click)="onPickFunction('COUNTIF')">COUNTIF</button>
+  <button type="button" class="cat-item" (click)="onPickFunction('AVERAGEIF')">AVERAGEIF</button>
+</div>

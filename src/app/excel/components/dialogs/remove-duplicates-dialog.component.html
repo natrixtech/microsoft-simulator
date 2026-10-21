@@ -1,0 +1,77 @@
+<div class="modal-backdrop" (click)="onCancel()">
+  <!-- Main dialog when not showing result message -->
+  <div
+    class="excel-dialog"
+    *ngIf="!resultMessage()"
+    (click)="$event.stopPropagation()"
+    role="dialog"
+    aria-labelledby="rdDialogTitle"
+  >
+    <div class="dialog-header">
+      <span id="rdDialogTitle" class="dialog-title">Remove Duplicates</span>
+      <button type="button" class="close-btn" (click)="onCancel()" aria-label="Close">✕</button>
+    </div>
+
+    <div class="dialog-body">
+      <p class="description-text">
+        To delete duplicate values, select the range of cells where duplicates should be checked and removed.
+      </p>
+
+      <div class="form-row">
+        <label for="rdRangeInput">Range</label>
+        <input
+          id="rdRangeInput"
+          type="text"
+          class="text-input"
+          [ngModel]="range()"
+          (ngModelChange)="range.set($event)"
+          data-demo-target="rd-range-input"
+        />
+      </div>
+
+      <div class="form-row">
+        <label class="checkbox-label">
+          <input
+            type="checkbox"
+            [checked]="hasHeader()"
+            (change)="hasHeader.set($any($event.target).checked)"
+            data-demo-target="rd-has-headers-chk"
+          />
+          <span>My data has headers</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="dialog-footer">
+      <button type="button" class="btn btn-primary" (click)="onRemove()" data-demo-target="rd-remove-btn">
+        Remove Duplicates
+      </button>
+      <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Excel result alert dialog -->
+  <div
+    class="excel-dialog alert-dialog"
+    *ngIf="resultMessage()"
+    (click)="$event.stopPropagation()"
+    role="alertdialog"
+    aria-labelledby="rdAlertTitle"
+  >
+    <div class="dialog-header">
+      <span id="rdAlertTitle" class="dialog-title">Microsoft Excel</span>
+      <button type="button" class="close-btn" (click)="onDismissResult()" aria-label="Close">✕</button>
+    </div>
+
+    <div class="dialog-body alert-body">
+      <div class="alert-icon">ℹ</div>
+      <div class="alert-message">{{ resultMessage() }}</div>
+    </div>
+
+    <div class="dialog-footer">
+      <button type="button" class="btn btn-primary" (click)="onDismissResult()" data-demo-target="rd-alert-ok-btn">
+        OK
+      </button>
+    </div>
+  </div>
+</div>

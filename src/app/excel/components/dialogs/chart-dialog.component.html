@@ -1,0 +1,59 @@
+<div class="modal-backdrop" (click)="onCancel()">
+  <div class="excel-dialog" (click)="$event.stopPropagation()" role="dialog" aria-labelledby="chartDialogTitle">
+    <div class="dialog-header">
+      <span id="chartDialogTitle" class="dialog-title">Insert Chart</span>
+      <button type="button" class="close-btn" (click)="onCancel()" aria-label="Close">✕</button>
+    </div>
+
+    <div class="dialog-body">
+      <div class="form-row">
+        <label for="chartTypeSelect">Chart Type</label>
+        <div class="chart-type-selector">
+          <button
+            type="button"
+            *ngFor="let ct of chartTypes"
+            class="chart-type-card"
+            [class.active]="chartType() === ct.type"
+            [attr.data-demo-target]="'chart-type-' + ct.type"
+            (click)="chartType.set(ct.type)"
+          >
+            <span class="chart-icon">{{ ct.icon }}</span>
+            <span class="chart-label">{{ ct.label }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label for="chartRangeInput">Data Range</label>
+        <input
+          id="chartRangeInput"
+          type="text"
+          class="text-input"
+          [ngModel]="range()"
+          (ngModelChange)="range.set($event)"
+          data-demo-target="chart-range-input"
+        />
+      </div>
+
+      <div class="form-row">
+        <label for="chartTitleInput">Chart Title</label>
+        <input
+          id="chartTitleInput"
+          type="text"
+          class="text-input"
+          placeholder="Chart Title"
+          [ngModel]="title()"
+          (ngModelChange)="title.set($event)"
+          data-demo-target="chart-title-input"
+        />
+      </div>
+    </div>
+
+    <div class="dialog-footer">
+      <button type="button" class="btn btn-primary" (click)="onApply()" data-demo-target="chart-insert-btn">
+        Insert
+      </button>
+      <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,268 @@
+.excel-ribbon-container {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface, #ffffff);
+  border-bottom: 1px solid var(--line, #e1dfdd);
+  user-select: none;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  flex-shrink: 0;
+  width: 100%;
+}
+
+.ribbon-tab-strip {
+  display: flex;
+  align-items: center;
+  height: 31px;
+  background: var(--surface, #ffffff);
+  padding: 0 8px;
+  gap: 2px;
+  border-bottom: 1px solid var(--line, #e1dfdd);
+  flex-shrink: 0;
+  position: relative;
+  overflow: visible;
+  z-index: 50;
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--text, #242424);
+  cursor: pointer;
+  position: relative;
+  white-space: nowrap;
+  border-radius: 3px 3px 0 0;
+  transition: color 0.1s, background 0.1s;
+}
+
+.tab-btn:hover:not(:disabled) {
+  background: var(--soft, #f3f2f1);
+}
+
+.tab-btn.active {
+  font-weight: 600;
+  color: #107c41;
+}
+
+.tab-btn.active::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 6px;
+  right: 6px;
+  height: 3px;
+  background: #107c41;
+  border-radius: 2px 2px 0 0;
+}
+
+.tab-btn:disabled,
+.tab-btn.disabled {
+  color: var(--muted, #8a8886);
+  cursor: default;
+  opacity: 0.7;
+}
+
+.file-tab {
+  color: #107c41;
+  font-weight: 600;
+}
+
+.nitro-tab {
+  color: #f7630c;
+}
+
+.ribbon-panel {
+  height: 98px;
+  min-height: 98px;
+  max-height: 98px;
+  background: var(--surface, #ffffff);
+  flex-shrink: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Dark mode support */
+:host-context([data-theme="dark"]) .excel-ribbon-container,
+:host-context([data-theme="dark"]) .ribbon-tab-strip,
+:host-context([data-theme="dark"]) .ribbon-panel,
+:host-context(.dark-theme) .excel-ribbon-container,
+:host-context(.dark-theme) .ribbon-tab-strip,
+:host-context(.dark-theme) .ribbon-panel {
+  background: #1f1f1f;
+  border-color: #3b3a39;
+}
+
+:host-context([data-theme="dark"]) .tab-btn,
+:host-context(.dark-theme) .tab-btn {
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .tab-btn:hover:not(:disabled),
+:host-context(.dark-theme) .tab-btn:hover:not(:disabled) {
+  background: #2b2b2b;
+}
+
+:host-context([data-theme="dark"]) .tab-btn.active,
+:host-context(.dark-theme) .tab-btn.active {
+  color: #52b99d;
+}
+
+:host-context([data-theme="dark"]) .tab-btn.active::after,
+:host-context(.dark-theme) .tab-btn.active::after {
+  background: #107c41;
+}
+
+:host-context([data-theme="dark"]) .tab-btn:disabled,
+:host-context([data-theme="dark"]) .tab-btn.disabled,
+:host-context(.dark-theme) .tab-btn:disabled,
+:host-context(.dark-theme) .tab-btn.disabled {
+  color: #8a8886;
+  opacity: 0.6;
+}
+
+:host-context([data-theme="dark"]) .file-tab,
+:host-context(.dark-theme) .file-tab {
+  color: #107c41;
+}
+
+:host-context([data-theme="dark"]) .nitro-tab,
+:host-context(.dark-theme) .nitro-tab {
+  color: #f7630c;
+}
+
+/* Search Box */
+.ribbon-search-box {
+  margin-left: auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.menu-search-input {
+  width: 170px;
+  height: 22px;
+  padding: 2px 8px 2px 24px;
+  border-radius: 4px;
+  border: 1px solid var(--line, #d1d1d1);
+  background: var(--soft, #f3f2f1);
+  color: var(--text, #242424);
+  font-size: 11px;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+  transition: width 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.menu-search-input:focus {
+  width: 210px;
+  background: var(--surface, #ffffff);
+  border-color: #107c41;
+  box-shadow: 0 0 0 1px #107c41;
+}
+
+.search-icon {
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted, #616161);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-results-popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  width: 220px;
+  max-height: 260px;
+  overflow-y: auto;
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--line, #d1d1d1);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0;
+  scrollbar-width: thin;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border: none;
+  background: transparent;
+  color: var(--text, #242424);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.search-result-item:hover,
+.search-result-item.highlighted {
+  background: var(--soft, #f3f2f1);
+}
+
+.search-result-item .cmd-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-result-item .cmd-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:host-context([data-theme="dark"]) .menu-search-input,
+:host-context(.dark-theme) .menu-search-input {
+  background: #2b2b2b;
+  border-color: #3b3a39;
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .menu-search-input:focus,
+:host-context(.dark-theme) .menu-search-input:focus {
+  background: #1f1f1f;
+  border-color: #107c41;
+  box-shadow: 0 0 0 1px #107c41;
+}
+
+:host-context([data-theme="dark"]) .search-icon,
+:host-context(.dark-theme) .search-icon {
+  color: #a19f9d;
+}
+
+:host-context([data-theme="dark"]) .search-results-popover,
+:host-context(.dark-theme) .search-results-popover {
+  background: #252423;
+  border-color: #3b3a39;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+:host-context([data-theme="dark"]) .search-result-item,
+:host-context(.dark-theme) .search-result-item {
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .search-result-item:hover,
+:host-context([data-theme="dark"]) .search-result-item.highlighted,
+:host-context(.dark-theme) .search-result-item:hover,
+:host-context(.dark-theme) .search-result-item.highlighted {
+  background: #333230;
+}

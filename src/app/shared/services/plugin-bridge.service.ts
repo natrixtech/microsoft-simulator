@@ -134,17 +134,18 @@ export class PluginBridgeService {
       return;
     }
 
-    if (app === 'excel' || app === 'powerpoint') {
+    if (app === 'powerpoint') {
       this.sendError(`The ${app} editor is not available in this build.`);
       return;
     }
 
-    this.currentKind = 'word';
+    const appKind = app as AppKind;
+    this.currentKind = appKind;
 
     let validated: ActivityPayload;
     try {
-      validated = validateActivity('word', data);
-      validated.app = 'word';
+      validated = validateActivity(appKind, data);
+      validated.app = appKind;
     } catch (err: any) {
       this.sendError(err?.message || 'Invalid activity payload');
       return;

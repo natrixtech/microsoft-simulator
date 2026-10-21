@@ -1,0 +1,84 @@
+<div class="modal-backdrop" (click)="onCancel()">
+  <div class="excel-dialog" (click)="$event.stopPropagation()" role="dialog" aria-labelledby="cfDialogTitle">
+    <div class="dialog-header">
+      <span id="cfDialogTitle" class="dialog-title">Conditional Formatting Rule</span>
+      <button type="button" class="close-btn" (click)="onCancel()" aria-label="Close">✕</button>
+    </div>
+
+    <div class="dialog-body">
+      <div class="form-row">
+        <label for="cfRangeInput">Apply to range</label>
+        <input
+          id="cfRangeInput"
+          type="text"
+          class="text-input"
+          [ngModel]="range()"
+          (ngModelChange)="range.set($event)"
+          data-demo-target="cf-range-input"
+        />
+      </div>
+
+      <div class="form-row">
+        <label for="cfConditionSelect">Format cells if...</label>
+        <select
+          id="cfConditionSelect"
+          class="select-input"
+          [ngModel]="condition()"
+          (ngModelChange)="condition.set($event)"
+          data-demo-target="cf-condition-select"
+        >
+          <option value="greaterThan">Greater than</option>
+          <option value="lessThan">Less than</option>
+          <option value="equals">Is equal to</option>
+          <option value="between">Is between</option>
+          <option value="contains">Text contains</option>
+          <option value="isEmpty">Is empty</option>
+        </select>
+      </div>
+
+      <div class="form-row" *ngIf="condition() !== 'isEmpty'">
+        <label for="cfValueInput">Value or formula</label>
+        <input
+          id="cfValueInput"
+          type="text"
+          class="text-input"
+          [ngModel]="value()"
+          (ngModelChange)="value.set($event)"
+          data-demo-target="cf-value-input"
+        />
+      </div>
+
+      <div class="form-row" *ngIf="condition() === 'between'">
+        <label for="cfValue2Input">and</label>
+        <input
+          id="cfValue2Input"
+          type="text"
+          class="text-input"
+          [ngModel]="value2()"
+          (ngModelChange)="value2.set($event)"
+        />
+      </div>
+
+      <div class="form-row">
+        <label>Formatting style (Fill Color)</label>
+        <div class="color-palette">
+          <button
+            type="button"
+            *ngFor="let c of availableColors"
+            class="color-swatch"
+            [class.active]="selectedColorKey() === c.key"
+            [style.background-color]="c.hex"
+            [title]="c.name"
+            [attr.data-demo-target]="'cf-color-' + c.key"
+            (click)="selectedColorKey.set(c.key)"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="dialog-footer">
+      <button type="button" class="btn btn-primary" (click)="onApply()" data-demo-target="cf-done-btn">Done</button>
+      <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+    </div>
+  </div>
+</div>

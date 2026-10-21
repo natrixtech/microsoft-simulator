@@ -1,0 +1,297 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+}
+
+.excel-simulator-root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: var(--bg, #f3f2f1);
+  color: var(--text, #242424);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Main Work Area */
+
+/* 4. Main Work Area */
+.excel-work-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.assessment-progress-sidebar {
+  width: 42px;
+  background: var(--surface, #ffffff);
+  border-right: 1px solid var(--line, #e1dfdd);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 0;
+  gap: 12px;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.progress-step-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--line, #e0e0e0);
+  color: var(--muted, #616161);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.step-badge.current {
+  background: #2b579a;
+  color: #ffffff;
+}
+
+.step-badge.passed {
+  background: #107c41;
+  color: #ffffff;
+}
+
+/* Floating Movable Task Card Group */
+.excel-floating-card-group {
+  position: absolute;
+  z-index: 100;
+  cursor: default;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  touch-action: none;
+}
+
+.excel-floating-card-group.dragging {
+  user-select: none;
+}
+
+/* 5. Sheet Tabs and Status Bar */
+.excel-statusbar-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 32px;
+  background: var(--surface, #ffffff);
+  border-top: 1px solid var(--line, #e1dfdd);
+  padding: 0 8px;
+  flex-shrink: 0;
+  user-select: none;
+  font-size: 11px;
+  color: var(--text, #323130);
+}
+
+.sheet-tabs-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sheet-nav-btn {
+  background: transparent;
+  border: none;
+  font-size: 10px;
+  color: var(--muted, #8a8886);
+  cursor: default;
+  padding: 2px 4px;
+}
+
+.sheet-tab {
+  display: flex;
+  align-items: center;
+  padding: 4px 12px;
+  font-size: 11px;
+  color: var(--text, #242424);
+  position: relative;
+  background: var(--surface, #ffffff);
+  cursor: pointer;
+}
+
+.sheet-tab.active {
+  font-weight: 600;
+  color: #107c41;
+}
+
+.sheet-tab.active::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 4px;
+  right: 4px;
+  height: 2px;
+  background: #107c41;
+}
+
+.sheet-add-btn {
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  color: var(--muted, #8a8886);
+  cursor: default;
+  padding: 0 6px;
+}
+
+.statusbar-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-ready {
+  font-weight: 500;
+}
+
+.status-item {
+  color: var(--muted, #616161);
+}
+
+.statusbar-views {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.view-icon {
+  font-size: 12px;
+  color: var(--muted, #616161);
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.view-icon.active {
+  color: #107c41;
+}
+
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.zoom-btn {
+  background: transparent;
+  border: none;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--muted, #616161);
+  padding: 0 4px;
+}
+
+.zoom-level {
+  font-size: 10px;
+  min-width: 32px;
+  text-align: center;
+}
+
+/* Dark Theme Overrides */
+:host-context([data-theme="dark"]) .excel-simulator-root,
+:host-context(.dark-theme) .excel-simulator-root,
+.dark-theme {
+  --bg: #1f1f1f;
+  --surface: #1f1f1f;
+  --text: #f3f2f1;
+  --muted: #c8c6c4;
+  --line: #3b3a39;
+  --soft: #242424;
+  --canvas: #1f1f1f;
+}
+
+:host-context([data-theme="dark"]) .excel-statusbar-strip,
+:host-context(.dark-theme) .excel-statusbar-strip,
+.dark-theme .excel-statusbar-strip {
+  background: #1f1f1f;
+  border-color: #3b3a39;
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .sheet-tab,
+:host-context(.dark-theme) .sheet-tab {
+  background: #1f1f1f;
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .sheet-tab.active,
+:host-context(.dark-theme) .sheet-tab.active {
+  background: #242424;
+  color: #52b99d;
+}
+
+:host-context([data-theme="dark"]) .assessment-progress-sidebar,
+:host-context(.dark-theme) .assessment-progress-sidebar {
+  background: #1f1f1f;
+  border-color: #3b3a39;
+}
+
+:host-context([data-theme="dark"]) .step-badge,
+:host-context(.dark-theme) .step-badge {
+  background: #2b2b2b;
+  color: #8a8886;
+}
+
+:host-context([data-theme="dark"]) .step-badge.current,
+:host-context(.dark-theme) .step-badge.current {
+  background: #2b579a;
+  color: #ffffff;
+}
+
+:host-context([data-theme="dark"]) .step-badge.passed,
+:host-context(.dark-theme) .step-badge.passed {
+  background: #107c41;
+  color: #ffffff;
+}
+
+:host-context([data-theme="dark"]) .status-item,
+:host-context([data-theme="dark"]) .view-icon,
+:host-context([data-theme="dark"]) .zoom-btn,
+:host-context([data-theme="dark"]) .sheet-nav-btn,
+:host-context([data-theme="dark"]) .sheet-add-btn,
+:host-context(.dark-theme) .status-item,
+:host-context(.dark-theme) .view-icon,
+:host-context(.dark-theme) .zoom-btn,
+:host-context(.dark-theme) .sheet-nav-btn,
+:host-context(.dark-theme) .sheet-add-btn {
+  color: #c8c6c4;
+}
+
+:host-context([data-theme="dark"]) .view-icon.active,
+:host-context(.dark-theme) .view-icon.active {
+  color: #52b99d;
+}
+
+/* Pause Overlay */
+.pause-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(16, 23, 37, 0.72);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  font-weight: 600;
+  z-index: 20000;
+  user-select: none;
+  pointer-events: auto;
+}
+

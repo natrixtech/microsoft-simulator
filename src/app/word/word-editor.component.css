@@ -1599,52 +1599,6 @@
   animation: none !important;
 }
 
-.teal-card {
-  width: 300px;
-  background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
-  border: 2px solid #38b2ac;
-  border-radius: 18px;
-  padding: 26px 20px;
-  text-align: center;
-  box-shadow: 0 8px 24px rgba(56, 178, 172, 0.18);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  box-sizing: border-box;
-}
-
-.teal-icon {
-  font-size: 36px;
-}
-
-.teal-card h2 {
-  margin: 0;
-  font-size: 19px;
-  color: #234e52;
-  font-weight: 700;
-}
-
-.teal-card p {
-  margin: 0 0 10px;
-  font-size: 13.5px;
-  color: #285e61;
-}
-
-.teal-continue-btn {
-  background: #319795;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  padding: 12px 20px;
-  font: 600 15px var(--ui, 'Lexend', sans-serif);
-  cursor: pointer;
-  width: 100%;
-}
-
-.teal-continue-btn:hover {
-  background: #285e61;
-}
 
 /* -------------------------------------------------------------
    Modal Dialogs & Fixed Backdrop

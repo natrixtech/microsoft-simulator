@@ -76,6 +76,7 @@ export class TaskCardComponent implements OnChanges, OnDestroy {
 
   @Output() readonly checkWork = new EventEmitter<void>();
   @Output() readonly continueNext = new EventEmitter<void>();
+  @Output() readonly startAgain = new EventEmitter<void>();
   @Output() readonly showDemo = new EventEmitter<void>();
   @Output() readonly selectReference = new EventEmitter<string>();
   @Output() readonly nudgePosition = new EventEmitter<{ dx: number; dy: number }>();
@@ -94,7 +95,6 @@ export class TaskCardComponent implements OnChanges, OnDestroy {
   }
 
   get buttonLabel(): string {
-    if (this.isSuccess) return 'Continue →';
     if (!this.hasGoals) return 'Done';
     return 'Check My Work';
   }
@@ -129,9 +129,7 @@ export class TaskCardComponent implements OnChanges, OnDestroy {
   }
 
   onPrimaryAction(): void {
-    if (this.isSuccess) {
-      this.continueNext.emit();
-    } else {
+    if (!this.isSuccess) {
       this.checkWork.emit();
     }
   }

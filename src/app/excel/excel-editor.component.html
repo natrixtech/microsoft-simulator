@@ -1,0 +1,227 @@
+<div class="excel-simulator-root" [class.dark-theme]="isDarkTheme" [class.paused]="bridge.isPaused()" #editorContainer>
+  <!-- 1. Ribbon Bar (Topmost Row) -->
+  <app-excel-ribbon
+    [attr.inert]="isFrozen ? '' : null"
+    [activeTab]="activeTab()"
+    [currentFormat]="currentCellFormat"
+    [hasFilterActive]="!!state.filter()"
+    [canUndo]="history.canUndo()"
+    [canRedo]="history.canRedo()"
+    (undo)="onUndo()"
+    (redo)="onRedo()"
+    (tabChange)="onTabChange($event)"
+    (formatChange)="onFormatChange($event)"
+    (borderChange)="onApplyBorder($event)"
+    (cut)="onCut()"
+    (copy)="onCopy()"
+    (paste)="onPaste()"
+    (openConditionalFormat)="openConditionalFormatDialog()"
+    (openPivotTable)="openPivotTableDialog()"
+    (openChart)="openChartDialog($event)"
+    (openComment)="openCommentDialog()"
+    (openInsertFunction)="openFunctionPickerDialog()"
+    (insertNamedFunction)="onInsertNamedFunction($event)"
+    (autoSum)="onAutoSum($event)"
+    (focusGrid)="focusGrid()"
+    (sortAsc)="onQuickSort('asc')"
+    (sortDesc)="onQuickSort('desc')"
+    (openSortDialog)="openSortDialog()"
+    (toggleFilter)="onToggleFilter()"
+    (openDataValidation)="openDataValidationDialog()"
+    (openRemoveDuplicates)="openRemoveDuplicatesDialog()"
+  ></app-excel-ribbon>
+
+  <!-- 3. Formula Bar -->
+  <app-formula-bar
+    [attr.inert]="isFrozen ? '' : null"
+    [activeCellAddr]="state.activeCell()"
+    [rawValue]="activeCellRaw"
+    [isEditing]="state.isEditing()"
+    (commitEdit)="onFormulaCommit($event)"
+    (cancelEdit)="onFormulaCancel()"
+    (valueChange)="onFormulaValueChange($event)"
+    (openFunctionPicker)="openFunctionPickerDialog()"
+    (navigateAddress)="onFormulaNavigate($event)"
+  ></app-formula-bar>
+
+  <!-- 4. Work Area (Grid + Assessment Bar) -->
+  <main class="excel-work-layout" role="main" #workLayout [attr.inert]="isFrozen ? '' : null">
+    <!-- Left Assessment Progress Strip (only in assessment mode) -->
+    <aside class="assessment-progress-sidebar" *ngIf="isAssessment" aria-label="Assessment progress">
+      <div class="progress-step-indicator" *ngFor="let t of currentActivity()?.tasks; let i = index">
+        <span
+          class="step-badge"
+          [class.passed]="passedTasks().has(i)"
+          [class.current]="taskIndex() === i && !passedTasks().has(i)"
+        >
+          <ng-container *ngIf="passedTasks().has(i)">✓</ng-container>
+          <ng-container *ngIf="!passedTasks().has(i)">{{ i + 1 }}</ng-container>
+        </span>
+      </div>
+    </aside>
+
+    <!-- Spreadsheet Grid -->
+    <app-excel-grid
+      [isCompleted]="isCompleted()"
+      (openFilterDropdown)="onOpenFilterDropdown($event)"
+      (openCommentPopup)="onOpenCommentPopup($event)"
+    ></app-excel-grid>
+
+    <!-- Floating Movable Task Card & Mascot Group -->
+    <div
+      #movableGroup
+      class="excel-floating-card-group"
+      [attr.inert]="isFrozen ? '' : null"
+      [class.dragging]="isDragging()"
+      [style.left.px]="groupX()"
+      [style.top.px]="groupY()"
+      (pointerdown)="onGroupPointerDown($event)"
+      (pointermove)="onGroupPointerMove($event)"
+      (pointerup)="onGroupPointerUp($event)"
+      (pointercancel)="onGroupPointerCancel($event)"
+    >
+      <lib-task-card
+        [appKind]="'excel'"
+        [title]="currentTask?.title || ''"
+        [explanation]="currentTask?.explanation || ''"
+        [instructions]="currentTask?.instructions || []"
+        [hasGoals]="(currentTask?.goals?.length || 0) > 0"
+        [hasShowMeHow]="hasShowMeHow"
+        [isSuccess]="isPassed()"
+        [isDisabled]="isFrozen"
+        [feedbackMessage]="feedbackMsg()"
+        [taskIndex]="taskIndex()"
+        [totalTasks]="totalTasks"
+        [isAssessment]="isAssessment"
+        [assetBaseUrl]="currentActivity()?.assetBaseUrl || './assets/'"
+        (selectReference)="selectReference($event)"
+        (checkWork)="checkWork()"
+        (startAgain)="onStartAgain()"
+        (showDemo)="onShowDemo()"
+        (nudgePosition)="onNudgePosition($event)"
+      ></lib-task-card>
+    </div>
+  </main>
+
+  <!-- 5. Sheet Tabs and Status Bar -->
+  <footer class="excel-statusbar-strip" [attr.inert]="isFrozen ? '' : null">
+    <!-- Sheet tabs -->
+    <div class="sheet-tabs-container">
+      <button type="button" class="sheet-nav-btn disabled" disabled title="First Sheet">◀</button>
+      <button type="button" class="sheet-nav-btn disabled" disabled title="Next Sheet">▶</button>
+      <div class="sheet-tab active" data-demo-target="sheet1-tab">
+        <span>Sheet1</span>
+      </div>
+      <button type="button" class="sheet-add-btn disabled" disabled title="New Sheet">+</button>
+    </div>
+
+    <!-- Status bar items -->
+    <div class="statusbar-info">
+      <span class="status-ready">Ready</span>
+      <span class="status-item">Accessibility: Investigate</span>
+    </div>
+
+    <div class="statusbar-views">
+      <span class="view-icon active" title="Normal">田</span>
+      <span class="view-icon" title="Page Layout">📄</span>
+      <span class="view-icon" title="Page Break Preview">▦</span>
+      <div class="zoom-controls">
+        <button type="button" class="zoom-btn" title="Zoom Out">−</button>
+        <span class="zoom-level">100%</span>
+        <button type="button" class="zoom-btn" title="Zoom In">+</button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Dialogs -->
+  <app-sort-dialog
+    *ngIf="showSortDialog()"
+    [attr.inert]="isFrozen ? '' : null"
+    [rangeStr]="state.selectedRange()"
+    (applySort)="onApplySort($event)"
+    (closeDialog)="closeDialog('sort')"
+  ></app-sort-dialog>
+
+  <app-filter-dropdown
+    *ngIf="showFilterDropdown() && filterDropdownParams()"
+    [attr.inert]="isFrozen ? '' : null"
+    [colIndex]="filterDropdownParams()!.colIndex"
+    [anchorX]="filterDropdownParams()!.anchorX"
+    [anchorY]="filterDropdownParams()!.anchorY"
+    (applyFilter)="onApplyColumnFilter($event)"
+    (sortColumn)="onSortFromFilter($event)"
+    (closeDropdown)="closeDialog('filter')"
+  ></app-filter-dropdown>
+
+  <app-conditional-format-dialog
+    *ngIf="showConditionalFormatDialog()"
+    [attr.inert]="isFrozen ? '' : null"
+    [initialRange]="state.selectedRange()"
+    (addRule)="onAddConditionalFormat($event)"
+    (closeDialog)="closeDialog('condFormat')"
+  ></app-conditional-format-dialog>
+
+  <app-data-validation-dialog
+    *ngIf="showDataValidationDialog()"
+    [attr.inert]="isFrozen ? '' : null"
+    [initialRange]="state.selectedRange()"
+    (addRule)="onAddDataValidation($event)"
+    (closeDialog)="closeDialog('dataVal')"
+  ></app-data-validation-dialog>
+
+  <app-remove-duplicates-dialog
+    *ngIf="showRemoveDuplicatesDialog()"
+    [attr.inert]="isFrozen ? '' : null"
+    [initialRange]="state.selectedRange()"
+    (closeDialog)="closeDialog('removeDup')"
+  ></app-remove-duplicates-dialog>
+
+  <app-chart-dialog
+    *ngIf="showChartDialog()"
+    [attr.inert]="isFrozen ? '' : null"
+    [initialRange]="state.selectedRange()"
+    [initialChartType]="chartDialogInitialType()"
+    (addChart)="onAddChart($event)"
+    (closeDialog)="closeDialog('chart')"
+  ></app-chart-dialog>
+
+  <app-pivot-table-dialog
+    *ngIf="showPivotTableDialog()"
+    [attr.inert]="isFrozen ? '' : null"
+    [initialRange]="state.selectedRange()"
+    (addPivotTable)="onAddPivotTable($event)"
+    (closeDialog)="closeDialog('pivot')"
+  ></app-pivot-table-dialog>
+
+  <app-comment-dialog
+    *ngIf="showCommentDialog()"
+    [attr.inert]="isFrozen ? '' : null"
+    [cellAddress]="commentTargetCell()"
+    (saveComment)="onSaveComment($event)"
+    (deleteComment)="onDeleteComment($event)"
+    (closeDialog)="closeDialog('comment')"
+  ></app-comment-dialog>
+
+  <app-function-picker-dialog
+    *ngIf="showFunctionPicker()"
+    [attr.inert]="isFrozen ? '' : null"
+    (selectFunction)="onInsertNamedFunction($event)"
+    (closeDialog)="closeDialog('fnPicker')"
+  ></app-function-picker-dialog>
+
+  <!-- Pause Overlay -->
+  <div class="pause-overlay" *ngIf="bridge.isPaused()" role="status">
+    Activity paused
+  </div>
+
+  <!-- Excel Show Me How Demo -->
+  <app-excel-demo
+    *ngIf="isDemoOpen()"
+    [title]="currentTask?.title || ''"
+    [goals]="currentTask?.goals || []"
+    [startingSheetSnapshot]="currentTaskSnapshot()"
+    [showMeHow]="currentTask?.showMeHow || currentActivity()?.showMeHow"
+    [isPaused]="bridge.isPaused()"
+    (close)="isDemoOpen.set(false); focusGrid()"
+  ></app-excel-demo>
+</div>

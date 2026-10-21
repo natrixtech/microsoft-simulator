@@ -29,6 +29,7 @@ export class AppComponent implements OnInit {
   readonly isLoading = signal<boolean>(false);
 
   private wordComponentRef: ComponentRef<any> | null = null;
+  private excelComponentRef: ComponentRef<any> | null = null;
 
   constructor(
     public bridge: PluginBridgeService,
@@ -38,8 +39,10 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     this.bridge.onActivity((act: ActivityPayload) => {
-      if (act.app === 'word' && !this.wordComponentRef) {
+      if (act.app === 'word' && this.loadedApp() !== 'word') {
         this.loadWordEditor();
+      } else if (act.app === 'excel' && this.loadedApp() !== 'excel') {
+        this.loadExcelEditor();
       }
     });
 
@@ -53,19 +56,48 @@ export class AppComponent implements OnInit {
     import('./word/word-editor.component')
       .then((m) => {
         this.ngZone.run(() => {
-          if (!this.wordComponentRef) {
-            this.editorContainer.clear();
-            this.wordComponentRef = this.editorContainer.createComponent(m.WordEditorComponent);
-            this.loadedApp.set('word');
-            this.isLoading.set(false);
-            this.cdr.markForCheck();
+          if (this.excelComponentRef) {
+            this.excelComponentRef.destroy();
+            this.excelComponentRef = null;
           }
+          this.editorContainer.clear();
+          this.wordComponentRef = this.editorContainer.createComponent(m.WordEditorComponent);
+          this.loadedApp.set('word');
+          this.isLoading.set(false);
+          this.cdr.markForCheck();
         });
       })
       .catch((err) => {
         this.ngZone.run(() => {
           this.isLoading.set(false);
           this.bridge.sendError('Failed to load Word editor: ' + (err?.message || err));
+          this.cdr.markForCheck();
+        });
+      });
+  }
+
+  private loadExcelEditor(): void {
+    this.isLoading.set(true);
+    this.cdr.markForCheck();
+
+    import('./excel/excel-editor.component')
+      .then((m) => {
+        this.ngZone.run(() => {
+          if (this.wordComponentRef) {
+            this.wordComponentRef.destroy();
+            this.wordComponentRef = null;
+          }
+          this.editorContainer.clear();
+          this.excelComponentRef = this.editorContainer.createComponent(m.ExcelEditorComponent);
+          this.loadedApp.set('excel');
+          this.isLoading.set(false);
+          this.cdr.markForCheck();
+        });
+      })
+      .catch((err) => {
+        this.ngZone.run(() => {
+          this.isLoading.set(false);
+          this.bridge.sendError('Failed to load Excel editor: ' + (err?.message || err));
           this.cdr.markForCheck();
         });
       });

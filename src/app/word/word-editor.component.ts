@@ -86,8 +86,11 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly isDemoOpen = signal<boolean>(false);
   readonly currentTaskSnapshot = signal<TaskStartSnapshot | null>(null);
   private readonly taskStartSnapshots = new Map<number, TaskStartSnapshot>();
-  readonly showFinalTealCard = signal<boolean>(false);
   readonly wordCount = signal<number>(0);
+
+  get isFrozen(): boolean {
+    return this.bridge.isPaused() || this.isCompleted();
+  }
 
   // Movable Group Positioning State (initially bottom-left of work area: left: 14px, bottom: 24px)
   readonly groupX = signal<number | null>(null);
@@ -446,7 +449,6 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.isCompleted.set(false);
     this.feedbackMsg.set('');
     this.isDemoOpen.set(false);
-    this.showFinalTealCard.set(false);
     this.showPageSetup.set(false);
     this.showFindReplace.set(false);
     this.clearFindHighlights();
@@ -1974,14 +1976,32 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       passedSet.add(this.taskIndex());
       this.passedTasks.set(passedSet);
 
+      const total = this.totalTasks();
+      const isLast = this.taskIndex() === total - 1;
+
       if (this.isAssessment()) {
-        const isLast = this.taskIndex() === this.totalTasks() - 1;
         if (!isLast) {
+          if (this.advanceTimer) clearTimeout(this.advanceTimer);
           this.advanceTimer = setTimeout(() => {
             this.loadTaskAtIndex(this.taskIndex() + 1);
           }, 1000);
         } else {
-          this.showFinalTealCard.set(true);
+          const passedCount = passedSet.size;
+          const allTasksPassed = passedCount === total;
+          this.bridge.sendComplete(allTasksPassed, passedCount, total);
+          this.isCompleted.set(true);
+        }
+      } else {
+        if (total > 1 && !isLast) {
+          if (this.advanceTimer) clearTimeout(this.advanceTimer);
+          this.advanceTimer = setTimeout(() => {
+            this.loadTaskAtIndex(this.taskIndex() + 1);
+          }, 1500);
+        } else {
+          const passedCount = passedSet.size;
+          const allTasksPassed = passedCount === total;
+          this.bridge.sendComplete(allTasksPassed, passedCount, total);
+          this.isCompleted.set(true);
         }
       }
     } else {
@@ -1990,26 +2010,41 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  onContinueNext(): void {
+  onStartAgain(): void {
+    if (this.advanceTimer) {
+      clearTimeout(this.advanceTimer);
+      this.advanceTimer = null;
+    }
+    this.isDemoOpen.set(false);
+    this.closeMenus();
+    this.showPageSetup.set(false);
+    this.showFindReplace.set(false);
+    this.clearFindHighlights();
+    this.showCommentDialog.set(false);
+    this.showOrientationPicker.set(false);
+    this.activeRibbonTab.set('Home');
     this.selectedImageEl.set(null);
-    const total = this.totalTasks();
-    const curIdx = this.taskIndex();
+    this.selectedTableEl.set(null);
+    this.selectedTocEl.set(null);
+    this.selectedPageNum.set(false);
+    this.findTextQuery = '';
+    this.replaceTextQuery = '';
+    this.bridge.resetCompleted();
 
-    if (this.isAssessment()) {
-      if (curIdx + 1 < total) {
-        this.loadTaskAtIndex(curIdx + 1);
-        return;
-      }
-      // Last task of assessment: send completed and stop!
-      const passedCount = this.passedTasks().size || total;
-      this.bridge.sendComplete(true, passedCount, total);
-      this.isCompleted.set(true);
-      return;
+    window.getSelection()?.removeAllRanges();
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
     }
 
-    // In a lesson (single task): send completed once and stop!
-    this.bridge.sendComplete(true, 1, 1);
-    this.isCompleted.set(true);
+    const act = this.currentActivity();
+    if (act) {
+      this.loadWordActivity(act);
+    }
+    window.getSelection()?.removeAllRanges();
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    this.cdr.detectChanges();
   }
 
   // --- Movable Task Card & Mascot Group Positioning ---

@@ -1,0 +1,169 @@
+<div class="excel-ribbon-container">
+  <!-- Tab Strip -->
+  <nav class="ribbon-tab-strip" role="tablist" aria-label="Ribbon Tabs">
+    <button type="button" class="tab-btn file-tab disabled" disabled role="tab" aria-selected="false">
+      File
+    </button>
+
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab === 'home'"
+      (click)="selectTab('home')"
+      role="tab"
+      [attr.aria-selected]="activeTab === 'home'"
+      data-demo-target="tab-home"
+    >
+      Home
+    </button>
+
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab === 'insert'"
+      (click)="selectTab('insert')"
+      role="tab"
+      [attr.aria-selected]="activeTab === 'insert'"
+      data-demo-target="tab-insert"
+    >
+      Insert
+    </button>
+
+    <button type="button" class="tab-btn disabled" disabled role="tab" aria-selected="false">
+      Page Layout
+    </button>
+
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab === 'formulas'"
+      (click)="selectTab('formulas')"
+      role="tab"
+      [attr.aria-selected]="activeTab === 'formulas'"
+      data-demo-target="tab-formulas"
+    >
+      Formulas
+    </button>
+
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab === 'data'"
+      (click)="selectTab('data')"
+      role="tab"
+      [attr.aria-selected]="activeTab === 'data'"
+      data-demo-target="tab-data"
+    >
+      Data
+    </button>
+
+    <button type="button" class="tab-btn disabled" disabled role="tab" aria-selected="false">
+      Review
+    </button>
+
+    <button type="button" class="tab-btn disabled" disabled role="tab" aria-selected="false">
+      View
+    </button>
+
+    <button type="button" class="tab-btn disabled" disabled role="tab" aria-selected="false">
+      Automate
+    </button>
+
+    <button type="button" class="tab-btn disabled" disabled role="tab" aria-selected="false">
+      Developer
+    </button>
+
+    <button type="button" class="tab-btn disabled" disabled role="tab" aria-selected="false">
+      Help
+    </button>
+
+    <button type="button" class="tab-btn disabled nitro-tab" disabled role="tab" aria-selected="false">
+      Nitro Pro
+    </button>
+
+    <button type="button" class="tab-btn disabled" disabled role="tab" aria-selected="false">
+      Power Pivot
+    </button>
+
+    <!-- Menus Search Box (Excel style) -->
+    <div class="ribbon-search-box">
+      <app-excel-icon name="search" [size]="13" class="search-icon"></app-excel-icon>
+      <input
+        type="text"
+        class="menu-search-input"
+        placeholder="Search"
+        data-demo-target="menu-search-input"
+        [(ngModel)]="searchQuery"
+        (input)="onSearchInput($event)"
+        (focus)="onSearchFocus()"
+        (blur)="onSearchBlur()"
+        (keydown)="onSearchKeyDown($event)"
+      />
+      <!-- Dropdown Results -->
+      <div
+        class="search-results-popover"
+        *ngIf="isSearchOpen && filteredCommands.length > 0"
+        (mousedown)="$event.preventDefault()"
+      >
+        <button
+          type="button"
+          *ngFor="let cmd of filteredCommands; let i = index"
+          class="search-result-item"
+          [class.highlighted]="i === selectedCommandIndex"
+          (click)="executeCommand(cmd)"
+        >
+          <app-excel-icon *ngIf="cmd.icon" [name]="cmd.icon" [size]="16" class="cmd-icon"></app-excel-icon>
+          <span class="cmd-label">{{ cmd.label }}</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Active Tab Content Area -->
+  <div class="ribbon-panel" role="tabpanel">
+    <app-home-tab
+      *ngIf="activeTab === 'home'"
+      [currentFormat]="currentFormat"
+      [canUndo]="canUndo"
+      [canRedo]="canRedo"
+      (undo)="undo.emit()"
+      (redo)="redo.emit()"
+      (formatChange)="formatChange.emit($event)"
+      (borderChange)="borderChange.emit($event)"
+      (cut)="cut.emit()"
+      (copy)="copy.emit()"
+      (paste)="paste.emit()"
+      (openConditionalFormat)="openConditionalFormat.emit()"
+      (autoSum)="autoSum.emit($event)"
+      (openInsertFunction)="openInsertFunction.emit()"
+      (quickSort)="($event === 'asc' ? sortAsc.emit() : sortDesc.emit())"
+      (openSortDialog)="openSortDialog.emit()"
+      (toggleFilter)="toggleFilter.emit()"
+    ></app-home-tab>
+
+    <app-insert-tab
+      *ngIf="activeTab === 'insert'"
+      (openPivotTableDialog)="openPivotTable.emit()"
+      (openChartDialog)="openChart.emit($event)"
+      (openCommentDialog)="openComment.emit()"
+    ></app-insert-tab>
+
+    <app-formulas-tab
+      *ngIf="activeTab === 'formulas'"
+      (openInsertFunction)="openInsertFunction.emit()"
+      (insertNamedFunction)="insertNamedFunction.emit($event)"
+      (autoSum)="autoSum.emit()"
+    ></app-formulas-tab>
+
+    <app-data-tab
+      *ngIf="activeTab === 'data'"
+      [hasFilterActive]="hasFilterActive"
+      (sortAsc)="sortAsc.emit()"
+      (sortDesc)="sortDesc.emit()"
+      (openSortDialog)="openSortDialog.emit()"
+      (toggleFilter)="toggleFilter.emit()"
+      (openDataValidation)="openDataValidation.emit()"
+      (openRemoveDuplicates)="openRemoveDuplicates.emit()"
+    ></app-data-tab>
+  </div>
+</div>

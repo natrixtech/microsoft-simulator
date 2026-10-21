@@ -1,0 +1,187 @@
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.comment-popup {
+  width: 360px;
+  background: var(--surface, #ffffff);
+  color: var(--text, #242424);
+  border-radius: 4px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--line, #d1d1d1);
+  display: flex;
+  flex-direction: column;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  font-size: 13px;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line, #e0e0e0);
+}
+
+.dialog-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--muted, #616161);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.close-btn:hover {
+  background: var(--soft, #f3f3f3);
+}
+
+.dialog-body {
+  padding: 12px 14px;
+}
+
+.comment-textarea {
+  width: 100%;
+  border: 1px solid var(--line, #d1d1d1);
+  border-radius: 3px;
+  padding: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  background: var(--surface, #ffffff);
+  color: var(--text, #242424);
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.comment-textarea:focus {
+  outline: 2px solid #107c41;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--line, #e0e0e0);
+  background: var(--soft, #f8f8f8);
+}
+
+.btn {
+  padding: 5px 14px;
+  font-size: 12px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-primary {
+  background: #107c41;
+  color: #ffffff;
+  border: 1px solid #107c41;
+}
+
+.btn-primary:hover {
+  background: #0e6b38;
+}
+
+.btn-secondary {
+  background: var(--surface, #ffffff);
+  color: var(--text, #242424);
+  border: 1px solid var(--line, #d1d1d1);
+}
+
+.btn-secondary:hover {
+  background: var(--soft, #f3f3f3);
+}
+
+.btn-danger {
+  background: #d83b01;
+  color: #ffffff;
+  border: 1px solid #d83b01;
+}
+
+.btn-danger:hover {
+  background: #c43501;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* Dark Theme Overrides */
+:host-context([data-theme="dark"]) .modal-backdrop,
+:host-context(.dark-theme) .modal-backdrop {
+  background: rgba(0, 0, 0, 0.65);
+}
+
+:host-context([data-theme="dark"]) .comment-popup,
+:host-context(.dark-theme) .comment-popup {
+  background: #242424;
+  color: #f3f2f1;
+  border-color: #3b3a39;
+}
+
+:host-context([data-theme="dark"]) .dialog-header,
+:host-context(.dark-theme) .dialog-header {
+  border-bottom-color: #3b3a39;
+}
+
+:host-context([data-theme="dark"]) .dialog-title,
+:host-context(.dark-theme) .dialog-title {
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .close-btn,
+:host-context(.dark-theme) .close-btn {
+  color: #c8c6c4;
+}
+
+:host-context([data-theme="dark"]) .close-btn:hover,
+:host-context(.dark-theme) .close-btn:hover {
+  background: #323130;
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .comment-textarea,
+:host-context(.dark-theme) .comment-textarea {
+  background: #2b2b2b;
+  color: #f3f2f1;
+  border-color: #484644;
+}
+
+:host-context([data-theme="dark"]) .dialog-footer,
+:host-context(.dark-theme) .dialog-footer {
+  background: #1f1f1f;
+  border-top-color: #3b3a39;
+}
+
+:host-context([data-theme="dark"]) .btn-secondary,
+:host-context(.dark-theme) .btn-secondary {
+  background: #2b2b2b;
+  color: #f3f2f1;
+  border-color: #484644;
+}
+
+:host-context([data-theme="dark"]) .btn-secondary:hover,
+:host-context(.dark-theme) .btn-secondary:hover {
+  background: #323130;
+}

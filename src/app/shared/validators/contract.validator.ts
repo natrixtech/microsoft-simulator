@@ -77,8 +77,39 @@ export function validateActivity(kind: AppKind, data: unknown): ActivityPayload 
     throw new Error('theme must be LIGHT or DARK.');
   }
 
-  if (act['showMeHow'] !== undefined && typeof act['showMeHow'] !== 'boolean') {
-    throw new Error('showMeHow must be a boolean.');
+  const validateShowMeHow = (val: unknown) => {
+    if (val === undefined) return;
+    if (kind === 'excel') {
+      if (typeof val === 'boolean') return;
+      if (typeof val === 'object' && val !== null && !Array.isArray(val)) {
+        const smh = val as Record<string, any>;
+        if (smh['description'] !== undefined && typeof smh['description'] !== 'string') {
+          throw new Error('description must be a string.');
+        }
+        if (smh['sampleSheet'] !== undefined) {
+          const ss = smh['sampleSheet'];
+          if (!ss || typeof ss !== 'object' || Array.isArray(ss)) {
+            throw new Error('sampleSheet.cells must be an object.');
+          }
+          if (
+            ss['cells'] !== undefined &&
+            (!ss['cells'] || typeof ss['cells'] !== 'object' || Array.isArray(ss['cells']))
+          ) {
+            throw new Error('sampleSheet.cells must be an object.');
+          }
+        }
+        return;
+      }
+      throw new Error('showMeHow must be a boolean or an object.');
+    } else {
+      if (typeof val !== 'boolean') {
+        throw new Error('showMeHow must be a boolean.');
+      }
+    }
+  };
+
+  if (act['showMeHow'] !== undefined) {
+    validateShowMeHow(act['showMeHow']);
   }
 
   const validateGoals = (goals: unknown[]) => {
@@ -238,8 +269,8 @@ export function validateActivity(kind: AppKind, data: unknown): ActivityPayload 
         );
       }
 
-      if (t['showMeHow'] !== undefined && typeof t['showMeHow'] !== 'boolean') {
-        throw new Error('showMeHow must be a boolean.');
+      if (t['showMeHow'] !== undefined) {
+        validateShowMeHow(t['showMeHow']);
       }
       validateGoals(t['goals'] || []);
 

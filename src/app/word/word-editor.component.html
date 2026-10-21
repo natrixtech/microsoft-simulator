@@ -14,7 +14,7 @@
   </header>
 
   <!-- Ribbon Tabs Bar -->
-  <nav class="ribbon-tabs-strip" [class.has-open-menu]="openMenuName() !== null" aria-label="Ribbon Tabs" [attr.inert]="bridge.isPaused() ? '' : null">
+  <nav class="ribbon-tabs-strip" [class.has-open-menu]="openMenuName() !== null" aria-label="Ribbon Tabs" [attr.inert]="isFrozen ? '' : null">
     <div class="ribbon-tab-list">
       <!-- File Tab (Disabled) -->
       <button type="button" class="ribbon-tab-btn disabled" disabled>File</button>
@@ -81,7 +81,7 @@
   </nav>
 
   <!-- Ribbon Command Bar -->
-  <div class="ribbon-command-bar" [attr.inert]="bridge.isPaused() ? '' : null">
+  <div class="ribbon-command-bar" [attr.inert]="isFrozen ? '' : null">
     <ng-container *ngIf="activeRibbonTab() === 'Home'">
       <!-- 1. Undo Group -->
       <div class="ribbon-group group-undo">
@@ -1921,7 +1921,7 @@
     </aside>
 
     <!-- Main Document Canvas & Status Bar -->
-    <section class="work" aria-label="Word document workspace" [attr.inert]="bridge.isPaused() ? '' : null">
+    <section class="work" aria-label="Word document workspace" [attr.inert]="isFrozen ? '' : null">
       <div class="word-canvas" (click)="onPaperClick($event)">
         <!-- Document Pages Container (Multi-Page Vertical Flow) -->
         <div
@@ -2261,16 +2261,7 @@
       (pointerup)="onGroupPointerUp($event)"
       (pointercancel)="onGroupPointerCancel($event)"
     >
-      <div class="teal-card" *ngIf="showFinalTealCard()">
-        <div class="teal-icon">🎉</div>
-        <h2>Assessment complete!</h2>
-        <p>Great work.</p>
-        <button type="button" class="teal-continue-btn" (click)="onContinueNext()">
-          Continue →
-        </button>
-      </div>
-
-      <ng-container *ngIf="!showFinalTealCard() && currentTask()">
+      <ng-container *ngIf="currentTask()">
         <lib-task-card
           [appKind]="'word'"
           [title]="currentTask()?.title || ''"
@@ -2279,14 +2270,14 @@
           [hasGoals]="(currentTask()?.goals?.length || 0) > 0"
           [hasShowMeHow]="currentTask()?.showMeHow === true"
           [isSuccess]="isPassed()"
-          [isDisabled]="bridge.isPaused() || isCompleted()"
+          [isDisabled]="isFrozen"
           [feedbackMessage]="feedbackMsg()"
           [isAssessment]="isAssessment()"
           [taskIndex]="taskIndex()"
           [totalTasks]="totalTasks()"
           [assetBaseUrl]="currentActivity()?.assetBaseUrl || './assets/'"
           (checkWork)="onCheckWork()"
-          (continueNext)="onContinueNext()"
+          (startAgain)="onStartAgain()"
           (showDemo)="openDemoModal()"
           (nudgePosition)="onNudgePosition($event)"
         ></lib-task-card>

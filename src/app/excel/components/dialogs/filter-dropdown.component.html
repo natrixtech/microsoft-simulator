@@ -1,0 +1,99 @@
+<div class="filter-dropdown-backdrop" (click)="onCancel()">
+  <div
+    class="filter-dropdown-menu"
+    [style.left.px]="anchorX"
+    [style.top.px]="anchorY"
+    (click)="$event.stopPropagation()"
+    role="menu"
+  >
+    <!-- Sorting Actions -->
+    <div class="filter-action-group">
+      <button type="button" class="menu-action" (click)="onSort('asc')" data-demo-target="filter-sort-asc-btn">
+        <span class="icon">⬆</span> Sort A to Z
+      </button>
+      <button type="button" class="menu-action" (click)="onSort('desc')" data-demo-target="filter-sort-desc-btn">
+        <span class="icon">⬇</span> Sort Z to A
+      </button>
+    </div>
+
+    <div class="menu-divider"></div>
+
+    <!-- Condition toggle -->
+    <div class="filter-action-group">
+      <button
+        type="button"
+        class="menu-action toggle-condition"
+        (click)="showConditionForm.set(!showConditionForm())"
+        data-demo-target="filter-condition-toggle-btn"
+      >
+        <span class="icon">⚡</span> Filter by condition...
+      </button>
+
+      <div class="condition-form" *ngIf="showConditionForm()">
+        <label class="sr-only" for="filterConditionSelect">Filter condition</label>
+        <select
+          id="filterConditionSelect"
+          [ngModel]="conditionType()"
+          (ngModelChange)="conditionType.set($event)"
+          data-demo-target="filter-condition-select"
+        >
+          <option value="greaterThan">Greater than</option>
+          <option value="lessThan">Less than</option>
+          <option value="equals">Equals</option>
+          <option value="between">Between</option>
+          <option value="contains">Text contains</option>
+          <option value="isEmpty">Is empty</option>
+        </select>
+
+        <input
+          type="text"
+          class="cond-input"
+          placeholder="Value"
+          *ngIf="conditionType() !== 'isEmpty'"
+          [ngModel]="conditionVal1()"
+          (ngModelChange)="conditionVal1.set($event)"
+          data-demo-target="filter-condition-val-input"
+        />
+
+        <input
+          type="text"
+          class="cond-input"
+          placeholder="Second value"
+          *ngIf="conditionType() === 'between'"
+          [ngModel]="conditionVal2()"
+          (ngModelChange)="conditionVal2.set($event)"
+        />
+      </div>
+    </div>
+
+    <div class="menu-divider"></div>
+
+    <!-- Value Checkboxes List -->
+    <div class="values-list-header">Filter by value:</div>
+    <div class="values-list-box">
+      <label class="val-item">
+        <input
+          type="checkbox"
+          [checked]="selectAll()"
+          (change)="onToggleSelectAll($any($event.target).checked)"
+          data-demo-target="filter-select-all-chk"
+        />
+        <span class="val-text">(Select All)</span>
+      </label>
+
+      <label class="val-item" *ngFor="let val of allValues()">
+        <input
+          type="checkbox"
+          [checked]="selectedValues().has(val)"
+          (change)="onToggleValue(val, $any($event.target).checked)"
+        />
+        <span class="val-text">{{ val }}</span>
+      </label>
+    </div>
+
+    <div class="menu-footer">
+      <button type="button" class="btn btn-primary" (click)="onApply()" data-demo-target="filter-ok-btn">OK</button>
+      <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+    </div>
+  </div>
+</div>

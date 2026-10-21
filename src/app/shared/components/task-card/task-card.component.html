@@ -72,7 +72,17 @@
         *ngIf="feedbackMessage && !isSuccess"
         role="status"
       >
-        {{ feedbackMessage }}
+        <div class="feedback-text">{{ feedbackMessage }}</div>
+        <div class="start-again-container">
+          <button
+            type="button"
+            class="start-again-btn"
+            (click)="startAgain.emit()"
+            data-demo-target="start-again-btn"
+          >
+            Start Again
+          </button>
+        </div>
       </div>
     </div>
 
@@ -81,9 +91,8 @@
       <p class="success" *ngIf="isSuccess" role="status">Well done! You've got this!</p>
       <button
         type="button"
-        class="btn"
-        [class.win]="isSuccess"
-        [class.ready]="!isSuccess"
+        class="btn ready"
+        *ngIf="!isSuccess"
         [disabled]="isDisabled"
         (click)="onPrimaryAction()"
         data-demo-target="check-work-btn"
