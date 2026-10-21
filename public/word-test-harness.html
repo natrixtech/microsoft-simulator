@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Word Simulator &mdash; Developer / QA Test Harness</title>
+    <style>
+      :root { color-scheme: light; }
+      body { margin: 0; font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background: #f8fafc; color: #0f172a; padding: 20px; }
+      header { margin-bottom: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; }
+      h1 { margin: 0 0 6px; font-size: 20px; color: #1e293b; }
+      .badge { display: inline-block; background: #fef3c7; color: #92400e; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; border: 1px solid #fde68a; margin-bottom: 8px; }
+      .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+      .nav-group { display: flex; align-items: center; gap: 6px; background: #e2e8f0; padding: 4px 8px; border-radius: 6px; }
+      select, button, textarea { font-family: inherit; font-size: 13px; }
+      select, button { padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; }
+      button.primary { background: #185abd; color: white; border-color: #114999; font-weight: 600; }
+      button.nav-btn { background: #0f172a; color: white; border-color: #0f172a; font-weight: 600; }
+      button:hover { opacity: 0.9; }
+      .lesson-indicator { font-size: 12px; font-weight: 700; color: #1e293b; padding: 0 4px; }
+      .auto-advance-label { font-size: 12px; display: flex; align-items: center; gap: 4px; color: #475569; margin-left: 6px; cursor: pointer; }
+      iframe { width: 100%; height: 750px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+      .log-panel { margin-top: 16px; }
+      pre { background: #1e293b; color: #f8fafc; padding: 12px; border-radius: 6px; font-family: Consolas, monospace; font-size: 12px; max-height: 180px; overflow-y: auto; }
+      details { margin-top: 12px; }
+      textarea { width: 100%; height: 160px; font-family: Consolas, monospace; font-size: 12px; box-sizing: border-box; padding: 8px; margin-top: 6px; }
+      .status-pill { font-size: 12px; padding: 3px 8px; border-radius: 12px; background: #dcfce7; color: #166534; font-weight: 600; display: none; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <span class="badge">Developer / QA test harness &mdash; not the production learner interface</span>
+      <h1>Word Processing Simulator &mdash; Test Harness</h1>
+    </header>
+
+    <div class="controls">
+      <!-- Lesson Navigation Group -->
+      <div class="nav-group">
+        <button id="prev-lesson-btn" title="Previous Lesson">◀ Prev</button>
+        <span id="lesson-indicator" class="lesson-indicator">Lesson 1 of 14</span>
+        <button id="next-lesson-btn" class="nav-btn" title="Next Lesson">Next Lesson ▶</button>
+      </div>
+
+      <label for="lesson-select"><strong>Activity:</strong></label>
+      <select id="lesson-select">
+        <option value="bold">Lesson 1: Apply Bold (textStyle)</option>
+        <option value="italic">Lesson 2: Apply Italic (textStyle)</option>
+        <option value="underline">Lesson 3: Apply Underline (textStyle)</option>
+        <option value="paragraph">Lesson 4: Center Heading (paragraph)</option>
+        <option value="list">Lesson 5: Make Bulleted List (list)</option>
+        <option value="textContains">Lesson 6: Find and Replace Spelling (textContains)</option>
+        <option value="textCount">Lesson 7: Duplicate Practice (textCount)</option>
+        <option value="textOrder">Lesson 8: Sentence Order (textOrder)</option>
+        <option value="pageSetup">Lesson 9: Change Page Setup (pageSetup)</option>
+        <option value="table">Lesson 10: Insert Table (table)</option>
+        <option value="assessment">Lesson 11: Multi-Task Skills Assessment (3 tasks)</option>
+        <option value="image">Lesson 12: Insert and Align Picture (image)</option>
+        <option value="element">Lesson 13: Add Page Header (element)</option>
+        <option value="action">Lesson 14: Undo Editing Mistake (action)</option>
+      </select>
+
+      <button id="load-btn" class="primary">Load Activity</button>
+
+      <label class="auto-advance-label">
+        <input type="checkbox" id="auto-advance-chk" checked />
+        Auto-advance to Next Lesson on completion
+      </label>
+
+      <span id="status-pill" class="status-pill">Next lesson loaded ✓</span>
+
+      <span style="flex: 1;"></span>
+      <button id="light-btn">Light</button>
+      <button id="dark-btn">Dark</button>
+      <button id="pause-btn">Pause</button>
+      <button id="resume-btn">Resume</button>
+      <button id="finish-btn">Force Finish</button>
+    </div>
+
+    <iframe id="plugin" src="./index.html"></iframe>
+
+    <div class="log-panel">
+      <h3>Host Message Log</h3>
+      <pre id="log-monitor">(Waiting for messages from simulator...)</pre>
+    </div>
+
+    <details>
+      <summary><strong>Custom Activity JSON Payload</strong></summary>
+      <textarea id="custom-json"></textarea>
+      <button id="send-json-btn" class="primary" style="margin-top: 8px;">Send Custom Activity</button>
+    </details>
+
+    <script type="module">
+      const frame = document.querySelector('#plugin');
+      const logMonitor = document.querySelector('#log-monitor');
+      const select = document.querySelector('#lesson-select');
+      const jsonArea = document.querySelector('#custom-json');
+      const indicator = document.querySelector('#lesson-indicator');
+      const autoAdvanceChk = document.querySelector('#auto-advance-chk');
+      const statusPill = document.querySelector('#status-pill');
+      const log = [];
+
+      const samples = {
+        bold: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Apply Bold',
+          tasks: [
+            {
+              title: 'Apply bold',
+              explanation: 'You can bold a word or phrase to make it stand out. Bold text catches the eye and signals what is most important.',
+              instructions: ['Select the word `really`.', 'Click the Bold (B) button in the toolbar.'],
+              hint: 'Double-click the word to select it, then click B.',
+              startingDocument: '<p>I really like pizza.</p>',
+              goals: [{ type: 'textStyle', text: 'really', bold: true }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        italic: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Apply Italic',
+          tasks: [
+            {
+              title: 'Apply italic',
+              explanation: 'Italic text leans slightly forward and is commonly used for emphasis, titles, and foreign words.',
+              instructions: ['Select the word `fox`.', 'Click the Italic (I) button in the toolbar.'],
+              hint: 'Double-click the word fox, then click the I button.',
+              startingDocument: '<p>The quick brown fox jumps over the lazy dog.</p>',
+              goals: [{ type: 'textStyle', text: 'fox', italic: true }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        underline: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Apply Underline',
+          tasks: [
+            {
+              title: 'Apply underline',
+              explanation: 'Underline adds a clean horizontal rule beneath key words for strong emphasis.',
+              instructions: ['Select the phrase `Important notice`.', 'Click the Underline (U) button in the toolbar.'],
+              hint: 'Highlight Important notice and click U.',
+              startingDocument: '<p>Important notice: please review the safety guidelines before class.</p>',
+              goals: [{ type: 'textStyle', text: 'Important notice', underline: true }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        paragraph: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Center Heading',
+          tasks: [
+            {
+              title: 'Center heading',
+              explanation: 'Centering titles and main headings balances the top of your document.',
+              instructions: ['Click inside the heading `School Newsletter`.', 'Click Center Align in the toolbar.'],
+              hint: 'Click inside School Newsletter, then click the Center align icon.',
+              startingDocument: '<h1>School Newsletter</h1><p>Welcome to our new school semester!</p>',
+              goals: [{ type: 'paragraph', text: 'School Newsletter', align: 'center' }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        list: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Make Bulleted List',
+          tasks: [
+            {
+              title: 'Create bulleted list',
+              explanation: 'Bulleted lists format key items so they are easy to scan and read.',
+              instructions: ['Select `Apples` and `Pears`.', 'Click the Bulleted list button in the toolbar.'],
+              hint: 'Highlight both lines and click the bullet list icon.',
+              startingDocument: '<p>Grocery List</p><p>Apples</p><p>Pears</p>',
+              goals: [{ type: 'list', items: ['Apples', 'Pears'], listType: 'bullet', level: 0 }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        textContains: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Correct Spelling',
+          tasks: [
+            {
+              title: 'Find and replace',
+              explanation: 'Use Find and replace or direct editing to fix spelling errors throughout your document.',
+              instructions: ['Correct the misspelling of `recieve` so it says `receive`.'],
+              hint: 'Change recieve to receive.',
+              startingDocument: '<p>We are excited to recieve your application.</p>',
+              goals: [{ type: 'textContains', contains: ['receive'], notContains: ['recieve'] }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        textCount: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Duplicate Text',
+          tasks: [
+            {
+              title: 'Copy and paste',
+              explanation: 'Duplicating repeated text saves time when authoring documents.',
+              instructions: ['Copy and paste `Pizza is great.` so it appears exactly 2 times.'],
+              hint: 'Copy the sentence and paste it onto a new line.',
+              startingDocument: '<p>Pizza is great.</p>',
+              goals: [{ type: 'textCount', text: 'Pizza is great.', count: 2 }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        textOrder: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Sentence Order',
+          tasks: [
+            {
+              title: 'Rearrange sentences',
+              explanation: 'Cut and paste sentences to ensure ideas follow a clear sequential order.',
+              instructions: ['Move `First.` so that it appears before `Second.`.'],
+              hint: 'Cut First. and paste it before Second.',
+              startingDocument: '<p>Second.</p><p>First.</p>',
+              goals: [{ type: 'textOrder', sequence: ['First.', 'Second.'] }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        pageSetup: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Change Page Setup',
+          tasks: [
+            {
+              title: 'Page orientation',
+              explanation: 'Change page orientation between portrait and landscape for wide content like flyers and charts.',
+              instructions: ['Open Layout > Page setup (or Orientation).', 'Set orientation to `landscape` and click Apply.'],
+              hint: 'Click Layout, Page setup, choose Landscape, and click Apply (or choose Orientation > Landscape).',
+              startingDocument: '<p>Landscape flyer presentation.</p>',
+              goals: [{ type: 'pageSetup', orientation: 'landscape' }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        table: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Insert Table',
+          tasks: [
+            {
+              title: 'Insert 2x2 table',
+              explanation: 'Tables organize information into clean rows and columns.',
+              instructions: ['Click Insert > Table to insert a 2x2 table.'],
+              hint: 'Select Insert > Table (2x2).',
+              startingDocument: '<p>Schedule Table:</p>',
+              goals: [{ type: 'table', rows: 2, columns: 2 }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        assessment: {
+          app: 'word',
+          mode: 'assessment',
+          title: 'Word Skills Assessment',
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT',
+          tasks: [
+            {
+              title: 'Apply bold',
+              explanation: 'You can bold a word or phrase to make it stand out.',
+              instructions: ['Select the word `really`.', 'Click the Bold (B) button in the toolbar.'],
+              hint: 'Double-click the word to select it, then click B.',
+              startingDocument: '<p>I really like learning new computer skills.</p>',
+              goals: [{ type: 'textStyle', text: 'really', bold: true }],
+              showMeHow: true
+            },
+            {
+              title: 'Apply italic',
+              explanation: 'Italic text leans slightly to the right.',
+              instructions: ['Select the word `learning`.', 'Click the Italic (I) button in the toolbar.'],
+              hint: 'Double-click the word, then click I.',
+              startingDocument: null,
+              goals: [{ type: 'textStyle', text: 'learning', italic: true }],
+              showMeHow: true
+            },
+            {
+              title: 'Add heading',
+              explanation: 'Headings introduce sections.',
+              instructions: ['Add the word `Summary` to the document.'],
+              hint: 'Type Summary at the end of the document.',
+              startingDocument: null,
+              goals: [{ type: 'textContains', contains: ['Summary'] }],
+              showMeHow: true
+            }
+          ]
+        },
+        image: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Insert and Align Picture',
+          tasks: [
+            {
+              title: 'Insert and center picture',
+              explanation: 'Illustrations and graphics can be inserted into documents and formatted to align with your text.',
+              instructions: [
+                'Click Insert in the ribbon menu and select Picture.',
+                'Select books.svg and click Insert.',
+                'Click the inserted picture to reveal options, then click Center.'
+              ],
+              hint: 'Go to Insert > Picture, insert the image, click it, and choose Center.',
+              startingDocument: '<p>Reading books expands your perspective and enhances creativity.</p>',
+              goals: [{ type: 'image', file: 'books.svg', align: 'center' }],
+              showMeHow: true
+            }
+          ],
+          images: [{ file: 'books.svg', alt: 'A stack of books' }],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        element: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Insert Page Header',
+          tasks: [
+            {
+              title: 'Add a header',
+              explanation: 'Headers appear at the top of every page and help readers track document context.',
+              instructions: [
+                'Click Insert in the ribbon menu.',
+                'Select Page Header to insert a header at the top of the document.'
+              ],
+              hint: 'Click Insert > Page Header.',
+              startingDocument: '<p>Quarterly summary of activities and milestones.</p>',
+              goals: [{ type: 'element', element: 'header' }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        action: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Undo Editing Mistake',
+          tasks: [
+            {
+              title: 'Undo an action',
+              explanation: 'The Undo command lets you quickly reverse your last action or typing mistake.',
+              instructions: [
+                'Make a change or select text in the document.',
+                'Click the Undo button in the toolbar (or press Ctrl+Z) to reverse the change.'
+              ],
+              hint: 'Click the Undo button on the Home ribbon or press Ctrl+Z.',
+              startingDocument: '<p>This sentence has an accidental typing error.</p>',
+              goals: [{ type: 'action', action: 'undo' }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        }
+      };
+
+      function updateIndicator() {
+        const idx = select.selectedIndex + 1;
+        const total = select.options.length;
+        indicator.textContent = `Lesson ${idx} of ${total}`;
+      }
+
+      function updateJson() {
+        jsonArea.value = JSON.stringify(samples[select.value], null, 2);
+        updateIndicator();
+      }
+
+      function appendLog(msg) {
+        log.push(msg);
+        logMonitor.textContent = log.map(x => JSON.stringify(x, null, 2)).join('\n\n');
+        logMonitor.scrollTop = logMonitor.scrollHeight;
+      }
+
+      function sendToPlugin(m) {
+        frame.contentWindow.postMessage(m, '*');
+      }
+
+      function loadCurrentLesson() {
+        updateJson();
+        const payload = JSON.parse(jsonArea.value);
+        sendToPlugin({ type: 'PLUGIN_DATA_IN', payload });
+      }
+
+      function advanceToNextLesson() {
+        if (select.selectedIndex < select.options.length - 1) {
+          select.selectedIndex++;
+          loadCurrentLesson();
+          showStatusBadge('Advanced to ' + select.options[select.selectedIndex].text);
+        } else {
+          showStatusBadge('All lessons completed! 🎉');
+        }
+      }
+
+      function showStatusBadge(msg) {
+        statusPill.textContent = msg;
+        statusPill.style.display = 'inline-block';
+        setTimeout(() => {
+          statusPill.style.display = 'none';
+        }, 3500);
+      }
+
+      window.addEventListener('message', (e) => {
+        if (e.source !== frame.contentWindow) return;
+        appendLog({ receivedFromPlugin: e.data });
+
+        if (e.data?.type === 'PLUGIN_EVENT') {
+          if (e.data.name === 'pluginReady') {
+            loadCurrentLesson();
+          } else if (e.data.name === 'activityCompleted') {
+            // Student finished the current lesson / assessment!
+            if (autoAdvanceChk.checked) {
+              setTimeout(() => {
+                advanceToNextLesson();
+              }, 800);
+            }
+          }
+        }
+      });
+
+      document.querySelector('#load-btn').onclick = loadCurrentLesson;
+
+      document.querySelector('#next-lesson-btn').onclick = () => {
+        advanceToNextLesson();
+      };
+
+      document.querySelector('#prev-lesson-btn').onclick = () => {
+        if (select.selectedIndex > 0) {
+          select.selectedIndex--;
+          loadCurrentLesson();
+          showStatusBadge('Moved to ' + select.options[select.selectedIndex].text);
+        }
+      };
+
+      document.querySelector('#send-json-btn').onclick = () => {
+        try {
+          const payload = JSON.parse(jsonArea.value);
+          sendToPlugin({ type: 'PLUGIN_DATA_IN', payload });
+        } catch (err) {
+          alert('Invalid JSON: ' + err.message);
+        }
+      };
+
+      document.querySelector('#pause-btn').onclick = () => sendToPlugin({ type: 'PAUSE', payload: { pause: true } });
+      document.querySelector('#resume-btn').onclick = () => sendToPlugin({ type: 'PAUSE', payload: { pause: false } });
+      document.querySelector('#light-btn').onclick = () => sendToPlugin({ type: 'PREFERENCE_CHANGED', payload: { type: 'theme', value: 'LIGHT' } });
+      document.querySelector('#dark-btn').onclick = () => sendToPlugin({ type: 'PREFERENCE_CHANGED', payload: { type: 'theme', value: 'DARK' } });
+      document.querySelector('#finish-btn').onclick = () => sendToPlugin({ type: 'FORCE_FINISH' });
+
+      select.onchange = () => {
+        loadCurrentLesson();
+      };
+
+      updateJson();
+    </script>
+  </body>
+</html>
