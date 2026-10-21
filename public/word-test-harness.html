@@ -90,7 +90,7 @@
     </details>
 
     <script type="module">
-      const frame = document.querySelector('#plugin');
+      let frame = document.querySelector('#plugin');
       const logMonitor = document.querySelector('#log-monitor');
       const select = document.querySelector('#lesson-select');
       const jsonArea = document.querySelector('#custom-json');
@@ -98,6 +98,10 @@
       const autoAdvanceChk = document.querySelector('#auto-advance-chk');
       const statusPill = document.querySelector('#status-pill');
       const log = [];
+
+      let currentTheme = 'LIGHT';
+      let pendingPayload = null;
+      let readyTimeout = null;
 
       const samples = {
         bold: {
@@ -384,40 +388,9 @@
       };
 
       function updateIndicator() {
-        const idx = select.selectedIndex + 1;
+        const idx = select.selectedIndex;
         const total = select.options.length;
-        indicator.textContent = `Lesson ${idx} of ${total}`;
-      }
-
-      function updateJson() {
-        jsonArea.value = JSON.stringify(samples[select.value], null, 2);
-        updateIndicator();
-      }
-
-      function appendLog(msg) {
-        log.push(msg);
-        logMonitor.textContent = log.map(x => JSON.stringify(x, null, 2)).join('\n\n');
-        logMonitor.scrollTop = logMonitor.scrollHeight;
-      }
-
-      function sendToPlugin(m) {
-        frame.contentWindow.postMessage(m, '*');
-      }
-
-      function loadCurrentLesson() {
-        updateJson();
-        const payload = JSON.parse(jsonArea.value);
-        sendToPlugin({ type: 'PLUGIN_DATA_IN', payload });
-      }
-
-      function advanceToNextLesson() {
-        if (select.selectedIndex < select.options.length - 1) {
-          select.selectedIndex++;
-          loadCurrentLesson();
-          showStatusBadge('Advanced to ' + select.options[select.selectedIndex].text);
-        } else {
-          showStatusBadge('All lessons completed! 🎉');
-        }
+        indicator.textContent = `Lesson ${idx + 1} of ${total}`;
       }
 
       function showStatusBadge(msg) {
@@ -428,58 +401,158 @@
         }, 3500);
       }
 
-      window.addEventListener('message', (e) => {
-        if (e.source !== frame.contentWindow) return;
-        appendLog({ receivedFromPlugin: e.data });
+      function appendLog(line) {
+        log.push(`[${new Date().toLocaleTimeString()}] ${line}`);
+        logMonitor.textContent = log.join('\n');
+        logMonitor.scrollTop = logMonitor.scrollHeight;
+      }
 
-        if (e.data?.type === 'PLUGIN_EVENT') {
-          if (e.data.name === 'pluginReady') {
-            loadCurrentLesson();
-          } else if (e.data.name === 'activityCompleted') {
-            // Student finished the current lesson / assessment!
+      function reloadSimulator(payload) {
+        payload.theme = currentTheme;
+        pendingPayload = payload;
+
+        if (readyTimeout) {
+          clearTimeout(readyTimeout);
+          readyTimeout = null;
+        }
+
+        readyTimeout = setTimeout(() => {
+          appendLog('Error: pluginReady did not arrive within 10 seconds.');
+        }, 10000);
+
+        appendLog('Reloading simulator…');
+
+        const oldFrame = frame;
+        const newFrame = document.createElement('iframe');
+        newFrame.id = 'plugin';
+        newFrame.src = './index.html';
+        oldFrame.replaceWith(newFrame);
+        frame = newFrame;
+      }
+
+      function loadSelectedLesson() {
+        const key = select.value;
+        const sample = samples[key];
+        if (sample) {
+          sample.theme = currentTheme;
+          jsonArea.value = JSON.stringify(sample, null, 2);
+          updateIndicator();
+          reloadSimulator(sample);
+        }
+      }
+
+      function advanceToNextLesson() {
+        if (select.selectedIndex < select.options.length - 1) {
+          select.selectedIndex++;
+          loadSelectedLesson();
+          showStatusBadge('Advanced to ' + select.options[select.selectedIndex].text);
+        } else {
+          showStatusBadge('All lessons completed! 🎉');
+        }
+      }
+
+      window.addEventListener('message', (event) => {
+        if (!frame || event.source !== frame.contentWindow) return;
+        const data = event.data;
+        if (!data || typeof data !== 'object') return;
+
+        if (data.type === 'PLUGIN_EVENT') {
+          if (data.name === 'pluginReady') {
+            appendLog('Received: pluginReady');
+            if (readyTimeout) {
+              clearTimeout(readyTimeout);
+              readyTimeout = null;
+            }
+            if (pendingPayload) {
+              const toSend = pendingPayload;
+              pendingPayload = null;
+              frame.contentWindow.postMessage({ type: 'PLUGIN_DATA_IN', payload: toSend }, '*');
+              appendLog(`Sent PLUGIN_DATA_IN: "${toSend.title}" (${toSend.app || 'unknown app'})`);
+            }
+          } else if (data.name === 'activityCompleted') {
+            const p = data.payload || {};
+            appendLog(`Received: activityCompleted { completed: ${p.completed}, tasksPassed: ${p.tasksPassed}/${p.tasksTotal} }`);
             if (autoAdvanceChk.checked) {
               setTimeout(() => {
                 advanceToNextLesson();
               }, 800);
             }
+          } else if (data.name === 'pluginError') {
+            appendLog(`Received: pluginError -> "${data.message}"`);
+          } else {
+            appendLog(`Received: ${data.name}`);
           }
         }
       });
 
-      document.querySelector('#load-btn').onclick = loadCurrentLesson;
+      document.querySelector('#load-btn').addEventListener('click', loadSelectedLesson);
 
-      document.querySelector('#next-lesson-btn').onclick = () => {
+      document.querySelector('#next-lesson-btn').addEventListener('click', () => {
         advanceToNextLesson();
-      };
+      });
 
-      document.querySelector('#prev-lesson-btn').onclick = () => {
+      document.querySelector('#prev-lesson-btn').addEventListener('click', () => {
         if (select.selectedIndex > 0) {
           select.selectedIndex--;
-          loadCurrentLesson();
+          loadSelectedLesson();
           showStatusBadge('Moved to ' + select.options[select.selectedIndex].text);
         }
-      };
+      });
 
-      document.querySelector('#send-json-btn').onclick = () => {
+      select.addEventListener('change', () => {
+        loadSelectedLesson();
+      });
+
+      document.querySelector('#send-json-btn').addEventListener('click', () => {
         try {
           const payload = JSON.parse(jsonArea.value);
-          sendToPlugin({ type: 'PLUGIN_DATA_IN', payload });
+          payload.theme = currentTheme;
+          jsonArea.value = JSON.stringify(payload, null, 2);
+          reloadSimulator(payload);
         } catch (err) {
           alert('Invalid JSON: ' + err.message);
         }
-      };
+      });
 
-      document.querySelector('#pause-btn').onclick = () => sendToPlugin({ type: 'PAUSE', payload: { pause: true } });
-      document.querySelector('#resume-btn').onclick = () => sendToPlugin({ type: 'PAUSE', payload: { pause: false } });
-      document.querySelector('#light-btn').onclick = () => sendToPlugin({ type: 'PREFERENCE_CHANGED', payload: { type: 'theme', value: 'LIGHT' } });
-      document.querySelector('#dark-btn').onclick = () => sendToPlugin({ type: 'PREFERENCE_CHANGED', payload: { type: 'theme', value: 'DARK' } });
-      document.querySelector('#finish-btn').onclick = () => sendToPlugin({ type: 'FORCE_FINISH' });
+      document.querySelector('#light-btn').addEventListener('click', () => {
+        currentTheme = 'LIGHT';
+        if (frame && frame.contentWindow) {
+          frame.contentWindow.postMessage({ type: 'PREFERENCE_CHANGED', payload: { type: 'theme', value: 'LIGHT' } }, '*');
+          appendLog('Sent: PREFERENCE_CHANGED theme LIGHT');
+        }
+      });
 
-      select.onchange = () => {
-        loadCurrentLesson();
-      };
+      document.querySelector('#dark-btn').addEventListener('click', () => {
+        currentTheme = 'DARK';
+        if (frame && frame.contentWindow) {
+          frame.contentWindow.postMessage({ type: 'PREFERENCE_CHANGED', payload: { type: 'theme', value: 'DARK' } }, '*');
+          appendLog('Sent: PREFERENCE_CHANGED theme DARK');
+        }
+      });
 
-      updateJson();
+      document.querySelector('#pause-btn').addEventListener('click', () => {
+        if (frame && frame.contentWindow) {
+          frame.contentWindow.postMessage({ type: 'PAUSE', payload: { pause: true } }, '*');
+          appendLog('Sent: PAUSE true');
+        }
+      });
+
+      document.querySelector('#resume-btn').addEventListener('click', () => {
+        if (frame && frame.contentWindow) {
+          frame.contentWindow.postMessage({ type: 'PAUSE', payload: { pause: false } }, '*');
+          appendLog('Sent: PAUSE false');
+        }
+      });
+
+      document.querySelector('#finish-btn').addEventListener('click', () => {
+        if (frame && frame.contentWindow) {
+          frame.contentWindow.postMessage({ type: 'FORCE_FINISH' }, '*');
+          appendLog('Sent: FORCE_FINISH');
+        }
+      });
+
+      // Initial load: populate and load selected lesson
+      loadSelectedLesson();
     </script>
   </body>
 </html>

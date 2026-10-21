@@ -89,7 +89,7 @@
     </details>
 
     <script type="module">
-      const frame = document.querySelector('#plugin');
+      let frame = document.querySelector('#plugin');
       const logMonitor = document.querySelector('#log-monitor');
       const select = document.querySelector('#lesson-select');
       const jsonArea = document.querySelector('#custom-json');
@@ -97,6 +97,10 @@
       const autoAdvanceChk = document.querySelector('#auto-advance-chk');
       const statusPill = document.querySelector('#status-pill');
       const log = [];
+
+      let currentTheme = 'LIGHT';
+      let pendingPayload = null;
+      let readyTimeout = null;
 
       const samples = {
         cellValue: {
@@ -481,125 +485,166 @@
         indicator.textContent = `Lesson ${idx + 1} of ${total}`;
       }
 
+      function showStatusBadge(msg) {
+        statusPill.textContent = msg;
+        statusPill.style.display = 'inline-block';
+        setTimeout(() => {
+          statusPill.style.display = 'none';
+        }, 3500);
+      }
+
       function appendLog(line) {
         log.push(`[${new Date().toLocaleTimeString()}] ${line}`);
         logMonitor.textContent = log.join('\n');
         logMonitor.scrollTop = logMonitor.scrollHeight;
       }
 
-      function sendPayload(payload) {
-        if (!frame.contentWindow) return;
-        frame.contentWindow.postMessage(
-          {
-            type: 'PLUGIN_DATA_IN',
-            payload
-          },
-          '*'
-        );
-        appendLog(`Sent PLUGIN_DATA_IN: "${payload.title}" (${payload.mode || 'lesson'}) [app: ${payload.app}]`);
+      function reloadSimulator(payload) {
+        payload.theme = currentTheme;
+        pendingPayload = payload;
+
+        if (readyTimeout) {
+          clearTimeout(readyTimeout);
+          readyTimeout = null;
+        }
+
+        readyTimeout = setTimeout(() => {
+          appendLog('Error: pluginReady did not arrive within 10 seconds.');
+        }, 10000);
+
+        appendLog('Reloading simulator…');
+
+        const oldFrame = frame;
+        const newFrame = document.createElement('iframe');
+        newFrame.id = 'plugin';
+        newFrame.src = './index.html';
+        oldFrame.replaceWith(newFrame);
+        frame = newFrame;
       }
 
-      function loadSelected() {
+      function loadSelectedLesson() {
         const key = select.value;
         const sample = samples[key];
         if (sample) {
+          sample.theme = currentTheme;
           jsonArea.value = JSON.stringify(sample, null, 2);
-          sendPayload(sample);
           updateIndicator();
+          reloadSimulator(sample);
         }
       }
 
-      function advanceLesson() {
+      function advanceToNextLesson() {
         if (select.selectedIndex < select.options.length - 1) {
           select.selectedIndex++;
-          loadSelected();
-          statusPill.style.display = 'inline-block';
-          setTimeout(() => {
-            statusPill.style.display = 'none';
-          }, 3000);
+          loadSelectedLesson();
+          showStatusBadge('Advanced to ' + select.options[select.selectedIndex].text);
+        } else {
+          showStatusBadge('All lessons completed! 🎉');
         }
       }
 
       window.addEventListener('message', (event) => {
-        if (event.source !== frame.contentWindow) return;
+        if (!frame || event.source !== frame.contentWindow) return;
         const data = event.data;
         if (!data || typeof data !== 'object') return;
 
         if (data.type === 'PLUGIN_EVENT') {
           if (data.name === 'pluginReady') {
             appendLog('Received: pluginReady');
-            loadSelected();
+            if (readyTimeout) {
+              clearTimeout(readyTimeout);
+              readyTimeout = null;
+            }
+            if (pendingPayload) {
+              const toSend = pendingPayload;
+              pendingPayload = null;
+              frame.contentWindow.postMessage({ type: 'PLUGIN_DATA_IN', payload: toSend }, '*');
+              appendLog(`Sent PLUGIN_DATA_IN: "${toSend.title}" (${toSend.app || 'unknown app'})`);
+            }
           } else if (data.name === 'activityCompleted') {
             const p = data.payload || {};
             appendLog(`Received: activityCompleted { completed: ${p.completed}, tasksPassed: ${p.tasksPassed}/${p.tasksTotal} }`);
             if (autoAdvanceChk.checked) {
               setTimeout(() => {
-                advanceLesson();
+                advanceToNextLesson();
               }, 800);
             }
           } else if (data.name === 'pluginError') {
             appendLog(`Received: pluginError -> "${data.message}"`);
+          } else {
+            appendLog(`Received: ${data.name}`);
           }
         }
       });
 
-      document.querySelector('#load-btn').addEventListener('click', loadSelected);
+      document.querySelector('#load-btn').addEventListener('click', loadSelectedLesson);
+
+      document.querySelector('#next-lesson-btn').addEventListener('click', () => {
+        advanceToNextLesson();
+      });
 
       document.querySelector('#prev-lesson-btn').addEventListener('click', () => {
         if (select.selectedIndex > 0) {
           select.selectedIndex--;
-          loadSelected();
-        }
-      });
-
-      document.querySelector('#next-lesson-btn').addEventListener('click', () => {
-        if (select.selectedIndex < select.options.length - 1) {
-          select.selectedIndex++;
-          loadSelected();
+          loadSelectedLesson();
+          showStatusBadge('Moved to ' + select.options[select.selectedIndex].text);
         }
       });
 
       select.addEventListener('change', () => {
-        loadSelected();
+        loadSelectedLesson();
       });
 
       document.querySelector('#send-json-btn').addEventListener('click', () => {
         try {
-          const parsed = JSON.parse(jsonArea.value);
-          sendPayload(parsed);
+          const payload = JSON.parse(jsonArea.value);
+          payload.theme = currentTheme;
+          jsonArea.value = JSON.stringify(payload, null, 2);
+          reloadSimulator(payload);
         } catch (err) {
           alert('Invalid JSON: ' + err.message);
         }
       });
 
       document.querySelector('#light-btn').addEventListener('click', () => {
-        frame.contentWindow.postMessage({ type: 'PREFERENCE_CHANGED', payload: { type: 'theme', value: 'LIGHT' } }, '*');
-        appendLog('Sent: PREFERENCE_CHANGED theme LIGHT');
+        currentTheme = 'LIGHT';
+        if (frame && frame.contentWindow) {
+          frame.contentWindow.postMessage({ type: 'PREFERENCE_CHANGED', payload: { type: 'theme', value: 'LIGHT' } }, '*');
+          appendLog('Sent: PREFERENCE_CHANGED theme LIGHT');
+        }
       });
 
       document.querySelector('#dark-btn').addEventListener('click', () => {
-        frame.contentWindow.postMessage({ type: 'PREFERENCE_CHANGED', payload: { type: 'theme', value: 'DARK' } }, '*');
-        appendLog('Sent: PREFERENCE_CHANGED theme DARK');
+        currentTheme = 'DARK';
+        if (frame && frame.contentWindow) {
+          frame.contentWindow.postMessage({ type: 'PREFERENCE_CHANGED', payload: { type: 'theme', value: 'DARK' } }, '*');
+          appendLog('Sent: PREFERENCE_CHANGED theme DARK');
+        }
       });
 
       document.querySelector('#pause-btn').addEventListener('click', () => {
-        frame.contentWindow.postMessage({ type: 'PAUSE', payload: { pause: true } }, '*');
-        appendLog('Sent: PAUSE true');
+        if (frame && frame.contentWindow) {
+          frame.contentWindow.postMessage({ type: 'PAUSE', payload: { pause: true } }, '*');
+          appendLog('Sent: PAUSE true');
+        }
       });
 
       document.querySelector('#resume-btn').addEventListener('click', () => {
-        frame.contentWindow.postMessage({ type: 'PAUSE', payload: { pause: false } }, '*');
-        appendLog('Sent: PAUSE false');
+        if (frame && frame.contentWindow) {
+          frame.contentWindow.postMessage({ type: 'PAUSE', payload: { pause: false } }, '*');
+          appendLog('Sent: PAUSE false');
+        }
       });
 
       document.querySelector('#finish-btn').addEventListener('click', () => {
-        frame.contentWindow.postMessage({ type: 'FORCE_FINISH' }, '*');
-        appendLog('Sent: FORCE_FINISH');
+        if (frame && frame.contentWindow) {
+          frame.contentWindow.postMessage({ type: 'FORCE_FINISH' }, '*');
+          appendLog('Sent: FORCE_FINISH');
+        }
       });
 
-      // Initial populate
-      jsonArea.value = JSON.stringify(samples.cellValue, null, 2);
-      updateIndicator();
+      // Initial load: populate and load selected lesson
+      loadSelectedLesson();
     </script>
   </body>
 </html>
