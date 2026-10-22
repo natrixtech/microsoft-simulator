@@ -18,7 +18,6 @@
       button.nav-btn { background: #0f172a; color: white; border-color: #0f172a; font-weight: 600; }
       button:hover { opacity: 0.9; }
       .lesson-indicator { font-size: 12px; font-weight: 700; color: #1e293b; padding: 0 4px; }
-      .auto-advance-label { font-size: 12px; display: flex; align-items: center; gap: 4px; color: #475569; margin-left: 6px; cursor: pointer; }
       iframe { width: 100%; height: 750px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
       .log-panel { margin-top: 16px; }
       pre { background: #1e293b; color: #f8fafc; padding: 12px; border-radius: 6px; font-family: Consolas, monospace; font-size: 12px; max-height: 180px; overflow-y: auto; }
@@ -61,11 +60,6 @@
 
       <button id="load-btn" class="primary">Load Activity</button>
 
-      <label class="auto-advance-label">
-        <input type="checkbox" id="auto-advance-chk" checked />
-        Auto-advance to Next Lesson on completion
-      </label>
-
       <span id="status-pill" class="status-pill">Next lesson loaded ✓</span>
 
       <span style="flex: 1;"></span>
@@ -95,7 +89,6 @@
       const select = document.querySelector('#lesson-select');
       const jsonArea = document.querySelector('#custom-json');
       const indicator = document.querySelector('#lesson-indicator');
-      const autoAdvanceChk = document.querySelector('#auto-advance-chk');
       const statusPill = document.querySelector('#status-pill');
       const log = [];
 
@@ -472,11 +465,6 @@
           } else if (data.name === 'activityCompleted') {
             const p = data.payload || {};
             appendLog(`Received: activityCompleted { completed: ${p.completed}, tasksPassed: ${p.tasksPassed}/${p.tasksTotal} }`);
-            if (autoAdvanceChk.checked) {
-              setTimeout(() => {
-                advanceToNextLesson();
-              }, 800);
-            }
           } else if (data.name === 'pluginError') {
             appendLog(`Received: pluginError -> "${data.message}"`);
           } else {
