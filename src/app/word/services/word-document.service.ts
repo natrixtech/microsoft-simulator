@@ -34,6 +34,16 @@ export interface ActionLog {
   text?: string;
 }
 
+export interface CustomStyleDefinition {
+  name: string;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  font?: string;
+  size?: number;
+  color?: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -49,6 +59,7 @@ export class WordDocumentService {
   numbering: boolean = false;
   comments: WordComment[] = [];
   styles: Record<string, any> = {};
+  customStyles: CustomStyleDefinition[] = [];
   actions: ActionLog[] = [];
 
   editorElement: HTMLElement | null = null;
@@ -155,12 +166,22 @@ export class WordDocumentService {
           parseFloat(b.style.lineHeight) === Number(g['lineSpacing']) ||
           b.dataset['lineSpacing'] === String(g['lineSpacing']);
 
+        let totalMargin = parseFloat(s.marginLeft) || 0;
+        let parentEl = b.parentElement;
+        while (parentEl && parentEl !== root && parentEl !== p2) {
+          if (parentEl.tagName === 'BLOCKQUOTE') {
+            const bqStyle = window.getComputedStyle(parentEl);
+            totalMargin += parseFloat(bqStyle.marginLeft) || 40;
+          }
+          parentEl = parentEl.parentElement;
+        }
+
         return (
           (g['style'] === undefined || style === g['style']) &&
           (g['align'] === undefined ||
             (s.textAlign === 'start' ? 'left' : s.textAlign) === g['align']) &&
           (g['indent'] === undefined ||
-            Math.round(parseFloat(s.marginLeft) / 40) === g['indent']) &&
+            Math.round(totalMargin / 40) === g['indent']) &&
           lineSpacingMatch
         );
       }
@@ -265,6 +286,30 @@ export class WordDocumentService {
       case 'action':
         return this.actions.some((a) => matches(a, g, ['action', 'text']));
 
+      case 'style': {
+        const name = g['name'];
+        if (!name) return false;
+        const s = this.customStyles.find((cs) => cs.name === name);
+        if (!s) return false;
+
+        if (g['bold'] !== undefined && !!s.bold !== g['bold']) return false;
+        if (g['italic'] !== undefined && !!s.italic !== g['italic']) return false;
+        if (g['underline'] !== undefined && !!s.underline !== g['underline']) return false;
+        if (g['font'] !== undefined && s.font !== g['font']) return false;
+        if (g['size'] !== undefined && (s.size === undefined || Math.abs(s.size - g['size']) > 0.15)) return false;
+        if (g['color'] !== undefined && s.color !== g['color']) return false;
+
+        if (g['appliedTo']) {
+          const r = findText(root, g['appliedTo']) || (p2 ? findText(p2, g['appliedTo']) : null);
+          if (!r) return false;
+          const b = r.startContainer.parentElement?.closest('p,h1,h2,h3,li,div') as HTMLElement | null;
+          if (!b) return false;
+          if (b.dataset['paragraphStyle'] !== name) return false;
+        }
+
+        return true;
+      }
+
       default:
         return false;
     }
@@ -273,6 +318,7 @@ export class WordDocumentService {
   demo(g: Record<string, any>, activity?: ActivityPayload): void {
     if (!this.editorElement) return;
     const root = this.editorElement;
+    const p2 = this.page2Element;
 
     switch (g['type']) {
       case 'textStyle': {
@@ -283,11 +329,50 @@ export class WordDocumentService {
           if (g['bold']) this.rich.command('bold');
           if (g['italic']) this.rich.command('italic');
           if (g['underline']) this.rich.command('underline');
+          if (g['superscript']) this.rich.command('superscript');
+          if (g['subscript']) this.rich.command('subscript');
           if (g['font']) this.rich.apply({ fontFamily: g['font'] });
           if (g['size']) this.rich.apply({ fontSize: g['size'] + 'pt' });
           if (g['color']) this.rich.apply({ color: COLORS[g['color']] || g['color'] });
           if (g['highlight'])
             this.rich.apply({ backgroundColor: COLORS[g['highlight']] || g['highlight'] });
+        }
+        break;
+      }
+
+      case 'style': {
+        const name = g['name'];
+        if (name) {
+          const customDef: CustomStyleDefinition = {
+            name,
+            bold: g['bold'],
+            italic: g['italic'],
+            underline: g['underline'],
+            font: g['font'],
+            size: g['size'],
+            color: g['color'],
+          };
+          const idx = this.customStyles.findIndex((cs) => cs.name === name);
+          if (idx >= 0) {
+            this.customStyles[idx] = customDef;
+          } else {
+            this.customStyles.push(customDef);
+          }
+          if (g['appliedTo']) {
+            const r = findText(root, g['appliedTo']) || (p2 ? findText(p2, g['appliedTo']) : null);
+            if (r) {
+              const b = r.startContainer.parentElement?.closest('p,h1,h2,h3,li,div') as HTMLElement | null;
+              if (b) {
+                b.dataset['paragraphStyle'] = name;
+                if (customDef.bold !== undefined) b.style.fontWeight = customDef.bold ? 'bold' : 'normal';
+                if (customDef.italic !== undefined) b.style.fontStyle = customDef.italic ? 'italic' : 'normal';
+                if (customDef.underline !== undefined) b.style.textDecoration = customDef.underline ? 'underline' : 'none';
+                if (customDef.font) b.style.fontFamily = customDef.font;
+                if (customDef.size) b.style.fontSize = customDef.size + 'pt';
+                if (customDef.color) b.style.color = COLORS[customDef.color] || customDef.color;
+              }
+            }
+          }
         }
         break;
       }

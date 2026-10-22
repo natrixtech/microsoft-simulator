@@ -64,10 +64,34 @@ export function styleMatches(root: HTMLElement, g: Record<string, any>): boolean
       return false;
     };
 
+    const isSuper = (): boolean => {
+      let e: HTMLElement | null = parent;
+      while (e && e !== root.parentElement) {
+        if (e.tagName === 'SUP' || window.getComputedStyle(e).verticalAlign === 'super') {
+          return true;
+        }
+        e = e.parentElement;
+      }
+      return false;
+    };
+
+    const isSub = (): boolean => {
+      let e: HTMLElement | null = parent;
+      while (e && e !== root.parentElement) {
+        if (e.tagName === 'SUB' || window.getComputedStyle(e).verticalAlign === 'sub') {
+          return true;
+        }
+        e = e.parentElement;
+      }
+      return false;
+    };
+
     const actual: Record<string, any> = {
       bold: Number(s.fontWeight) >= 600 || s.fontWeight === 'bold',
       italic: s.fontStyle === 'italic',
       underline: deco(),
+      superscript: isSuper(),
+      subscript: isSub(),
       font: s.fontFamily.replaceAll('"', '').split(',')[0].trim(),
       size: parseFloat(s.fontSize) * 0.75,
       color: s.color,
@@ -75,7 +99,7 @@ export function styleMatches(root: HTMLElement, g: Record<string, any>): boolean
       align: s.textAlign === 'start' ? 'left' : s.textAlign,
     };
 
-    for (const k of ['bold', 'italic', 'underline', 'font', 'size', 'align']) {
+    for (const k of ['bold', 'italic', 'underline', 'superscript', 'subscript', 'font', 'size', 'align']) {
       if (g[k] !== undefined) {
         if (k === 'size' ? Math.abs(actual[k] - g[k]) > 0.15 : actual[k] !== g[k]) {
           return false;
@@ -98,17 +122,62 @@ export function styleMatches(root: HTMLElement, g: Record<string, any>): boolean
   return true;
 }
 
+function coversBlockText(range: Range, block: HTMLElement): boolean {
+  if (range.collapsed) return false;
+  try {
+    const blockRange = document.createRange();
+    blockRange.selectNodeContents(block);
+    if (range.compareBoundaryPoints(Range.END_TO_START, blockRange) >= 0) return false;
+    if (range.compareBoundaryPoints(Range.START_TO_END, blockRange) <= 0) return false;
+
+    const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+    let node: Node | null = walker.nextNode();
+    while (node) {
+      const len = node.textContent?.length || 0;
+      if (len > 0) {
+        const nr = document.createRange();
+        nr.selectNodeContents(node);
+        if (
+          range.compareBoundaryPoints(Range.END_TO_START, nr) < 0 &&
+          range.compareBoundaryPoints(Range.START_TO_END, nr) > 0
+        ) {
+          return true;
+        }
+      }
+      node = walker.nextNode();
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+function isWholeBlock(range: Range, block: HTMLElement): boolean {
+  try {
+    const blockRange = document.createRange();
+    blockRange.selectNodeContents(block);
+    const startOk = range.compareBoundaryPoints(Range.START_TO_START, blockRange) <= 0;
+    const endOk = range.compareBoundaryPoints(Range.END_TO_END, blockRange) >= 0;
+    return startOk && endOk;
+  } catch {
+    return false;
+  }
+}
+
 let internalClipboard = '';
 
 export class RichEditor {
-  private saved: Range | null = null;
+  saved: Range | null = null;
   private lastPasteTime = 0;
   private lastCopyTime = 0;
   taskStartHtml: string | null = null;
   getDocumentHtml?: () => string;
 
   private onInput = () => this.changed();
-  private onMouseUp = () => this.capture();
+  private onMouseUp = () => {
+    this.capture();
+    setTimeout(() => this.capture(), 0);
+  };
   private onKeyUp = () => this.capture();
   private onKeyDown = (e: KeyboardEvent) => {
     if (e.ctrlKey || e.metaKey) {
@@ -205,6 +274,12 @@ export class RichEditor {
             }
           }
         }
+      } else {
+        const inLi = el?.closest('li');
+        if (inLi) {
+          e.preventDefault();
+          this.command(e.shiftKey ? 'outdent' : 'indent');
+        }
       }
     }
   };
@@ -277,6 +352,10 @@ export class RichEditor {
   }
 
   command(cmd: string, value?: string): void {
+    if (cmd === 'indent' || cmd === 'outdent') {
+      this.indent(cmd === 'indent');
+      return;
+    }
     this.root.dispatchEvent(new Event('beforeformat'));
     this.restore();
     try {
@@ -287,7 +366,198 @@ export class RichEditor {
     this.changed();
   }
 
+  indent(increase: boolean = true): void {
+    this.root.dispatchEvent(new Event('beforeformat'));
+    this.restore();
+    const sel = window.getSelection();
+
+    // In a list item: delegate directly to browser indent/outdent to nest sub-lists and adjust levels
+    let inListItem = false;
+    if (sel && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      const getLi = (n: Node | null): HTMLElement | null => {
+        if (!n) return null;
+        return (n.nodeType === Node.ELEMENT_NODE ? (n as Element) : n.parentElement)?.closest('li') as HTMLElement | null;
+      };
+      if (getLi(range.startContainer) || getLi(range.endContainer)) {
+        inListItem = true;
+      }
+    }
+    if (!inListItem) {
+      const b = this.block();
+      if (b?.closest('li')) {
+        inListItem = true;
+      }
+    }
+
+    if (inListItem) {
+      try {
+        document.execCommand('styleWithCSS', false, 'true');
+      } catch {}
+      document.execCommand(increase ? 'indent' : 'outdent');
+      this.capture();
+      this.changed();
+      return;
+    }
+
+    // Normal blocks (p, h1-h3) not in a list and not wrapping a list
+    let blocks: HTMLElement[] = [];
+    if (sel && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      const all = Array.from(this.root.querySelectorAll<HTMLElement>('p, h1, h2, h3'));
+      blocks = all.filter((el) => {
+        if (el.closest('li, ul, ol') || el.querySelector('ul, ol, li')) return false;
+        try {
+          return coversBlockText(range, el);
+        } catch {
+          return false;
+        }
+      });
+      if (blocks.length === 0) {
+        const b = this.block();
+        if (b && ['P', 'H1', 'H2', 'H3'].includes(b.tagName) && !b.closest('li, ul, ol') && !b.querySelector('ul, ol, li')) {
+          blocks = [b];
+        }
+      }
+    } else {
+      const b = this.block();
+      if (b && ['P', 'H1', 'H2', 'H3'].includes(b.tagName) && !b.closest('li, ul, ol') && !b.querySelector('ul, ol, li')) {
+        blocks = [b];
+      }
+    }
+
+    for (const b of blocks) {
+      const cur = parseFloat(b.style.marginLeft) || 0;
+      const next = increase ? cur + 40 : Math.max(0, cur - 40);
+      b.style.marginLeft = next > 0 ? `${next}px` : '';
+    }
+    this.capture();
+    this.changed();
+  }
+
+  private getCoveredBlocks(): HTMLElement[] {
+    if (!this.saved || this.saved.collapsed) return [];
+    const all = Array.from(this.root.querySelectorAll<HTMLElement>('p, h1, h2, h3, li'));
+    return all.filter((el) => coversBlockText(this.saved!, el));
+  }
+
+  private getTargetWholeBlocks(): HTMLElement[] | null {
+    if (!this.saved || this.saved.collapsed) return null;
+    const covered = this.getCoveredBlocks();
+    if (covered.length === 0) return null;
+
+    if (covered.every((b) => isWholeBlock(this.saved!, b))) {
+      return covered;
+    }
+
+    if (covered.length === 1) {
+      const b = covered[0];
+      const selText = this.saved.toString().trim();
+      const blockText = (b.textContent || '').trim();
+      if (selText && blockText && selText === blockText) {
+        return [b];
+      }
+    }
+
+    return null;
+  }
+
+  private applyToWholeBlocks(styles: Record<string, string>, targetBlocks: HTMLElement[]): void {
+    this.root.dispatchEvent(new Event('beforeformat'));
+    for (const blk of targetBlocks) {
+      const span = document.createElement('span');
+      Object.assign(span.style, styles);
+      while (blk.firstChild) {
+        span.appendChild(blk.firstChild);
+      }
+      blk.appendChild(span);
+    }
+    const newRange = document.createRange();
+    newRange.setStart(targetBlocks[0], 0);
+    newRange.setEnd(targetBlocks[targetBlocks.length - 1], targetBlocks[targetBlocks.length - 1].childNodes.length);
+    setSelection(newRange);
+    this.saved = newRange;
+    this.changed();
+  }
+
+  private applyToMultiBlocks(styles: Record<string, string>): void {
+    if (!this.saved) return;
+    this.root.dispatchEvent(new Event('beforeformat'));
+    this.restore();
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+
+    // 1. Split text nodes at range boundaries so selected portions are whole text nodes
+    if (range.endContainer.nodeType === Node.TEXT_NODE) {
+      const endText = range.endContainer as Text;
+      if (range.endOffset > 0 && range.endOffset < (endText.textContent?.length || 0)) {
+        endText.splitText(range.endOffset);
+        range.setEnd(endText, endText.textContent?.length || range.endOffset);
+      }
+    }
+
+    if (range.startContainer.nodeType === Node.TEXT_NODE) {
+      const startText = range.startContainer as Text;
+      if (range.startOffset > 0 && range.startOffset < (startText.textContent?.length || 0)) {
+        const after = startText.splitText(range.startOffset);
+        range.setStart(after, 0);
+      }
+    }
+
+    // 2. Collect all text nodes strictly within range
+    const walker = document.createTreeWalker(this.root, NodeFilter.SHOW_TEXT);
+    const textNodes: Text[] = [];
+    let curr: Node | null = walker.nextNode();
+    while (curr) {
+      if (curr.nodeType === Node.TEXT_NODE && curr.textContent && curr.textContent.length > 0) {
+        const nr = document.createRange();
+        nr.selectNodeContents(curr);
+        if (
+          range.compareBoundaryPoints(Range.START_TO_START, nr) <= 0 &&
+          range.compareBoundaryPoints(Range.END_TO_END, nr) >= 0
+        ) {
+          textNodes.push(curr as Text);
+        }
+      }
+      curr = walker.nextNode();
+    }
+
+    if (textNodes.length === 0) return;
+
+    // 3. Wrap each selected text node in a styled span inside its own block
+    const createdSpans: HTMLSpanElement[] = [];
+    for (const tn of textNodes) {
+      const span = document.createElement('span');
+      Object.assign(span.style, styles);
+      tn.parentNode?.insertBefore(span, tn);
+      span.appendChild(tn);
+      createdSpans.push(span);
+    }
+
+    // 4. Update selection across all newly created spans
+    if (createdSpans.length > 0) {
+      const newRange = document.createRange();
+      newRange.setStartBefore(createdSpans[0]);
+      newRange.setEndAfter(createdSpans[createdSpans.length - 1]);
+      setSelection(newRange);
+      this.saved = newRange;
+    }
+    this.capture();
+    this.changed();
+  }
+
   applyColor(color: string): void {
+    const whole = this.getTargetWholeBlocks();
+    if (whole) {
+      this.applyToWholeBlocks({ color }, whole);
+      return;
+    }
+    const covered = this.getCoveredBlocks();
+    if (covered.length >= 2) {
+      this.applyToMultiBlocks({ color });
+      return;
+    }
     this.root.dispatchEvent(new Event('beforeformat'));
     this.restore();
     try {
@@ -299,6 +569,16 @@ export class RichEditor {
   }
 
   applyHighlight(color: string): void {
+    const whole = this.getTargetWholeBlocks();
+    if (whole) {
+      this.applyToWholeBlocks({ backgroundColor: color }, whole);
+      return;
+    }
+    const covered = this.getCoveredBlocks();
+    if (covered.length >= 2) {
+      this.applyToMultiBlocks({ backgroundColor: color });
+      return;
+    }
     this.root.dispatchEvent(new Event('beforeformat'));
     this.restore();
     try {
@@ -311,6 +591,16 @@ export class RichEditor {
   }
 
   apply(styles: Record<string, string>): void {
+    const whole = this.getTargetWholeBlocks();
+    if (whole) {
+      this.applyToWholeBlocks(styles, whole);
+      return;
+    }
+    const covered = this.getCoveredBlocks();
+    if (covered.length >= 2) {
+      this.applyToMultiBlocks(styles);
+      return;
+    }
     if (styles['color'] && Object.keys(styles).length === 1) {
       this.applyColor(styles['color']);
       return;

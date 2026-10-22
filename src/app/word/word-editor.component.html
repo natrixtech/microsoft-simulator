@@ -192,10 +192,10 @@
           <button type="button" class="ribbon-btn micro disabled" title="Strikethrough" disabled>
             <s>ab</s>
           </button>
-          <button type="button" class="ribbon-btn micro" title="Subscript" (click)="formatCmd('subscript')">
+          <button type="button" class="ribbon-btn micro" title="Subscript" (click)="formatCmd('subscript')" data-demo-target="ribbon-subscript">
             <span>x₂</span>
           </button>
-          <button type="button" class="ribbon-btn micro" title="Superscript" (click)="formatCmd('superscript')">
+          <button type="button" class="ribbon-btn micro" title="Superscript" (click)="formatCmd('superscript')" data-demo-target="ribbon-superscript">
             <span>x²</span>
           </button>
           <button type="button" class="ribbon-btn micro disabled" title="Text Effects" disabled>
@@ -389,7 +389,7 @@
               <path d="M4.5 5.5l-3.5 3 3.5 3V5.5z"/>
             </svg>
           </button>
-          <button type="button" class="ribbon-btn micro" title="Increase Indent" aria-label="Increase Indent" (click)="formatCmd('indent')">
+          <button type="button" class="ribbon-btn micro" title="Increase Indent" aria-label="Increase Indent" (click)="formatCmd('indent')" data-demo-target="indent">
             <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">
               <rect x="6.5" y="2.5" width="8" height="1.8" rx="0.8"/>
               <rect x="6.5" y="6" width="8" height="1.8" rx="0.8"/>
@@ -572,17 +572,46 @@
             <span class="tile-preview h3-preview">Heading 3</span>
             <span class="tile-name">Heading 3</span>
           </button>
+
+          <!-- Custom style tiles -->
+          <button
+            *ngFor="let s of wordDoc.customStyles"
+            type="button"
+            class="style-tile custom-style-tile"
+            [class.selected]="selectedStyle() === s.name"
+            (click)="applyCustomStyle(s)"
+            [title]="s.name + ' Style'"
+          >
+            <span
+              class="tile-preview"
+              [style.fontWeight]="s.bold ? 'bold' : 'normal'"
+              [style.fontStyle]="s.italic ? 'italic' : 'normal'"
+              [style.textDecoration]="s.underline ? 'underline' : 'none'"
+              [style.fontFamily]="s.font || 'inherit'"
+              [style.fontSize.pt]="s.size || 11"
+              [style.color]="s.color ? (COLORS[s.color] || s.color) : 'inherit'"
+            >AaBbCcDc</span>
+            <span class="tile-name">{{ s.name }}</span>
+          </button>
         </div>
 
-        <div class="styles-gallery-nav">
-          <button type="button" class="gallery-arrow" title="Scroll styles up">▲</button>
-          <button type="button" class="gallery-arrow" title="Scroll styles down">▼</button>
-          <button type="button" class="gallery-arrow" title="More styles">⤋</button>
-        </div>
+        <button
+          type="button"
+          class="styles-more-btn"
+          title="More styles"
+          data-demo-target="styles-more-btn"
+          (click)="toggleStylesMenu($event)"
+        >⌄</button>
       </div>
       <div class="group-footer">
         <span class="group-name">Styles</span>
-        <span class="group-launcher">⤢</span>
+        <button
+          type="button"
+          class="group-launcher styles-launcher-btn"
+          title="More styles"
+          data-demo-target="styles-launcher"
+          (click)="openMoreStylesDialog()"
+        >⤢</button>
       </div>
     </div>
 
@@ -2434,6 +2463,226 @@
           data-demo-target="variables-insert-btn"
         >
           Insert
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Styles Dropdown Menu (Fixed position outside ribbon overflow) -->
+  <div
+    class="styles-dropdown-menu"
+    *ngIf="showStylesMenu()"
+    [style.top.px]="stylesMenuPos().top"
+    [style.left.px]="stylesMenuPos().left"
+    data-demo-target="styles-menu"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="styles-menu-list">
+      <button type="button" class="styles-menu-item" (click)="applyParagraphStyle('normal'); showStylesMenu.set(false)">
+        <span class="style-item-preview normal-preview">Normal</span>
+        <span class="style-item-arrow">›</span>
+      </button>
+      <button type="button" class="styles-menu-item disabled" disabled>
+        <span class="style-item-preview nospacing-preview">No Spacing</span>
+        <span class="style-item-arrow">›</span>
+      </button>
+      <button type="button" class="styles-menu-item" (click)="applyParagraphStyle('h1'); showStylesMenu.set(false)">
+        <span class="style-item-preview h1-preview">Heading 1</span>
+        <span class="style-item-arrow">›</span>
+      </button>
+      <button type="button" class="styles-menu-item" (click)="applyParagraphStyle('h2'); showStylesMenu.set(false)">
+        <span class="style-item-preview h2-preview">Heading 2</span>
+        <span class="style-item-arrow">›</span>
+      </button>
+      <button type="button" class="styles-menu-item" (click)="applyParagraphStyle('h3'); showStylesMenu.set(false)">
+        <span class="style-item-preview h3-preview">Heading 3</span>
+        <span class="style-item-arrow">›</span>
+      </button>
+      <button type="button" class="styles-menu-item" (click)="applyParagraphStyle('title'); showStylesMenu.set(false)">
+        <span class="style-item-preview title-preview">Title</span>
+        <span class="style-item-arrow">›</span>
+      </button>
+      <button type="button" class="styles-menu-item" (click)="applyParagraphStyle('subtitle'); showStylesMenu.set(false)">
+        <span class="style-item-preview subtitle-preview">Subtitle</span>
+        <span class="style-item-arrow">›</span>
+      </button>
+
+      <!-- Custom styles in dropdown -->
+      <button
+        *ngFor="let s of wordDoc.customStyles"
+        type="button"
+        class="styles-menu-item"
+        (click)="applyCustomStyle(s); showStylesMenu.set(false)"
+      >
+        <span
+          class="style-item-preview"
+          [style.fontWeight]="s.bold ? 'bold' : 'normal'"
+          [style.fontStyle]="s.italic ? 'italic' : 'normal'"
+          [style.textDecoration]="s.underline ? 'underline' : 'none'"
+          [style.fontFamily]="s.font || 'inherit'"
+          [style.fontSize.pt]="s.size || 11"
+          [style.color]="s.color ? (COLORS[s.color] || s.color) : 'inherit'"
+        >{{ s.name }}</span>
+        <span class="style-item-arrow">›</span>
+      </button>
+    </div>
+
+    <div class="styles-menu-divider"></div>
+
+    <div class="styles-menu-actions">
+      <button type="button" class="styles-action-item" (click)="openMoreStylesDialog()">
+        <span class="action-icon">⤋</span>
+        <span class="action-text">See More Styles</span>
+      </button>
+      <button
+        type="button"
+        class="styles-action-item"
+        (click)="openCreateStyleDialog()"
+        data-demo-target="style-create"
+      >
+        <span class="action-icon">➕</span>
+        <span class="action-text">Create a Style</span>
+      </button>
+      <button type="button" class="styles-action-item disabled" disabled>
+        <span class="action-icon">⌫</span>
+        <span class="action-text">Clear Formatting of Selection</span>
+      </button>
+      <button type="button" class="styles-action-item disabled" disabled>
+        <span class="action-icon">⚙</span>
+        <span class="action-text">Manage Default Styles</span>
+        <span class="style-item-arrow" style="margin-left: auto;">›</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- More styles Dialog -->
+  <div
+    class="modal-backdrop"
+    *ngIf="showMoreStylesDialog()"
+    (click)="showMoreStylesDialog.set(false)"
+  >
+    <div
+      class="modal-dialog more-styles-dialog"
+      data-demo-target="more-styles-dialog"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="dialog-header">
+        <h3 class="dialog-title">More styles</h3>
+        <button type="button" class="dialog-close-btn" (click)="showMoreStylesDialog.set(false)" aria-label="Close">✕</button>
+      </div>
+
+      <div class="more-styles-search-wrap">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          class="more-styles-search-input"
+          placeholder="Style Name"
+          data-demo-target="more-styles-search"
+          [ngModel]="moreStylesSearchQuery()"
+          (ngModelChange)="moreStylesSearchQuery.set($event)"
+        />
+        <button
+          type="button"
+          class="search-clear-btn"
+          *ngIf="moreStylesSearchQuery()"
+          (click)="moreStylesSearchQuery.set('')"
+        >✕</button>
+      </div>
+
+      <div class="more-styles-list-box">
+        <div
+          class="more-styles-list-item"
+          *ngFor="let item of filteredMoreStyles()"
+          [class.selected]="selectedMoreStyle() === item.name"
+          (click)="selectedMoreStyle.set(item.name)"
+          (dblclick)="confirmMoreStyles()"
+        >
+          <span class="item-name">{{ item.name }}</span>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="primary"
+          (click)="confirmMoreStyles()"
+          data-demo-target="more-styles-ok"
+        >
+          OK
+        </button>
+        <button
+          type="button"
+          class="btn-subtle"
+          (click)="showMoreStylesDialog.set(false)"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create a Style Dialog -->
+  <div
+    class="modal-backdrop"
+    *ngIf="showCreateStyleDialog()"
+    (click)="showCreateStyleDialog.set(false)"
+  >
+    <div
+      class="modal-dialog create-style-dialog"
+      data-demo-target="create-style-dialog"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="dialog-header">
+        <h3 class="dialog-title">Create a Style</h3>
+        <button type="button" class="dialog-close-btn" (click)="showCreateStyleDialog.set(false)" aria-label="Close">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label for="create-style-name-input">Name:</label>
+        <input
+          id="create-style-name-input"
+          type="text"
+          class="style-name-input"
+          placeholder="e.g. Quote"
+          data-demo-target="create-style-name"
+          [ngModel]="newStyleName()"
+          (ngModelChange)="newStyleName.set($event); styleNameError.set('')"
+          (keydown.enter)="$event.preventDefault(); confirmCreateStyle()"
+          autofocus
+        />
+        <div class="style-name-error" *ngIf="styleNameError()">{{ styleNameError() }}</div>
+      </div>
+
+      <div class="form-group preview-group">
+        <label>Style preview:</label>
+        <div
+          class="create-style-preview"
+          [style.fontWeight]="capturedBold() ? 'bold' : 'normal'"
+          [style.fontStyle]="capturedItalic() ? 'italic' : 'normal'"
+          [style.textDecoration]="capturedUnderline() ? 'underline' : 'none'"
+          [style.fontFamily]="capturedFont()"
+          [style.fontSize.pt]="capturedSize()"
+          [style.color]="capturedColor() ? (COLORS[capturedColor()] || capturedColor()) : 'inherit'"
+        >
+          AaBbCcDc - {{ newStyleName() || 'Sample Text' }}
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="primary"
+          (click)="confirmCreateStyle()"
+          data-demo-target="create-style-ok"
+        >
+          OK
+        </button>
+        <button
+          type="button"
+          class="btn-subtle"
+          (click)="showCreateStyleDialog.set(false)"
+        >
+          Cancel
         </button>
       </div>
     </div>

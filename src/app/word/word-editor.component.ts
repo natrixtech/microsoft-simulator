@@ -27,7 +27,7 @@ import {
   clone,
   sanitizeHtml,
 } from 'shared';
-import { PageSetup, WordComment, WordDocumentService } from './services/word-document.service';
+import { CustomStyleDefinition, PageSetup, WordComment, WordDocumentService } from './services/word-document.service';
 import { WORD_LESSONS } from './word-lessons.data';
 
 export interface TaskStartSnapshot {
@@ -164,6 +164,36 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly activeFontColor = signal<string>(COLORS['black']);
   readonly activeHighlightColor = signal<string>(COLORS['yellow']);
 
+  readonly showStylesMenu = signal<boolean>(false);
+  readonly showMoreStylesDialog = signal<boolean>(false);
+  readonly showCreateStyleDialog = signal<boolean>(false);
+  readonly moreStylesSearchQuery = signal<string>('');
+  readonly selectedMoreStyle = signal<string>('Normal');
+  readonly newStyleName = signal<string>('');
+  readonly styleNameError = signal<string>('');
+  readonly capturedBold = signal<boolean>(false);
+  readonly capturedItalic = signal<boolean>(false);
+  readonly capturedUnderline = signal<boolean>(false);
+  readonly capturedFont = signal<string>('Calibri');
+  readonly capturedSize = signal<number>(11);
+  readonly capturedColor = signal<string>('');
+  readonly stylesMenuPos = signal<{ top: number; left: number }>({ top: 0, left: 0 });
+
+  readonly filteredMoreStyles = computed<Array<{ name: string; key: string; isCustom?: boolean; customDef?: CustomStyleDefinition }>>(() => {
+    const q = this.moreStylesSearchQuery().toLowerCase().trim();
+    const list: Array<{ name: string; key: string; isCustom?: boolean; customDef?: CustomStyleDefinition }> = [
+      { name: 'Normal', key: 'normal' },
+      { name: 'Heading 1', key: 'h1' },
+      { name: 'Heading 2', key: 'h2' },
+      { name: 'Heading 3', key: 'h3' },
+      { name: 'Title', key: 'title' },
+      { name: 'Subtitle', key: 'subtitle' },
+      ...this.wordDoc.customStyles.map((s) => ({ name: s.name, key: s.name, isCustom: true, customDef: s })),
+    ];
+    if (!q) return list;
+    return list.filter((s) => s.name.toLowerCase().includes(q));
+  });
+
   readonly baseColors: Array<{ key: string; name: string; hex: string }> = [
     { key: 'black', name: 'Black', hex: COLORS['black'] },
     { key: 'darkGray', name: 'Dark Gray', hex: COLORS['darkGray'] },
@@ -199,6 +229,7 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly fontList = FONTS;
   readonly sizeList = [8, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72];
   readonly colorKeys = Object.keys(COLORS);
+  readonly COLORS = COLORS;
 
   readonly docSetup = signal<PageSetup>({
     orientation: 'portrait',
@@ -282,7 +313,17 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         this.cdr.detectChanges();
       })
     );
+
+    window.addEventListener('scroll', this.onScrollOrResizeCloseMenu, true);
+    window.addEventListener('resize', this.onScrollOrResizeCloseMenu);
   }
+
+  private onScrollOrResizeCloseMenu = (): void => {
+    if (this.showStylesMenu()) {
+      this.showStylesMenu.set(false);
+      this.cdr.markForCheck();
+    }
+  };
 
   ngAfterViewInit(): void {
     if (this.editorRef) {
@@ -303,6 +344,8 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    window.removeEventListener('scroll', this.onScrollOrResizeCloseMenu, true);
+    window.removeEventListener('resize', this.onScrollOrResizeCloseMenu);
     if (this.advanceTimer) {
       clearTimeout(this.advanceTimer);
     }
@@ -336,6 +379,9 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!target?.closest('.orientation-dropdown-wrap')) {
       this.showOrientationPicker.set(false);
     }
+    if (!target?.closest('.styles-dropdown-menu') && !target?.closest('[data-demo-target="styles-more-btn"]')) {
+      this.showStylesMenu.set(false);
+    }
   }
 
   @HostListener('document:keydown.escape')
@@ -345,6 +391,9 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.showHighlightColorPicker.set(false);
     this.showCommentDialog.set(false);
     this.showOrientationPicker.set(false);
+    this.showStylesMenu.set(false);
+    this.showMoreStylesDialog.set(false);
+    this.showCreateStyleDialog.set(false);
     this.selectedImageEl.set(null);
     this.selectedTableEl.set(null);
     this.selectedTocEl.set(null);
@@ -456,6 +505,10 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.commentSelectedText.set('');
     this.newCommentText.set('Please review this section.');
     this.showOrientationPicker.set(false);
+    this.wordDoc.customStyles = [];
+    this.showStylesMenu.set(false);
+    this.showMoreStylesDialog.set(false);
+    this.showCreateStyleDialog.set(false);
     this.activeRibbonTab.set('Home');
     this.selectedImageEl.set(null);
     this.selectedTableEl.set(null);
@@ -951,18 +1004,257 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  matchColorKey(colorStr: string, el?: HTMLElement | null): string {
+    if (!colorStr) return '';
+    let curr: HTMLElement | null = el || null;
+    while (curr && curr.tagName !== 'DIV' && curr.tagName !== 'BODY') {
+      const inlineColor = curr.style?.color?.toLowerCase().trim();
+      if (inlineColor) {
+        if (COLORS[inlineColor]) return inlineColor;
+        for (const [k, v] of Object.entries(COLORS)) {
+          if (inlineColor === v.toLowerCase() || inlineColor === k.toLowerCase()) {
+            return k;
+          }
+        }
+      }
+      curr = curr.parentElement;
+    }
+
+    const probe = document.createElement('span');
+    document.body.appendChild(probe);
+    let matched = '';
+    for (const [k, v] of Object.entries(COLORS)) {
+      probe.style.color = v;
+      if (window.getComputedStyle(probe).color === colorStr) {
+        matched = k;
+        break;
+      }
+      probe.style.color = k;
+      if (window.getComputedStyle(probe).color === colorStr) {
+        matched = k;
+        break;
+      }
+    }
+    probe.remove();
+    return matched;
+  }
+
+  toggleStylesMenu(event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (this.showStylesMenu()) {
+      this.showStylesMenu.set(false);
+      return;
+    }
+    this.wordDoc.rich?.capture();
+    this.updateStylesMenuPos(event.currentTarget as HTMLElement);
+    this.showStylesMenu.set(true);
+  }
+
+  updateStylesMenuPos(btnEl?: HTMLElement | null): void {
+    const btn = btnEl || (document.querySelector('[data-demo-target="styles-more-btn"]') as HTMLElement | null);
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const menuWidth = 240;
+    let left = rect.right - menuWidth;
+    let top = rect.bottom + 2;
+
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    if (left + menuWidth > vw - 8) {
+      left = vw - menuWidth - 8;
+    }
+    if (left < 8) {
+      left = 8;
+    }
+
+    const estimatedMenuHeight = 320;
+    if (top + estimatedMenuHeight > vh - 8 && rect.top - estimatedMenuHeight > 8) {
+      top = rect.top - estimatedMenuHeight - 2;
+    }
+
+    this.stylesMenuPos.set({ top, left });
+  }
+
+  openMoreStylesDialog(): void {
+    this.showStylesMenu.set(false);
+    this.moreStylesSearchQuery.set('');
+    this.selectedMoreStyle.set('Normal');
+    this.showMoreStylesDialog.set(true);
+  }
+
+  confirmMoreStyles(): void {
+    const sel = this.selectedMoreStyle();
+    if (!sel) return;
+    const custom = this.wordDoc.customStyles.find((cs) => cs.name === sel);
+    if (custom) {
+      this.applyCustomStyle(custom);
+    } else {
+      const mapping: Record<string, string> = {
+        Normal: 'normal',
+        'Heading 1': 'h1',
+        'Heading 2': 'h2',
+        'Heading 3': 'h3',
+        Title: 'title',
+        Subtitle: 'subtitle',
+      };
+      const key = mapping[sel] || sel.toLowerCase();
+      this.applyParagraphStyle(key);
+    }
+    this.showMoreStylesDialog.set(false);
+  }
+
+  openCreateStyleDialog(): void {
+    this.showStylesMenu.set(false);
+
+    let targetEl: HTMLElement | null = null;
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      let node: Node | null = range.startContainer;
+      if (node.nodeType === Node.TEXT_NODE) {
+        targetEl = node.parentElement;
+      } else if (node instanceof HTMLElement) {
+        targetEl = node;
+      }
+    }
+    if (!targetEl && this.wordDoc.rich?.saved) {
+      const node = this.wordDoc.rich.saved.startContainer;
+      targetEl = node.nodeType === Node.TEXT_NODE ? node.parentElement : (node as HTMLElement);
+    }
+    if (!targetEl && this.editorRef?.nativeElement) {
+      targetEl = (this.editorRef.nativeElement.querySelector('p, h1, h2, h3, div') as HTMLElement | null) || this.editorRef.nativeElement;
+    }
+
+    if (targetEl) {
+      const cs = window.getComputedStyle(targetEl);
+      this.capturedBold.set(Number(cs.fontWeight) >= 600 || cs.fontWeight === 'bold');
+      this.capturedItalic.set(cs.fontStyle === 'italic');
+      this.capturedUnderline.set(cs.textDecorationLine.includes('underline'));
+      const font = cs.fontFamily.replaceAll('"', '').split(',')[0].trim();
+      this.capturedFont.set(font || 'Calibri');
+      const sizePt = Math.round(parseFloat(cs.fontSize) * 0.75);
+      this.capturedSize.set(sizePt > 0 ? sizePt : 11);
+      const colorKey = this.matchColorKey(cs.color, targetEl);
+      this.capturedColor.set(colorKey);
+    } else {
+      this.capturedBold.set(false);
+      this.capturedItalic.set(false);
+      this.capturedUnderline.set(false);
+      this.capturedFont.set('Calibri');
+      this.capturedSize.set(11);
+      this.capturedColor.set('');
+    }
+
+    this.newStyleName.set('');
+    this.styleNameError.set('');
+    this.showCreateStyleDialog.set(true);
+  }
+
+  confirmCreateStyle(): void {
+    const name = this.newStyleName().trim();
+    if (!name) {
+      this.styleNameError.set('Please enter a style name.');
+      return;
+    }
+    const builtInNames = ['normal', 'no spacing', 'heading 1', 'heading 2', 'heading 3', 'title', 'subtitle', 'h1', 'h2', 'h3'];
+    if (
+      builtInNames.includes(name.toLowerCase()) ||
+      this.wordDoc.customStyles.some((s) => s.name.toLowerCase() === name.toLowerCase())
+    ) {
+      this.styleNameError.set('A style with this name already exists.');
+      return;
+    }
+
+    const newStyle: CustomStyleDefinition = {
+      name,
+      bold: this.capturedBold(),
+      italic: this.capturedItalic(),
+      underline: this.capturedUnderline(),
+      font: this.capturedFont(),
+      size: this.capturedSize(),
+      color: this.capturedColor(),
+    };
+
+    this.wordDoc.customStyles.push(newStyle);
+    this.applyCustomStyle(newStyle);
+    this.showCreateStyleDialog.set(false);
+  }
+
+  applyCustomStyle(style: CustomStyleDefinition): void {
+    this.selectedStyle.set(style.name);
+    this.wordDoc.rich?.command('formatBlock', 'p');
+    let b = this.wordDoc.rich?.block();
+    if (!b && this.editorRef?.nativeElement) {
+      const sel = window.getSelection();
+      if (sel && sel.anchorNode) {
+        b = sel.anchorNode.parentElement?.closest('p, h1, h2, h3, li, div') as HTMLElement | null;
+      }
+      if (!b) {
+        b = this.editorRef.nativeElement.querySelector('p, h1, h2, h3, div') as HTMLElement | null;
+      }
+    }
+    if (b) {
+      if (['H1', 'H2', 'H3'].includes(b.tagName)) {
+        const p = document.createElement('p');
+        p.innerHTML = b.innerHTML;
+        b.replaceWith(p);
+        b = p;
+      }
+      b.classList.remove('doc-title', 'doc-subtitle');
+      b.dataset['paragraphStyle'] = style.name;
+      b.style.fontWeight = style.bold ? 'bold' : 'normal';
+      b.style.fontStyle = style.italic ? 'italic' : 'normal';
+      b.style.textDecoration = style.underline ? 'underline' : 'none';
+      if (style.font) b.style.fontFamily = style.font;
+      if (style.size) b.style.fontSize = style.size + 'pt';
+      if (style.color) b.style.color = COLORS[style.color] || style.color;
+
+      b.querySelectorAll('*').forEach((el) => {
+        const h = el as HTMLElement;
+        if (style.bold !== undefined && h.style.fontWeight) h.style.fontWeight = '';
+        if (style.italic !== undefined && h.style.fontStyle) h.style.fontStyle = '';
+        if (style.underline !== undefined && h.style.textDecoration) h.style.textDecoration = '';
+        if (style.color && h.style.color) h.style.color = '';
+        if (style.font && h.style.fontFamily) h.style.fontFamily = '';
+        if (style.size && h.style.fontSize) h.style.fontSize = '';
+      });
+
+      this.wordDoc.logAction('style', style.name);
+      this.onEditorInput();
+    }
+  }
+
   applyParagraphStyle(style: string): void {
     this.selectedStyle.set(style);
     const tag = style === 'normal' ? 'p' : style === 'h1' || style === 'h2' || style === 'h3' ? style : 'p';
     this.wordDoc.rich?.command('formatBlock', tag);
-    const b = this.wordDoc.rich?.block();
+    let b = this.wordDoc.rich?.block();
+    if (!b && this.editorRef?.nativeElement) {
+      const sel = window.getSelection();
+      if (sel && sel.anchorNode) {
+        b = sel.anchorNode.parentElement?.closest('p, h1, h2, h3, li, div') as HTMLElement | null;
+      }
+      if (!b) {
+        b = this.editorRef.nativeElement.querySelector('p, h1, h2, h3, div') as HTMLElement | null;
+      }
+    }
     if (b) {
       b.dataset['paragraphStyle'] = style;
+      b.classList.remove('doc-title', 'doc-subtitle');
       if (style === 'title') {
         b.classList.add('doc-title');
       } else if (style === 'subtitle') {
         b.classList.add('doc-subtitle');
       }
+      b.style.fontWeight = '';
+      b.style.fontStyle = '';
+      b.style.textDecoration = '';
+      b.style.color = '';
+      b.style.fontFamily = '';
+      b.style.fontSize = '';
+      this.wordDoc.logAction('paragraphStyle', style);
       this.onEditorInput();
     }
   }

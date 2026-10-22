@@ -11,6 +11,32 @@ export interface TaskGoal extends BaseGoal {
   type: string;
 }
 
+export interface TextStyleGoal extends BaseGoal {
+  type: 'textStyle';
+  text: string;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  superscript?: boolean;
+  subscript?: boolean;
+  font?: string;
+  size?: number;
+  color?: string;
+  highlight?: string;
+}
+
+export interface StyleGoal extends BaseGoal {
+  type: 'style';
+  name: string;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  font?: string;
+  size?: number;
+  color?: string;
+  appliedTo?: string;
+}
+
 export interface LessonTask {
   title: string;
   explanation: string;

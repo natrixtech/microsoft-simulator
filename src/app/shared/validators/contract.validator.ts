@@ -13,6 +13,7 @@ export const GOAL_TYPES: Record<AppKind, string[]> = {
     'table',
     'element',
     'action',
+    'style',
   ],
   excel: [
     'cellValue',
@@ -134,6 +135,7 @@ export function validateActivity(kind: AppKind, data: unknown): ActivityPayload 
               textOrder: ['sequence'],
               element: ['element'],
               action: ['action'],
+              style: ['name'],
             }
           : kind === 'excel'
           ? {
@@ -174,9 +176,17 @@ export function validateActivity(kind: AppKind, data: unknown): ActivityPayload 
         'theme',
         'cell',
         'range',
+        'name',
+        'appliedTo',
       ]) {
         if (g[key] !== undefined && typeof g[key] !== 'string') {
           throw new Error(`${goalType}.${key} must be text.`);
+        }
+      }
+
+      for (const key of ['superscript', 'subscript']) {
+        if (g[key] !== undefined && typeof g[key] !== 'boolean') {
+          throw new Error(`${goalType}.${key} must be a boolean.`);
         }
       }
 

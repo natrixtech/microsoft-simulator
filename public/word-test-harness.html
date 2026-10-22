@@ -56,6 +56,19 @@
         <option value="image">Lesson 12: Insert and Align Picture (image)</option>
         <option value="element">Lesson 13: Add Page Header (element)</option>
         <option value="action">Lesson 14: Undo Editing Mistake (action)</option>
+        <option value="orientationPortrait">Lesson 15: Change Orientation to Portrait (pageSetup)</option>
+        <option value="pageSize">Lesson 16: Change the Page Size (pageSetup)</option>
+        <option value="pageMargins">Lesson 17: Set the Page Margins (pageSetup)</option>
+        <option value="fontFace">Lesson 18: Change the Font Face (textStyle)</option>
+        <option value="fontColor">Lesson 19: Change the Font Color (textStyle)</option>
+        <option value="indentParagraph">Lesson 20: Indent a Paragraph (paragraph)</option>
+        <option value="lineSpacing">Lesson 21: Change Line Spacing (paragraph)</option>
+        <option value="numberedList">Lesson 22: Make a Numbered List (list)</option>
+        <option value="predefinedStyle">Lesson 23: Apply a Predefined Style (paragraph)</option>
+        <option value="footnote">Lesson 24: Insert a Footnote (element)</option>
+        <option value="superscript">Lesson 25: Apply Superscript (textStyle)</option>
+        <option value="subscript">Lesson 26: Apply Subscript (textStyle)</option>
+        <option value="customStyle">Lesson 27: Create a Custom Style (style)</option>
       </select>
 
       <button id="load-btn" class="primary">Load Activity</button>
@@ -372,6 +385,307 @@
               hint: 'Click the Undo button on the Home ribbon or press Ctrl+Z.',
               startingDocument: '<p>This sentence has an accidental typing error.</p>',
               goals: [{ type: 'action', action: 'undo' }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        orientationPortrait: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Change Orientation to Portrait',
+          tasks: [
+            {
+              title: 'Change orientation to portrait',
+              explanation: 'Page orientation determines whether pages are printed vertically or horizontally. Portrait orientation is standard for letters, essays, and reports.',
+              instructions: [
+                'Click `Layout > Orientation` and select `Portrait`.'
+              ],
+              hint: 'Click `Layout > Orientation` and select `Portrait`.',
+              startingDocument: '<p>Quarterly Financial Overview</p><p>This document is currently set to landscape orientation. Switch it to portrait format for standard printing.</p>',
+              pageSetup: {
+                orientation: 'landscape',
+                paperSize: 'Letter',
+                margins: { top: 1, bottom: 1, left: 1, right: 1 }
+              },
+              goals: [{ type: 'pageSetup', orientation: 'portrait' }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        pageSize: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Change the Page Size',
+          tasks: [
+            {
+              title: 'Change page size to A4',
+              explanation: 'Setting the page size configures the document dimensions for specific paper formats. A4 is the standard paper size across Europe, Asia, and international organizations.',
+              instructions: [
+                'Click `Layout > Size`, choose `A4` in the Paper size list, then click `Apply`.'
+              ],
+              hint: 'Click `Layout > Size`, choose `A4` from the Paper size dropdown, and click `Apply`.',
+              startingDocument: '<p>International Project Proposal</p><p>Standardizing document dimensions ensures seamless printing and sharing with overseas partners.</p>',
+              pageSetup: {
+                orientation: 'portrait',
+                paperSize: 'Letter',
+                margins: { top: 1, bottom: 1, left: 1, right: 1 }
+              },
+              goals: [{ type: 'pageSetup', paperSize: 'A4' }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        pageMargins: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Set the Page Margins',
+          tasks: [
+            {
+              title: 'Set page margins to 0.5 inches',
+              explanation: 'Page margins establish white space around text to maintain readability. Custom margins provide necessary space for dense tables or document notes.',
+              instructions: [
+                'Click `Layout > Margins`, set Top, Bottom, Left and Right to `0.5`, then click `Apply`.'
+              ],
+              hint: 'Click `Layout > Margins`, set Top, Bottom, Left and Right to 0.5, and click `Apply`.',
+              startingDocument: '<p>Quarterly Inventory Roster</p><p>Reducing margin width allows more items to fit onto each page without breaking columns.</p>',
+              pageSetup: {
+                orientation: 'portrait',
+                paperSize: 'Letter',
+                margins: { top: 1, bottom: 1, left: 1, right: 1 }
+              },
+              goals: [
+                {
+                  type: 'pageSetup',
+                  margins: { top: 0.5, bottom: 0.5, left: 0.5, right: 0.5 }
+                }
+              ],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        fontFace: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Change the Font Face',
+          tasks: [
+            {
+              title: 'Apply Georgia font',
+              explanation: 'Different font faces convey distinct professional tones. Applying an elegant serif typeface like Georgia gives document headings a classic, authoritative feel.',
+              instructions: [
+                'Select the heading `Meeting Minutes`.',
+                'In the Home tab, choose `Georgia` from the font dropdown.'
+              ],
+              hint: 'Highlight `Meeting Minutes` and choose `Georgia` from the font dropdown on the Home ribbon.',
+              startingDocument: '<h1>Meeting Minutes</h1><p>The project kickoff meeting commenced at 10:00 AM in Conference Room B.</p>',
+              goals: [{ type: 'textStyle', text: 'Meeting Minutes', font: 'Georgia' }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        fontColor: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Change the Font Color',
+          tasks: [
+            {
+              title: 'Change word color to blue',
+              explanation: 'Font colors draw immediate visual focus to key terms. Using color effectively highlights crucial alerts, statuses, and action items.',
+              instructions: [
+                'Select the word `Urgent`.',
+                'In the Home tab, click `Font Color` and select `blue`.'
+              ],
+              hint: 'Select the word `Urgent` and click the blue color swatch in the Font Color picker.',
+              startingDocument: '<p>Reminder: This is an Urgent request that requires immediate team review.</p>',
+              goals: [{ type: 'textStyle', text: 'Urgent', color: 'blue' }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        indentParagraph: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Indent a Paragraph',
+          tasks: [
+            {
+              title: 'Increase paragraph indent',
+              explanation: 'Paragraph indentation offsets text from the margin to denote sub-points, quotes, or new thoughts. Indenting structure helps readers navigate dense blocks of text.',
+              instructions: [
+                'Click inside the paragraph starting with `This introductory paragraph`.',
+                'In the Home tab, click `Increase Indent`.'
+              ],
+              hint: 'Place your cursor in the paragraph and click the Increase Indent button on the Home tab.',
+              startingDocument: '<p>Executive Summary</p><p>This introductory paragraph highlights our key achievements and milestones for the fiscal year.</p>',
+              goals: [{ type: 'paragraph', text: 'This introductory paragraph', indent: 1 }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        lineSpacing: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Change Line Spacing',
+          tasks: [
+            {
+              title: 'Set double line spacing',
+              explanation: 'Line spacing regulates the vertical space between lines of text. Double spacing improves text legibility and provides ample room for written comments.',
+              instructions: [
+                'Click inside the paragraph starting with `Double spaced text`.',
+                'In the Home tab, click `Line spacing` and choose `2.0`.'
+              ],
+              hint: 'Click inside the paragraph and select 2.0 from the `Line spacing` dropdown on the Home ribbon.',
+              startingDocument: '<p>Double spaced text makes academic papers and draft manuscripts much easier to read and annotate during peer review.</p>',
+              goals: [{ type: 'paragraph', text: 'Double spaced text', lineSpacing: 2 }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        numberedList: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Make a Numbered List',
+          tasks: [
+            {
+              title: 'Convert lines to numbered list',
+              explanation: 'Numbered lists organize items into sequential order. They are ideal for chronological steps, priority checklists, and procedural workflows.',
+              instructions: [
+                'Select the three lines from `Review draft proposal` through `Submit final approval`.',
+                'In the Home tab, click `Numbering`.'
+              ],
+              hint: 'Highlight all three lines and click the Numbering button on the Home ribbon.',
+              startingDocument: '<p>Project Checklist</p><p>Review draft proposal</p><p>Gather stakeholder feedback</p><p>Submit final approval</p>',
+              goals: [
+                {
+                  type: 'list',
+                  items: [
+                    'Review draft proposal',
+                    'Gather stakeholder feedback',
+                    'Submit final approval'
+                  ],
+                  listType: 'numbered'
+                }
+              ],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        predefinedStyle: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Apply a Predefined Style',
+          tasks: [
+            {
+              title: 'Apply Heading 1 style',
+              explanation: 'Predefined styles apply uniform formatting and establish an accessible document hierarchy. Heading styles enable automatic table of contents generation and document navigation.',
+              instructions: [
+                'Click inside the heading line `Executive Summary`.',
+                'In the Home tab Styles gallery, click `Heading 1`.'
+              ],
+              hint: 'Click inside Executive Summary and select Heading 1 from the Styles gallery on the Home tab.',
+              startingDocument: '<p>Executive Summary</p><p>This report outlines the strategic initiatives planned for the upcoming fiscal quarter.</p>',
+              goals: [{ type: 'paragraph', text: 'Executive Summary', style: 'h1' }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        footnote: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Insert a Footnote',
+          tasks: [
+            {
+              title: 'Insert footnote citation',
+              explanation: 'Footnotes cite references, credits, or supplementary notes at the bottom of the page without interrupting reading continuity in the main text.',
+              instructions: [
+                'Place your cursor immediately after the word `research`.',
+                'Click `References > Insert Footnote`.'
+              ],
+              hint: 'Place the cursor after research, then click `References > Insert Footnote`.',
+              startingDocument: '<p>According to recent industry research, remote work productivity increased significantly over the past five years.</p>',
+              goals: [{ type: 'element', element: 'footnote' }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        superscript: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Apply Superscript',
+          tasks: [
+            {
+              title: 'Format number as superscript',
+              explanation: 'Superscript positions text slightly above the standard line of type. It is essential for mathematical powers, scientific formulas, and footnote references.',
+              instructions: [
+                'Select the number `2` in the equation.',
+                'In the Home tab, click `Superscript` (x²).'
+              ],
+              hint: 'Select the number 2 and click the Superscript (x²) button on the Home ribbon.',
+              startingDocument: '<p>The formula is E = mc2.</p>',
+              goals: [{ type: 'textStyle', text: '2', superscript: true }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        subscript: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Apply Subscript',
+          tasks: [
+            {
+              title: 'Format number as subscript',
+              explanation: 'Subscript places characters slightly below the normal text baseline. It is widely used in chemical formulas and mathematical notations.',
+              instructions: [
+                'Select the number `2` in the chemical formula.',
+                'In the Home tab, click `Subscript` (x₂).'
+              ],
+              hint: 'Select the number 2 and click the Subscript (x₂) button on the Home ribbon.',
+              startingDocument: '<p>Water is written as H2O.</p>',
+              goals: [{ type: 'textStyle', text: '2', subscript: true }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        customStyle: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Create a Custom Style',
+          tasks: [
+            {
+              title: 'Create and apply custom Quote style',
+              explanation: 'Custom styles let you capture your preferred formatting and quickly reuse it throughout your document. They streamline formatting and guarantee consistent presentation.',
+              instructions: [
+                'Select the text in the first paragraph: `All the world’s a stage.`',
+                'Open the Styles menu (the ⌄ button next to the styles) and choose `Create a Style`.',
+                'Type `Quote` for the name and click `OK`, then click the second paragraph and choose `Quote` in the gallery.'
+              ],
+              hint: 'Select the first paragraph, click the ⌄ button next to the styles, choose `Create a Style`, name it Quote, then click into the second paragraph and choose Quote.',
+              startingDocument: '<p style="font-style: italic; color: gray;">All the world’s a stage.</p><p>To be or not to be.</p>',
+              goals: [{ type: 'style', name: 'Quote', italic: true, color: 'gray', appliedTo: 'To be or not to be' }],
               showMeHow: true
             }
           ],
