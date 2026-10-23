@@ -1,0 +1,282 @@
+<div class="chart-modal-backdrop" *ngIf="isOpen" (click)="onCancel()">
+  <div class="chart-dialog-window" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+    <!-- Title Bar -->
+    <div class="chart-dialog-titlebar">
+      <span class="dialog-title-text">{{ mode === 'change' ? 'Change Chart Type' : 'Insert Chart' }}</span>
+      <div class="dialog-title-actions">
+        <button type="button" class="dialog-help-btn" title="Help">?</button>
+        <button type="button" class="dialog-close-btn" (click)="onCancel()" title="Close (Esc)">✕</button>
+      </div>
+    </div>
+
+    <!-- Tabs Strip -->
+    <div class="chart-dialog-tabs">
+      <div class="chart-dialog-tab active">All Charts</div>
+    </div>
+
+    <!-- Dialog Content: Left list + Right content -->
+    <div class="chart-dialog-content">
+      <!-- Left List of Chart Categories -->
+      <div class="chart-categories-sidebar">
+        <div
+          *ngFor="let cat of categoriesList"
+          class="category-list-item"
+          [class.active]="cat.enabled && selectedType() === cat.type"
+          [class.disabled]="!cat.enabled"
+          [attr.data-demo-target]="cat.target || null"
+          (click)="cat.enabled && selectType(cat.type)"
+        >
+          <span class="category-icon" [ngSwitch]="cat.icon">
+            <svg *ngSwitchCase="'clock'" viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+              <path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zM8 4a.5.5 0 0 1 .5.5v3.293l2.146 2.147a.5.5 0 0 1-.708.708l-2.5-2.5A.5.5 0 0 1 7.5 8V4.5A.5.5 0 0 1 8 4z"/>
+            </svg>
+            <svg *ngSwitchCase="'folder'" viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+              <path d="M1.5 3A1.5 1.5 0 0 0 0 4.5v7A1.5 1.5 0 0 0 1.5 13h13a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 14.5 5H7.707L6.354 3.646A.5.5 0 0 0 6 3.5H1.5z"/>
+            </svg>
+            <svg *ngSwitchCase="'column'" viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+              <rect x="2" y="7" width="3" height="7" rx="0.5" fill="#4472c4"/>
+              <rect x="6.5" y="4" width="3" height="10" rx="0.5" fill="#ed7d31"/>
+              <rect x="11" y="2" width="3" height="12" rx="0.5" fill="#70ad47"/>
+            </svg>
+            <svg *ngSwitchCase="'line'" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8">
+              <polyline points="2,12 6,6 10,9 14,3" stroke="#4472c4"/>
+            </svg>
+            <svg *ngSwitchCase="'pie'" viewBox="0 0 16 16" width="14" height="14">
+              <circle cx="8" cy="8" r="6" fill="#4472c4"/>
+              <path d="M8 8 L8 2 A6 6 0 0 1 14 8 Z" fill="#ed7d31"/>
+            </svg>
+            <svg *ngSwitchCase="'bar'" viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+              <rect x="2" y="2" width="11" height="3" rx="0.5" fill="#4472c4"/>
+              <rect x="2" y="6.5" width="8" height="3" rx="0.5" fill="#ed7d31"/>
+              <rect x="2" y="11" width="5" height="3" rx="0.5" fill="#70ad47"/>
+            </svg>
+            <svg *ngSwitchDefault viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+              <rect x="2" y="3" width="12" height="10" rx="1" fill="none" stroke="currentColor"/>
+              <line x1="2" y1="8" x2="14" y2="8" stroke="currentColor"/>
+            </svg>
+          </span>
+          <span class="category-name">{{ cat.label }}</span>
+        </div>
+      </div>
+
+      <!-- Right Preview and Configuration Pane -->
+      <div class="chart-main-pane">
+        <!-- Sub-types icons row (first is active, rest greyed out) -->
+        <div class="chart-subtypes-row" [ngSwitch]="selectedType()">
+          <!-- Column sub-types -->
+          <ng-container *ngSwitchCase="'column'">
+            <div class="subtype-thumbnail active" title="Clustered Column">
+              <svg viewBox="0 0 32 24" width="32" height="24">
+                <rect x="3" y="10" width="3.5" height="11" fill="#4472c4"/>
+                <rect x="7" y="6" width="3.5" height="15" fill="#ed7d31"/>
+                <rect x="11" y="13" width="3.5" height="8" fill="#70ad47"/>
+                <rect x="17.5" y="8" width="3.5" height="13" fill="#4472c4"/>
+                <rect x="21.5" y="4" width="3.5" height="17" fill="#ed7d31"/>
+                <rect x="25.5" y="9" width="3.5" height="12" fill="#70ad47"/>
+                <line x1="2" y1="21.5" x2="30" y2="21.5" stroke="#999" stroke-width="1"/>
+              </svg>
+            </div>
+            <div class="subtype-thumbnail disabled" title="Stacked Column">
+              <svg viewBox="0 0 32 24" width="32" height="24" opacity="0.45">
+                <rect x="6" y="14" width="6" height="7" fill="#4472c4"/>
+                <rect x="6" y="8" width="6" height="6" fill="#ed7d31"/>
+                <rect x="20" y="12" width="6" height="9" fill="#4472c4"/>
+                <rect x="20" y="5" width="6" height="7" fill="#ed7d31"/>
+                <line x1="2" y1="21.5" x2="30" y2="21.5" stroke="#999" stroke-width="1"/>
+              </svg>
+            </div>
+            <div class="subtype-thumbnail disabled" title="100% Stacked Column">
+              <svg viewBox="0 0 32 24" width="32" height="24" opacity="0.45">
+                <rect x="6" y="4" width="6" height="8" fill="#ed7d31"/>
+                <rect x="6" y="12" width="6" height="9" fill="#4472c4"/>
+                <rect x="20" y="4" width="6" height="11" fill="#ed7d31"/>
+                <rect x="20" y="15" width="6" height="6" fill="#4472c4"/>
+                <line x1="2" y1="21.5" x2="30" y2="21.5" stroke="#999" stroke-width="1"/>
+              </svg>
+            </div>
+            <div class="subtype-thumbnail disabled" title="3-D Clustered Column">
+              <svg viewBox="0 0 32 24" width="32" height="24" opacity="0.45">
+                <polygon points="6,12 11,8 11,20 6,21" fill="#4472c4"/>
+                <polygon points="14,8 19,4 19,20 14,21" fill="#ed7d31"/>
+                <polygon points="22,11 27,7 27,20 22,21" fill="#70ad47"/>
+              </svg>
+            </div>
+          </ng-container>
+
+          <!-- Line sub-types -->
+          <ng-container *ngSwitchCase="'line'">
+            <div class="subtype-thumbnail active" title="Line">
+              <svg viewBox="0 0 32 24" width="32" height="24">
+                <polyline points="4,16 11,8 19,13 28,5" fill="none" stroke="#4472c4" stroke-width="2"/>
+                <line x1="2" y1="21.5" x2="30" y2="21.5" stroke="#999" stroke-width="1"/>
+              </svg>
+            </div>
+            <div class="subtype-thumbnail disabled" title="Stacked Line">
+              <svg viewBox="0 0 32 24" width="32" height="24" opacity="0.45">
+                <polyline points="4,18 11,12 19,15 28,9" fill="none" stroke="#4472c4" stroke-width="1.8"/>
+                <polyline points="4,13 11,6 19,9 28,4" fill="none" stroke="#ed7d31" stroke-width="1.8"/>
+                <line x1="2" y1="21.5" x2="30" y2="21.5" stroke="#999" stroke-width="1"/>
+              </svg>
+            </div>
+            <div class="subtype-thumbnail disabled" title="100% Stacked Line">
+              <svg viewBox="0 0 32 24" width="32" height="24" opacity="0.45">
+                <polyline points="4,16 11,14 19,15 28,13" fill="none" stroke="#4472c4" stroke-width="1.8"/>
+                <polyline points="4,6 11,6 19,6 28,6" fill="none" stroke="#ed7d31" stroke-width="1.8"/>
+                <line x1="2" y1="21.5" x2="30" y2="21.5" stroke="#999" stroke-width="1"/>
+              </svg>
+            </div>
+            <div class="subtype-thumbnail disabled" title="Line with Markers">
+              <svg viewBox="0 0 32 24" width="32" height="24" opacity="0.45">
+                <polyline points="4,16 11,8 19,13 28,5" fill="none" stroke="#4472c4" stroke-width="1.8"/>
+                <circle cx="4" cy="16" r="2" fill="#4472c4"/>
+                <circle cx="11" cy="8" r="2" fill="#4472c4"/>
+                <circle cx="19" cy="13" r="2" fill="#4472c4"/>
+                <circle cx="28" cy="5" r="2" fill="#4472c4"/>
+                <line x1="2" y1="21.5" x2="30" y2="21.5" stroke="#999" stroke-width="1"/>
+              </svg>
+            </div>
+          </ng-container>
+
+          <!-- Pie sub-types -->
+          <ng-container *ngSwitchCase="'pie'">
+            <div class="subtype-thumbnail active" title="Pie">
+              <svg viewBox="0 0 32 24" width="32" height="24">
+                <circle cx="16" cy="12" r="9" fill="#4472c4"/>
+                <path d="M16 12 L16 3 A9 9 0 0 1 25 12 Z" fill="#ed7d31"/>
+              </svg>
+            </div>
+            <div class="subtype-thumbnail disabled" title="3-D Pie">
+              <svg viewBox="0 0 32 24" width="32" height="24" opacity="0.45">
+                <ellipse cx="16" cy="12" rx="10" ry="6" fill="#4472c4"/>
+                <path d="M16 12 L16 6 A10 6 0 0 1 26 12 Z" fill="#ed7d31"/>
+              </svg>
+            </div>
+            <div class="subtype-thumbnail disabled" title="Pie of Pie">
+              <svg viewBox="0 0 32 24" width="32" height="24" opacity="0.45">
+                <circle cx="11" cy="12" r="7" fill="#4472c4"/>
+                <circle cx="24" cy="12" r="4.5" fill="#ed7d31"/>
+              </svg>
+            </div>
+            <div class="subtype-thumbnail disabled" title="Doughnut">
+              <svg viewBox="0 0 32 24" width="32" height="24" opacity="0.45">
+                <circle cx="16" cy="12" r="9" fill="#4472c4"/>
+                <circle cx="16" cy="12" r="4.5" fill="#fff"/>
+              </svg>
+            </div>
+          </ng-container>
+
+          <!-- Bar sub-types -->
+          <ng-container *ngSwitchCase="'bar'">
+            <div class="subtype-thumbnail active" title="Clustered Bar">
+              <svg viewBox="0 0 32 24" width="32" height="24">
+                <rect x="3" y="3" width="18" height="3" fill="#4472c4"/>
+                <rect x="3" y="6.5" width="14" height="3" fill="#ed7d31"/>
+                <rect x="3" y="10" width="8" height="3" fill="#70ad47"/>
+                <rect x="3" y="14.5" width="22" height="3" fill="#4472c4"/>
+                <rect x="3" y="18" width="16" height="3" fill="#ed7d31"/>
+                <line x1="3" y1="2" x2="3" y2="22" stroke="#999" stroke-width="1"/>
+              </svg>
+            </div>
+            <div class="subtype-thumbnail disabled" title="Stacked Bar">
+              <svg viewBox="0 0 32 24" width="32" height="24" opacity="0.45">
+                <rect x="3" y="5" width="10" height="4" fill="#4472c4"/>
+                <rect x="13" y="5" width="10" height="4" fill="#ed7d31"/>
+                <rect x="3" y="13" width="14" height="4" fill="#4472c4"/>
+                <rect x="17" y="13" width="8" height="4" fill="#ed7d31"/>
+                <line x1="3" y1="2" x2="3" y2="22" stroke="#999" stroke-width="1"/>
+              </svg>
+            </div>
+            <div class="subtype-thumbnail disabled" title="100% Stacked Bar">
+              <svg viewBox="0 0 32 24" width="32" height="24" opacity="0.45">
+                <rect x="3" y="5" width="14" height="4" fill="#4472c4"/>
+                <rect x="17" y="5" width="10" height="4" fill="#ed7d31"/>
+                <rect x="3" y="13" width="8" height="4" fill="#4472c4"/>
+                <rect x="11" y="13" width="16" height="4" fill="#ed7d31"/>
+                <line x1="3" y1="2" x2="3" y2="22" stroke="#999" stroke-width="1"/>
+              </svg>
+            </div>
+            <div class="subtype-thumbnail disabled" title="3-D Clustered Bar">
+              <svg viewBox="0 0 32 24" width="32" height="24" opacity="0.45">
+                <polygon points="3,6 16,6 18,3 5,3" fill="#4472c4"/>
+                <polygon points="3,14 20,14 22,11 5,11" fill="#ed7d31"/>
+              </svg>
+            </div>
+          </ng-container>
+        </div>
+
+        <!-- Subtype Label -->
+        <div class="chart-subtype-name">{{ subTypeName() }}</div>
+
+        <!-- Live Preview Card -->
+        <div class="chart-preview-card" [innerHTML]="previewSvg()"></div>
+
+        <!-- Client additions: Chart title field + Data grid -->
+        <div class="chart-config-section">
+          <!-- Chart Title Input -->
+          <div class="chart-title-field-row">
+            <label for="word-chart-title-input" class="field-label">Chart title:</label>
+            <input
+              id="word-chart-title-input"
+              type="text"
+              class="chart-title-input"
+              data-demo-target="chart-title-input"
+              [value]="title()"
+              (input)="onTitleInput($event)"
+              placeholder="Enter chart title..."
+            />
+          </div>
+
+          <!-- Data Grid -->
+          <div class="chart-data-grid-container">
+            <div class="data-grid-header-note">
+              <span>Data values (updates live preview):</span>
+              <span *ngIf="selectedType() === 'pie'" class="pie-series-note">★ Pie uses Series 1 values</span>
+            </div>
+            <table class="chart-data-table">
+              <thead>
+                <tr>
+                  <th class="corner-header">Category</th>
+                  <th *ngFor="let s of data().series; let sIdx = index" [class.pie-highlight]="selectedType() === 'pie' && sIdx === 0">
+                    {{ s.name }}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let cat of data().categories; let cIdx = index">
+                  <td class="cat-label-cell">{{ cat }}</td>
+                  <td *ngFor="let s of data().series; let sIdx = index" [class.pie-highlight]="selectedType() === 'pie' && sIdx === 0">
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      class="grid-cell-input"
+                      [value]="s.values[cIdx]"
+                      (input)="onCellInput(sIdx, cIdx, $event)"
+                      (blur)="onCellInput(sIdx, cIdx, $event)"
+                      (keydown.enter)="onCellInput(sIdx, cIdx, $event)"
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dialog Footer -->
+    <div class="chart-dialog-footer">
+      <button
+        type="button"
+        class="chart-btn-primary"
+        data-demo-target="chart-insert-ok"
+        (click)="onInsert()"
+      >
+        {{ mode === 'change' ? 'OK' : 'Insert' }}
+      </button>
+      <button type="button" class="chart-btn-secondary" (click)="onCancel()">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>

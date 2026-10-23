@@ -37,6 +37,22 @@ export interface StyleGoal extends BaseGoal {
   appliedTo?: string;
 }
 
+export interface TableGoal extends BaseGoal {
+  type: 'table';
+  rows?: number;
+  columns?: number;
+  cells?: string[][];
+  style?: string;
+  cellColors?: Array<{ row: number; col: number; color: string }>;
+}
+
+export interface ChartGoal extends BaseGoal {
+  type: 'chart';
+  chartType?: 'column' | 'bar' | 'line' | 'pie';
+  title?: string;
+  count?: number;
+}
+
 export interface LessonTask {
   title: string;
   explanation: string;

@@ -14,6 +14,7 @@ export const GOAL_TYPES: Record<AppKind, string[]> = {
     'element',
     'action',
     'style',
+    'chart',
   ],
   excel: [
     'cellValue',
@@ -178,6 +179,7 @@ export function validateActivity(kind: AppKind, data: unknown): ActivityPayload 
         'range',
         'name',
         'appliedTo',
+        'title',
       ]) {
         if (g[key] !== undefined && typeof g[key] !== 'string') {
           throw new Error(`${goalType}.${key} must be text.`);
@@ -221,6 +223,42 @@ export function validateActivity(kind: AppKind, data: unknown): ActivityPayload 
 
       if (g['slide'] !== undefined && g['slide'] < 1) {
         throw new Error('Slide numbers start at 1.');
+      }
+
+      if (kind === 'word' && goalType === 'chart') {
+        if (g['chartType'] !== undefined) {
+          const allowedChartTypes = ['column', 'bar', 'line', 'pie'];
+          if (!allowedChartTypes.includes(g['chartType'])) {
+            throw new Error(`chart.chartType must be one of: ${allowedChartTypes.join(', ')}.`);
+          }
+        }
+      }
+
+      if (goalType === 'table') {
+        if (g['style'] !== undefined) {
+          const allowedStyles = ['Plain', 'Banded Rows', 'Grid', 'Grid Blue', 'Grid Green', 'List Blue'];
+          if (!allowedStyles.includes(g['style'])) {
+            throw new Error(`table.style must be one of: ${allowedStyles.join(', ')}.`);
+          }
+        }
+        if (g['cellColors'] !== undefined) {
+          if (!Array.isArray(g['cellColors'])) {
+            throw new Error('table.cellColors must be an array.');
+          }
+          for (const cc of g['cellColors']) {
+            if (
+              !cc ||
+              typeof cc !== 'object' ||
+              !Number.isInteger(cc.row) ||
+              cc.row < 0 ||
+              !Number.isInteger(cc.col) ||
+              cc.col < 0 ||
+              typeof cc.color !== 'string'
+            ) {
+              throw new Error('table.cellColors must contain objects with non-negative integer row, col, and string color.');
+            }
+          }
+        }
       }
 
       if (kind === 'excel') {

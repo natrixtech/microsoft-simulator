@@ -1,0 +1,546 @@
+/* Modal backdrop */
+.chart-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(1px);
+}
+
+/* Dialog window matching Word's Insert Chart */
+.chart-dialog-window {
+  width: 740px;
+  max-width: 95vw;
+  max-height: 92vh;
+  background: #ffffff;
+  border: 1px solid #c8c6c4;
+  border-radius: 4px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: 'Segoe UI', Aptos, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  color: #242424;
+}
+
+/* Title bar */
+.chart-dialog-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #ffffff;
+  border-bottom: 1px solid #edebe9;
+  user-select: none;
+}
+
+.dialog-title-text {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #323130;
+}
+
+.dialog-title-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dialog-help-btn,
+.dialog-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  width: 26px;
+  height: 24px;
+  cursor: pointer;
+  color: #605e5c;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+}
+
+.dialog-help-btn:hover {
+  background: #f3f2f1;
+}
+
+.dialog-close-btn:hover {
+  background: #c42b1c;
+  color: #ffffff;
+}
+
+/* Tabs */
+.chart-dialog-tabs {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border-bottom: 1px solid #d1d1d1;
+  background: #f8f8f8;
+}
+
+.chart-dialog-tab {
+  padding: 7px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #0f6cbd;
+  border-bottom: 2px solid #0f6cbd;
+  cursor: default;
+}
+
+/* Main Content Area */
+.chart-dialog-content {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Sidebar with chart categories */
+.chart-categories-sidebar {
+  width: 175px;
+  border-right: 1px solid #edebe9;
+  background: #faf9f8;
+  overflow-y: auto;
+  padding: 4px 0;
+  flex-shrink: 0;
+}
+
+.category-list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  font-size: 12px;
+  color: #323130;
+  cursor: pointer;
+  user-select: none;
+  border-left: 3px solid transparent;
+}
+
+.category-list-item:hover:not(.disabled) {
+  background: #f3f2f1;
+}
+
+.category-list-item.active {
+  background: #e1dfdd;
+  font-weight: 600;
+  color: #0f6cbd;
+  border-left-color: #0f6cbd;
+}
+
+.category-list-item.disabled {
+  color: #a19f9d;
+  cursor: default;
+  opacity: 0.65;
+}
+
+.category-icon {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.category-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Main Right Pane */
+.chart-main-pane {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Subtypes row */
+.chart-subtypes-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #edebe9;
+}
+
+.subtype-thumbnail {
+  border: 1px solid #d1d1d1;
+  border-radius: 2px;
+  padding: 3px;
+  background: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.subtype-thumbnail.active {
+  border: 2px solid #0f6cbd;
+  background: #eef4f9;
+}
+
+.subtype-thumbnail.disabled {
+  cursor: default;
+  border-color: #e1dfdd;
+  background: #fbfbfb;
+}
+
+.chart-subtype-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #323130;
+}
+
+/* Preview Card */
+.chart-preview-card {
+  width: 100%;
+  height: 200px;
+  border: 1px solid #e1dfdd;
+  background: #ffffff;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.chart-preview-card ::ng-deep svg {
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+}
+
+/* Configuration section: Title + Data grid */
+.chart-config-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #fbfbfb;
+  border: 1px solid #edebe9;
+  border-radius: 3px;
+  padding: 10px;
+}
+
+.chart-title-field-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #323130;
+  white-space: nowrap;
+}
+
+.chart-title-input {
+  flex: 1;
+  padding: 4px 8px;
+  font-size: 12px;
+  border: 1px solid #8a8886;
+  border-radius: 2px;
+  background: #ffffff;
+  color: #242424;
+}
+
+.chart-title-input:focus {
+  outline: none;
+  border-color: #0f6cbd;
+  box-shadow: 0 0 0 1px #0f6cbd;
+}
+
+/* Data grid */
+.chart-data-grid-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.data-grid-header-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #605e5c;
+}
+
+.pie-series-note {
+  color: #0f6cbd;
+  font-weight: 600;
+}
+
+.chart-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+  background: #ffffff;
+  border: 1px solid #e1dfdd;
+}
+
+.chart-data-table th,
+.chart-data-table td {
+  border: 1px solid #edebe9;
+  padding: 4px 6px;
+  text-align: center;
+}
+
+.chart-data-table th {
+  background: #f3f2f1;
+  font-weight: 600;
+  color: #323130;
+}
+
+.chart-data-table th.corner-header {
+  text-align: left;
+  width: 105px;
+}
+
+.chart-data-table th.pie-highlight,
+.chart-data-table td.pie-highlight {
+  background: #eff6fc;
+}
+
+.cat-label-cell {
+  text-align: left;
+  font-weight: 500;
+  color: #484644;
+}
+
+.grid-cell-input {
+  width: 58px;
+  padding: 2px 4px;
+  font-size: 11.5px;
+  border: 1px solid #d1d1d1;
+  border-radius: 2px;
+  text-align: right;
+  color: #242424;
+  background: #ffffff;
+}
+
+.grid-cell-input:focus {
+  outline: none;
+  border-color: #0f6cbd;
+}
+
+/* Footer buttons */
+.chart-dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid #edebe9;
+  background: #f8f8f8;
+}
+
+.chart-btn-primary {
+  min-width: 76px;
+  height: 28px;
+  padding: 0 12px;
+  background: #0f6cbd;
+  color: #ffffff;
+  border: 1px solid #0f6cbd;
+  border-radius: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chart-btn-primary:hover {
+  background: #0c5ca2;
+  border-color: #0c5ca2;
+}
+
+.chart-btn-secondary {
+  min-width: 76px;
+  height: 28px;
+  padding: 0 12px;
+  background: #ffffff;
+  color: #242424;
+  border: 1px solid #8a8886;
+  border-radius: 2px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.chart-btn-secondary:hover {
+  background: #f3f2f1;
+  border-color: #605e5c;
+}
+
+/* Dark Theme Overrides - NO :is() selectors! */
+:host-context(.dark-theme) .chart-dialog-window,
+:host-context([data-theme='DARK']) .chart-dialog-window,
+:host-context([data-theme='dark']) .chart-dialog-window {
+  background: #252423;
+  border-color: #484644;
+  color: #f3f2f1;
+}
+
+:host-context(.dark-theme) .chart-dialog-titlebar,
+:host-context([data-theme='DARK']) .chart-dialog-titlebar,
+:host-context([data-theme='dark']) .chart-dialog-titlebar {
+  background: #201f1e;
+  border-color: #3b3a39;
+}
+
+:host-context(.dark-theme) .dialog-title-text,
+:host-context([data-theme='DARK']) .dialog-title-text,
+:host-context([data-theme='dark']) .dialog-title-text {
+  color: #f3f2f1;
+}
+
+:host-context(.dark-theme) .chart-dialog-tabs,
+:host-context([data-theme='DARK']) .chart-dialog-tabs,
+:host-context([data-theme='dark']) .chart-dialog-tabs {
+  background: #1b1a19;
+  border-color: #3b3a39;
+}
+
+:host-context(.dark-theme) .chart-dialog-tab,
+:host-context([data-theme='DARK']) .chart-dialog-tab,
+:host-context([data-theme='dark']) .chart-dialog-tab {
+  color: #4ea2ea;
+  border-bottom-color: #4ea2ea;
+}
+
+:host-context(.dark-theme) .chart-categories-sidebar,
+:host-context([data-theme='DARK']) .chart-categories-sidebar,
+:host-context([data-theme='dark']) .chart-categories-sidebar {
+  background: #1b1a19;
+  border-color: #3b3a39;
+}
+
+:host-context(.dark-theme) .category-list-item,
+:host-context([data-theme='DARK']) .category-list-item,
+:host-context([data-theme='dark']) .category-list-item {
+  color: #d2d0ce;
+}
+
+:host-context(.dark-theme) .category-list-item:hover:not(.disabled),
+:host-context([data-theme='DARK']) .category-list-item:hover:not(.disabled),
+:host-context([data-theme='dark']) .category-list-item:hover:not(.disabled) {
+  background: #2d2c2b;
+}
+
+:host-context(.dark-theme) .category-list-item.active,
+:host-context([data-theme='DARK']) .category-list-item.active,
+:host-context([data-theme='dark']) .category-list-item.active {
+  background: #323130;
+  color: #4ea2ea;
+  border-left-color: #4ea2ea;
+}
+
+:host-context(.dark-theme) .chart-preview-card,
+:host-context([data-theme='DARK']) .chart-preview-card,
+:host-context([data-theme='dark']) .chart-preview-card {
+  background: #2d2c2b;
+  border-color: #3b3a39;
+}
+
+:host-context(.dark-theme) .chart-preview-card ::ng-deep .chart-title-text,
+:host-context([data-theme='DARK']) .chart-preview-card ::ng-deep .chart-title-text,
+:host-context([data-theme='dark']) .chart-preview-card ::ng-deep .chart-title-text {
+  fill: #ffffff;
+}
+
+:host-context(.dark-theme) .chart-preview-card ::ng-deep .chart-axis-text,
+:host-context([data-theme='DARK']) .chart-preview-card ::ng-deep .chart-axis-text,
+:host-context([data-theme='dark']) .chart-preview-card ::ng-deep .chart-axis-text {
+  fill: #c8c6c4;
+}
+
+:host-context(.dark-theme) .chart-preview-card ::ng-deep .chart-legend-text,
+:host-context([data-theme='DARK']) .chart-preview-card ::ng-deep .chart-legend-text,
+:host-context([data-theme='dark']) .chart-preview-card ::ng-deep .chart-legend-text {
+  fill: #f3f2f1;
+}
+
+:host-context(.dark-theme) .chart-preview-card ::ng-deep .grid-line,
+:host-context([data-theme='DARK']) .chart-preview-card ::ng-deep .grid-line,
+:host-context([data-theme='dark']) .chart-preview-card ::ng-deep .grid-line {
+  stroke: #484644;
+}
+
+:host-context(.dark-theme) .chart-config-section,
+:host-context([data-theme='DARK']) .chart-config-section,
+:host-context([data-theme='dark']) .chart-config-section {
+  background: #201f1e;
+  border-color: #3b3a39;
+}
+
+:host-context(.dark-theme) .chart-title-input,
+:host-context([data-theme='DARK']) .chart-title-input,
+:host-context([data-theme='dark']) .chart-title-input {
+  background: #2d2c2b;
+  border-color: #605e5c;
+  color: #ffffff;
+}
+
+:host-context(.dark-theme) .chart-data-table,
+:host-context([data-theme='DARK']) .chart-data-table,
+:host-context([data-theme='dark']) .chart-data-table {
+  background: #252423;
+  border-color: #3b3a39;
+}
+
+:host-context(.dark-theme) .chart-data-table th,
+:host-context([data-theme='DARK']) .chart-data-table th,
+:host-context([data-theme='dark']) .chart-data-table th {
+  background: #201f1e;
+  border-color: #3b3a39;
+  color: #f3f2f1;
+}
+
+:host-context(.dark-theme) .chart-data-table td,
+:host-context([data-theme='DARK']) .chart-data-table td,
+:host-context([data-theme='dark']) .chart-data-table td {
+  border-color: #3b3a39;
+}
+
+:host-context(.dark-theme) .cat-label-cell,
+:host-context([data-theme='DARK']) .cat-label-cell,
+:host-context([data-theme='dark']) .cat-label-cell {
+  color: #d2d0ce;
+}
+
+:host-context(.dark-theme) .grid-cell-input,
+:host-context([data-theme='DARK']) .grid-cell-input,
+:host-context([data-theme='dark']) .grid-cell-input {
+  background: #2d2c2b;
+  border-color: #605e5c;
+  color: #ffffff;
+}
+
+:host-context(.dark-theme) .chart-dialog-footer,
+:host-context([data-theme='DARK']) .chart-dialog-footer,
+:host-context([data-theme='dark']) .chart-dialog-footer {
+  background: #201f1e;
+  border-color: #3b3a39;
+}
+
+:host-context(.dark-theme) .chart-btn-secondary,
+:host-context([data-theme='DARK']) .chart-btn-secondary,
+:host-context([data-theme='dark']) .chart-btn-secondary {
+  background: #2d2c2b;
+  border-color: #605e5c;
+  color: #f3f2f1;
+}
+
+:host-context(.dark-theme) .chart-btn-secondary:hover,
+:host-context([data-theme='DARK']) .chart-btn-secondary:hover,
+:host-context([data-theme='dark']) .chart-btn-secondary:hover {
+  background: #3b3a39;
+}

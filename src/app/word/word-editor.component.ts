@@ -29,6 +29,13 @@ import {
 } from 'shared';
 import { CustomStyleDefinition, PageSetup, WordComment, WordDocumentService } from './services/word-document.service';
 import { WORD_LESSONS } from './word-lessons.data';
+import { ChartDialogComponent, ChartDialogResult } from './chart-dialog.component';
+import {
+  DEFAULT_CHART_DATA,
+  WordChartData,
+  WordChartType,
+  renderChartSvg,
+} from './chart-svg.helper';
 
 export interface TaskStartSnapshot {
   documentHtml: string;
@@ -45,9 +52,719 @@ export interface TaskStartSnapshot {
 @Component({
   selector: 'app-word-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule, TaskCardComponent, ShowMeHowComponent],
+  imports: [CommonModule, FormsModule, TaskCardComponent, ShowMeHowComponent, ChartDialogComponent],
   templateUrl: './word-editor.component.html',
   styleUrls: ['./word-editor.component.css'],
+  styles: [`
+    .contextual-table-tab {
+      color: #0f6cbd !important;
+      font-weight: 600 !important;
+    }
+    .contextual-table-tab.active {
+      border-bottom: 2px solid #0f6cbd !important;
+    }
+    .simulator.word.dark-theme .contextual-table-tab,
+    .simulator.word[data-theme='DARK'] .contextual-table-tab {
+      color: #4da3ff !important;
+    }
+    .simulator.word.dark-theme .contextual-table-tab.active,
+    .simulator.word[data-theme='DARK'] .contextual-table-tab.active {
+      border-bottom-color: #4da3ff !important;
+    }
+
+    /* Runtime Chart Element Styles */
+    :host ::ng-deep figure.doc-chart {
+      display: block;
+      margin: 16px auto;
+      padding: 8px;
+      max-width: 100%;
+      box-sizing: border-box;
+      user-select: none;
+      cursor: pointer;
+      background: transparent;
+      border: 1px solid transparent;
+      position: relative;
+      text-align: center;
+    }
+    :host ::ng-deep figure.doc-chart:hover {
+      border: 1px dashed #c8c6c4;
+    }
+    :host ::ng-deep figure.doc-chart.selected {
+      border: 1px solid #0f6cbd;
+    }
+    :host ::ng-deep figure.doc-chart svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    :host ::ng-deep figure.doc-chart .chart-title-text {
+      fill: #242424;
+      cursor: text;
+    }
+    :host ::ng-deep figure.doc-chart .chart-axis-text {
+      fill: #616161;
+    }
+    :host ::ng-deep figure.doc-chart .chart-legend-text {
+      fill: #323130;
+    }
+    :host ::ng-deep figure.doc-chart .grid-line {
+      stroke: #e1dfdd;
+      stroke-width: 1;
+    }
+
+    /* Dark Mode Runtime Chart Styles - NO :is() selectors! */
+    :host ::ng-deep .simulator.word.dark-theme figure.doc-chart .chart-title-text,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] figure.doc-chart .chart-title-text {
+      fill: #ffffff;
+    }
+    :host ::ng-deep .simulator.word.dark-theme figure.doc-chart .chart-axis-text,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] figure.doc-chart .chart-axis-text {
+      fill: #c8c6c4;
+    }
+    :host ::ng-deep .simulator.word.dark-theme figure.doc-chart .chart-legend-text,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] figure.doc-chart .chart-legend-text {
+      fill: #f3f2f1;
+    }
+    :host ::ng-deep .simulator.word.dark-theme figure.doc-chart .grid-line,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] figure.doc-chart .grid-line {
+      stroke: #3b3a39;
+    }
+    :host ::ng-deep .simulator.word.dark-theme figure.doc-chart:hover,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] figure.doc-chart:hover {
+      border: 1px dashed #605e5c;
+    }
+
+    /* Chart Resize Box and Floating Side Buttons */
+    .chart-resize-box {
+      border-radius: 2px;
+    }
+    .chart-resize-box .resize-handle {
+      border-radius: 50%;
+    }
+    .chart-side-buttons {
+      position: absolute;
+      top: 0;
+      right: -36px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      pointer-events: auto;
+    }
+    .cs-btn {
+      width: 26px;
+      height: 26px;
+      background: #ffffff;
+      border: 1px solid #d1d1d1;
+      border-radius: 2px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #323130;
+      padding: 0;
+    }
+    .cs-btn:hover {
+      background: #f3f2f1;
+      border-color: #0f6cbd;
+    }
+    .simulator.word.dark-theme .cs-btn,
+    .simulator.word[data-theme='DARK'] .cs-btn {
+      background: #252423;
+      border-color: #484644;
+      color: #f3f2f1;
+    }
+    .simulator.word.dark-theme .cs-btn:hover,
+    .simulator.word[data-theme='DARK'] .cs-btn:hover {
+      background: #2d2c2b;
+      border-color: #4da3ff;
+    }
+
+    /* Inline Title Edit Field */
+    .chart-title-edit-overlay {
+      position: absolute;
+      z-index: 60;
+      pointer-events: auto;
+    }
+    .chart-title-inline-field {
+      width: 220px;
+      padding: 3px 8px;
+      border: 1px dashed #0f6cbd;
+      border-radius: 2px;
+      background: #ffffff;
+      color: #242424;
+      font-size: 14px;
+      font-weight: 600;
+      text-align: center;
+      outline: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    .simulator.word.dark-theme .chart-title-inline-field,
+    .simulator.word[data-theme='DARK'] .chart-title-inline-field {
+      background: #201f1e;
+      color: #ffffff;
+      border-color: #4da3ff;
+    }
+
+    /* Ribbon Chart Styles strip */
+    .chart-styles-strip {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 4px;
+      border: 1px solid #e1dfdd;
+      border-radius: 2px;
+      background: #faf9f8;
+    }
+    .chart-style-tile {
+      width: 38px;
+      height: 38px;
+      border: 1px solid #d1d1d1;
+      border-radius: 2px;
+      background: #ffffff;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 4px;
+      box-sizing: border-box;
+    }
+    .chart-style-tile.active {
+      border: 2px solid #0f6cbd;
+    }
+    .chart-style-tile .cst-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      width: 100%;
+      height: 100%;
+    }
+    .chart-style-tile .cst-bars span {
+      flex: 1;
+      height: 100%;
+      border-radius: 1px 1px 0 0;
+    }
+    .chart-style-tile .cst-bars span:nth-child(1) { height: 60%; }
+    .chart-style-tile .cst-bars span:nth-child(2) { height: 90%; }
+    .chart-style-tile .cst-bars span:nth-child(3) { height: 40%; }
+
+    /* Document Table Styles */
+    :host ::ng-deep .document-editor table[data-table-style="Plain"] td,
+    :host ::ng-deep .document-editor table[data-table-style="Plain"] th {
+      border: 1px solid #d2d0ce;
+      background-color: transparent;
+    }
+    :host ::ng-deep .document-editor table[data-table-style="Banded Rows"] tr:nth-child(even) td {
+      background-color: #f3f2f1;
+    }
+    :host ::ng-deep .document-editor table[data-table-style="Grid"] td,
+    :host ::ng-deep .document-editor table[data-table-style="Grid"] th {
+      border: 1px solid #605e5c;
+    }
+    :host ::ng-deep .document-editor table[data-table-style="Grid Blue"] tr:first-child td,
+    :host ::ng-deep .document-editor table[data-table-style="Grid Blue"] tr:first-child th {
+      background-color: #0f6cbd;
+      color: #ffffff;
+      font-weight: 600;
+      border: 1px solid #0f6cbd;
+    }
+    :host ::ng-deep .document-editor table[data-table-style="Grid Blue"] tr:not(:first-child):nth-child(even) td {
+      background-color: #eff6fc;
+    }
+    :host ::ng-deep .document-editor table[data-table-style="Grid Blue"] td {
+      border: 1px solid #b4d6fa;
+    }
+    :host ::ng-deep .document-editor table[data-table-style="Grid Green"] tr:first-child td,
+    :host ::ng-deep .document-editor table[data-table-style="Grid Green"] tr:first-child th {
+      background-color: #107c41;
+      color: #ffffff;
+      font-weight: 600;
+      border: 1px solid #107c41;
+    }
+    :host ::ng-deep .document-editor table[data-table-style="Grid Green"] tr:not(:first-child):nth-child(even) td {
+      background-color: #f1f8f3;
+    }
+    :host ::ng-deep .document-editor table[data-table-style="Grid Green"] td {
+      border: 1px solid #a2d6b3;
+    }
+    :host ::ng-deep .document-editor table[data-table-style="List Blue"] td,
+    :host ::ng-deep .document-editor table[data-table-style="List Blue"] th {
+      border-left: none;
+      border-right: none;
+      border-top: 1px solid #b4d6fa;
+      border-bottom: 1px solid #b4d6fa;
+    }
+    :host ::ng-deep .document-editor table[data-table-style="List Blue"] tr:first-child td,
+    :host ::ng-deep .document-editor table[data-table-style="List Blue"] tr:first-child th {
+      background-color: #0f6cbd;
+      color: #ffffff;
+      font-weight: 600;
+      border-top: 1px solid #0f6cbd;
+      border-bottom: 2px solid #0f6cbd;
+    }
+    :host ::ng-deep .document-editor table[data-table-style="List Blue"] tr:not(:first-child):nth-child(even) td {
+      background-color: #eff6fc;
+    }
+
+    /* Dark Mode Table Styles */
+    :host ::ng-deep .simulator.word.dark-theme .document-editor table[data-table-style="Plain"] td,
+    :host ::ng-deep .simulator.word.dark-theme .document-editor table[data-table-style="Plain"] th,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] .document-editor table[data-table-style="Plain"] td,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] .document-editor table[data-table-style="Plain"] th {
+      border-color: #484644 !important;
+      color: #f3f2f1 !important;
+    }
+    :host ::ng-deep .simulator.word.dark-theme .document-editor table[data-table-style="Banded Rows"] td,
+    :host ::ng-deep .simulator.word.dark-theme .document-editor table[data-table-style="Banded Rows"] th,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] .document-editor table[data-table-style="Banded Rows"] td,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] .document-editor table[data-table-style="Banded Rows"] th {
+      border-color: #484644 !important;
+      color: #f3f2f1 !important;
+    }
+    :host ::ng-deep .simulator.word.dark-theme .document-editor table[data-table-style="Banded Rows"] tr:nth-child(even) td,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] .document-editor table[data-table-style="Banded Rows"] tr:nth-child(even) td {
+      background-color: #2b2b2b !important;
+      color: #f3f2f1 !important;
+    }
+    :host ::ng-deep .simulator.word.dark-theme .document-editor table[data-table-style="Grid"] td,
+    :host ::ng-deep .simulator.word.dark-theme .document-editor table[data-table-style="Grid"] th,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] .document-editor table[data-table-style="Grid"] td,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] .document-editor table[data-table-style="Grid"] th {
+      border-color: #605e5c !important;
+      color: #f3f2f1 !important;
+    }
+    :host ::ng-deep .simulator.word.dark-theme .document-editor table[data-table-style="Grid Blue"] td,
+    :host ::ng-deep .simulator.word.dark-theme .document-editor table[data-table-style="Grid Blue"] th,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] .document-editor table[data-table-style="Grid Blue"] td,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] .document-editor table[data-table-style="Grid Blue"] th {
+      border-color: #2b496e !important;
+      color: #f3f2f1 !important;
+    }
+    :host ::ng-deep .simulator.word.dark-theme .document-editor table[data-table-style="Grid Blue"] tr:first-child td,
+    :host ::ng-deep .simulator.word.dark-theme .document-editor table[data-table-style="Grid Blue"] tr:first-child th,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] .document-editor table[data-table-style="Grid Blue"] tr:first-child td,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] .document-editor table[data-table-style="Grid Blue"] tr:first-child th {
+      background-color: #1a4f8b !important;
+      color: #ffffff !important;
+      border-color: #1a4f8b !important;
+    }
+    :host ::ng-deep .simulator.word.dark-theme .document-editor table[data-table-style="Grid Blue"] tr:not(:first-child):nth-child(even) td,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] .document-editor table[data-table-style="Grid Blue"] tr:not(:first-child):nth-child(even) td {
+      background-color: #1a2d42 !important;
+      color: #f3f2f1 !important;
+    }
+    :host ::ng-deep .simulator.word.dark-theme .document-editor table[data-table-style="Grid Green"] td,
+    :host ::ng-deep .simulator.word.dark-theme .document-editor table[data-table-style="Grid Green"] th,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] .document-editor table[data-table-style="Grid Green"] td,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] .document-editor table[data-table-style="Grid Green"] th {
+      border-color: #1f472e !important;
+      color: #f3f2f1 !important;
+    }
+    :host ::ng-deep .simulator.word.dark-theme .document-editor table[data-table-style="Grid Green"] tr:first-child td,
+    :host ::ng-deep .simulator.word.dark-theme .document-editor table[data-table-style="Grid Green"] tr:first-child th,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] .document-editor table[data-table-style="Grid Green"] tr:first-child td,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] .document-editor table[data-table-style="Grid Green"] tr:first-child th {
+      background-color: #0e5e32 !important;
+      color: #ffffff !important;
+      border-color: #0e5e32 !important;
+    }
+    :host ::ng-deep .simulator.word.dark-theme .document-editor table[data-table-style="Grid Green"] tr:not(:first-child):nth-child(even) td,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] .document-editor table[data-table-style="Grid Green"] tr:not(:first-child):nth-child(even) td {
+      background-color: #162f20 !important;
+      color: #f3f2f1 !important;
+    }
+    :host ::ng-deep .simulator.word.dark-theme .document-editor table[data-table-style="List Blue"] td,
+    :host ::ng-deep .simulator.word.dark-theme .document-editor table[data-table-style="List Blue"] th,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] .document-editor table[data-table-style="List Blue"] td,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] .document-editor table[data-table-style="List Blue"] th {
+      border-color: #2b496e !important;
+      color: #f3f2f1 !important;
+    }
+    :host ::ng-deep .simulator.word.dark-theme .document-editor table[data-table-style="List Blue"] tr:first-child td,
+    :host ::ng-deep .simulator.word.dark-theme .document-editor table[data-table-style="List Blue"] tr:first-child th,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] .document-editor table[data-table-style="List Blue"] tr:first-child td,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] .document-editor table[data-table-style="List Blue"] tr:first-child th {
+      background-color: #1a4f8b !important;
+      color: #ffffff !important;
+      border-top-color: #1a4f8b !important;
+      border-bottom-color: #1a4f8b !important;
+    }
+    :host ::ng-deep .simulator.word.dark-theme .document-editor table[data-table-style="List Blue"] tr:not(:first-child):nth-child(even) td,
+    :host ::ng-deep .simulator.word[data-theme='DARK'] .document-editor table[data-table-style="List Blue"] tr:not(:first-child):nth-child(even) td {
+      background-color: #1a2d42 !important;
+      color: #f3f2f1 !important;
+    }
+
+    /* Ribbon UI Styling for Table Tabs */
+    .table-styles-gallery-row {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .table-style-tile-btn {
+      width: 44px;
+      height: 44px;
+      padding: 2px;
+      border: 1px solid #d2d0ce;
+      background: #ffffff;
+      border-radius: 3px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      transition: all 0.15s ease;
+    }
+    .table-style-tile-btn:hover {
+      border-color: #0f6cbd;
+      box-shadow: 0 0 0 1px #0f6cbd;
+    }
+    .table-style-tile-btn.active {
+      border-color: #0f6cbd;
+      background: #eff6fc;
+      outline: 2px solid #0f6cbd;
+    }
+    .mini-table-preview {
+      width: 100%;
+      height: 100%;
+      border-collapse: collapse;
+      pointer-events: none;
+    }
+    .mini-table-preview td {
+      padding: 0;
+      border: 1px solid #d2d0ce;
+      font-size: 0;
+    }
+    .mini-table-preview.style-plain td {
+      border: 1px solid #d2d0ce;
+      background: #fff;
+    }
+    .mini-table-preview.style-banded tr:nth-child(even) td {
+      background: #f3f2f1;
+    }
+    .mini-table-preview.style-grid td {
+      border: 1px solid #605e5c;
+    }
+    .mini-table-preview.style-grid-blue tr:first-child td {
+      background: #0f6cbd;
+      border-color: #0f6cbd;
+    }
+    .mini-table-preview.style-grid-blue tr:not(:first-child):nth-child(even) td {
+      background: #eff6fc;
+    }
+    .mini-table-preview.style-grid-blue td {
+      border-color: #b4d6fa;
+    }
+    .mini-table-preview.style-grid-green tr:first-child td {
+      background: #107c41;
+      border-color: #107c41;
+    }
+    .mini-table-preview.style-grid-green tr:not(:first-child):nth-child(even) td {
+      background: #f1f8f3;
+    }
+    .mini-table-preview.style-grid-green td {
+      border-color: #a2d6b3;
+    }
+    .mini-table-preview.style-list-blue tr:first-child td {
+      background: #0f6cbd;
+    }
+    .mini-table-preview.style-list-blue tr:not(:first-child):nth-child(even) td {
+      background: #eff6fc;
+    }
+    .mini-table-preview.style-list-blue td {
+      border-left: none;
+      border-right: none;
+      border-color: #b4d6fa;
+    }
+
+    .table-styles-more-btn {
+      width: 18px;
+      height: 44px;
+      background: #ffffff;
+      border: 1px solid #d2d0ce;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 11px;
+      color: #605e5c;
+      padding: 0;
+    }
+    .table-styles-more-btn:hover {
+      background: #eff6fc;
+      border-color: #0f6cbd;
+      color: #0f6cbd;
+    }
+
+    /* Flyouts */
+    .table-styles-flyout {
+      position: fixed;
+      min-width: 330px;
+      background: #ffffff;
+      border: 1px solid #d2d0ce;
+      border-radius: 6px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      z-index: 15000;
+      padding: 10px 14px;
+      box-sizing: border-box;
+    }
+    .table-styles-section-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #605e5c;
+      margin: 6px 0 4px 0;
+    }
+    .table-styles-grid {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+    .table-style-clear-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      background: none;
+      border: none;
+      border-top: 1px solid #edebe9;
+      cursor: pointer;
+      font-size: 13px;
+      color: #201f1e;
+      text-align: left;
+    }
+    .table-style-clear-btn:hover {
+      background: #f3f2f1;
+    }
+
+    /* Cell Shading Dropdown */
+    .cell-shading-flyout {
+      position: fixed;
+      width: 240px;
+      background: #ffffff;
+      border: 1px solid #d2d0ce;
+      border-radius: 6px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      z-index: 15000;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+    .cell-shading-header {
+      font-size: 13px;
+      font-weight: 600;
+      color: #201f1e;
+      margin-bottom: 8px;
+    }
+    .theme-colors-matrix {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 3px;
+      margin-bottom: 10px;
+    }
+    .shading-swatch {
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      border: 1px solid rgba(0,0,0,0.15);
+      cursor: pointer;
+      box-sizing: border-box;
+      padding: 0;
+      transition: transform 0.1s ease;
+    }
+    .shading-swatch:hover {
+      transform: scale(1.2);
+      outline: 1px solid #0f6cbd;
+      z-index: 2;
+    }
+    .standard-colors-row {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 3px;
+      margin-bottom: 10px;
+    }
+    .cell-shading-action-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 4px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 12.5px;
+      color: #201f1e;
+      text-align: left;
+    }
+    .cell-shading-action-btn:hover:not(:disabled) {
+      background: #f3f2f1;
+    }
+    .cell-shading-action-btn.disabled, .cell-shading-action-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .no-color-icon {
+      width: 16px;
+      height: 16px;
+      border: 1px solid #a19f9d;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: #a80000;
+    }
+
+    /* Table Layout Options & Inputs */
+    .table-options-grid {
+      display: grid;
+      grid-template-columns: auto auto;
+      gap: 2px 8px;
+      font-size: 11px;
+      color: #797775;
+    }
+    .table-checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: not-allowed;
+      user-select: none;
+    }
+    .table-checkbox-label input {
+      margin: 0;
+      cursor: not-allowed;
+    }
+    .align-grid-3x3 {
+      display: grid;
+      grid-template-columns: repeat(3, 18px);
+      gap: 2px;
+    }
+    .align-cell-btn {
+      width: 18px;
+      height: 18px;
+      padding: 0;
+      background: #fff;
+      border: 1px solid #d2d0ce;
+      border-radius: 2px;
+      cursor: not-allowed;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      color: #a19f9d;
+    }
+    .cell-size-col {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      font-size: 11px;
+    }
+    .size-input-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: #605e5c;
+    }
+    .size-input-field {
+      width: 50px;
+      height: 20px;
+      font-size: 11px;
+      padding: 1px 4px;
+      border: 1px solid #d2d0ce;
+      background: #f3f2f1;
+      border-radius: 2px;
+      color: #797775;
+      cursor: not-allowed;
+    }
+
+    /* Insert Menu Dropdown */
+    .table-insert-menu {
+      position: fixed;
+      min-width: 160px;
+      background: #ffffff;
+      border: 1px solid #d2d0ce;
+      border-radius: 6px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      z-index: 15000;
+      padding: 4px 0;
+    }
+    .table-insert-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 14px;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      font-size: 13px;
+      color: #201f1e;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+    .table-insert-item:hover {
+      background: #f3f2f1;
+    }
+
+    /* Dark Mode Flyouts */
+    .simulator.word.dark-theme .table-style-tile-btn,
+    .simulator.word.dark-theme .table-styles-more-btn,
+    .simulator.word[data-theme='DARK'] .table-style-tile-btn,
+    .simulator.word[data-theme='DARK'] .table-styles-more-btn {
+      background: #2b2b2b;
+      border-color: #484644;
+      color: #f3f2f1;
+    }
+    .simulator.word.dark-theme .table-style-tile-btn:hover,
+    .simulator.word.dark-theme .table-styles-more-btn:hover,
+    .simulator.word[data-theme='DARK'] .table-style-tile-btn:hover,
+    .simulator.word[data-theme='DARK'] .table-styles-more-btn:hover {
+      border-color: #2886de;
+      background: #383838;
+      color: #ffffff;
+    }
+    .simulator.word.dark-theme .table-styles-flyout,
+    .simulator.word.dark-theme .cell-shading-flyout,
+    .simulator.word.dark-theme .table-insert-menu,
+    .simulator.word[data-theme='DARK'] .table-styles-flyout,
+    .simulator.word[data-theme='DARK'] .cell-shading-flyout,
+    .simulator.word[data-theme='DARK'] .table-insert-menu {
+      background: #242424;
+      border-color: #3b3a39;
+      color: #f3f2f1;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+    }
+    .simulator.word.dark-theme .cell-shading-header,
+    .simulator.word.dark-theme .table-styles-section-title,
+    .simulator.word[data-theme='DARK'] .cell-shading-header,
+    .simulator.word[data-theme='DARK'] .table-styles-section-title {
+      color: #f3f2f1;
+    }
+    .simulator.word.dark-theme .table-style-clear-btn,
+    .simulator.word.dark-theme .cell-shading-action-btn,
+    .simulator.word.dark-theme .table-insert-item,
+    .simulator.word[data-theme='DARK'] .table-style-clear-btn,
+    .simulator.word[data-theme='DARK'] .cell-shading-action-btn,
+    .simulator.word[data-theme='DARK'] .table-insert-item {
+      color: #f3f2f1;
+      border-top-color: #3b3a39;
+    }
+    .simulator.word.dark-theme .table-style-clear-btn:hover,
+    .simulator.word.dark-theme .cell-shading-action-btn:hover:not(:disabled),
+    .simulator.word.dark-theme .table-insert-item:hover,
+    .simulator.word[data-theme='DARK'] .table-style-clear-btn:hover,
+    .simulator.word[data-theme='DARK'] .cell-shading-action-btn:hover:not(:disabled),
+    .simulator.word[data-theme='DARK'] .table-insert-item:hover {
+      background: #333333;
+    }
+    .simulator.word.dark-theme .align-cell-btn,
+    .simulator.word.dark-theme .size-input-field,
+    .simulator.word[data-theme='DARK'] .align-cell-btn,
+    .simulator.word[data-theme='DARK'] .size-input-field {
+      background: #1b1b1b;
+      border-color: #484644;
+      color: #797775;
+    }
+  `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -107,7 +824,7 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly showCommentDialog = signal<boolean>(false);
   readonly commentSelectedText = signal<string>('');
   readonly newCommentText = signal<string>('Please review this section.');
-  readonly activeRibbonTab = signal<'Home' | 'Insert' | 'Layout' | 'References'>('Home');
+  readonly activeRibbonTab = signal<'Home' | 'Insert' | 'Layout' | 'References' | 'Table Design' | 'Table Layout' | 'Chart Design' | 'Format'>('Home');
   readonly showOrientationPicker = signal<boolean>(false);
   readonly openMenuName = signal<string | null>(null);
 
@@ -148,6 +865,118 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly selectedImageFile = signal<string>('');
   readonly selectedImageEl = signal<HTMLImageElement | null>(null);
   readonly selectedTableEl = signal<HTMLTableElement | null>(null);
+  readonly selectedTableCell = signal<HTMLTableCellElement | null>(null);
+
+  // Charts State
+  readonly showInsertChartDialog = signal<boolean>(false);
+  readonly chartDialogMode = signal<'insert' | 'change'>('insert');
+  readonly chartDialogInitialType = signal<WordChartType>('column');
+  readonly chartDialogInitialTitle = signal<string>('Chart Title');
+  readonly chartDialogInitialData = signal<WordChartData | null>(null);
+  readonly selectedChartEl = signal<HTMLElement | null>(null);
+  readonly chartBoxLeft = signal<number>(0);
+  readonly chartBoxTop = signal<number>(0);
+  readonly chartBoxWidth = signal<number>(480);
+  readonly chartBoxHeight = signal<number>(300);
+  readonly isEditingChartTitle = signal<boolean>(false);
+  readonly chartTitleEditingText = signal<string>('Chart Title');
+
+  readonly showTableStylesGallery = signal<boolean>(false);
+  readonly showCellShadingDropdown = signal<boolean>(false);
+  readonly showTableInsertMenu = signal<boolean>(false);
+  readonly tableStylesPos = signal<{ top: number; left: number }>({ top: 120, left: 300 });
+  readonly cellShadingPos = signal<{ top: number; left: number }>({ top: 120, left: 450 });
+  readonly tableInsertPos = signal<{ top: number; left: number }>({ top: 120, left: 100 });
+  private tableUndoStack: string[] = [];
+  private lastTablePostHtml: string | null = null;
+
+  readonly themeColorPalette = [
+    [
+      { name: 'White', color: '#ffffff', key: 'white' },
+      { name: 'Black', color: '#000000', key: 'black' },
+      { name: 'Dark Gray', color: '#434343', key: 'darkGray' },
+      { name: 'Gray', color: '#999999', key: 'gray' },
+      { name: 'Blue', color: '#3d85c6', key: 'blue' },
+      { name: 'Orange', color: '#e69138', key: 'orange' },
+      { name: 'Yellow', color: '#f1c232', key: 'yellow' },
+      { name: 'Green', color: '#6aa84f', key: 'green' },
+      { name: 'Cyan', color: '#45818e', key: 'cyan' },
+      { name: 'Purple', color: '#674ea7', key: 'purple' },
+    ],
+    [
+      { name: 'Lighter White', color: '#f3f2f1' },
+      { name: 'Light Gray', color: '#d2d0ce' },
+      { name: 'Light Red', color: '#f4cccc', key: 'lightRed' },
+      { name: 'Magenta', color: '#a64d79', key: 'magenta' },
+      { name: 'Light Blue', color: '#cfe2f3', key: 'lightBlue' },
+      { name: 'Light Orange', color: '#fce5cd', key: 'lightOrange' },
+      { name: 'Light Yellow', color: '#fff2cc', key: 'lightYellow' },
+      { name: 'Light Green', color: '#d9ead3', key: 'lightGreen' },
+      { name: 'Light Cyan', color: '#d0e0e3', key: 'lightCyan' },
+      { name: 'Light Purple', color: '#d9d2e9', key: 'lightPurple' },
+    ],
+    [
+      { name: 'Off White', color: '#faf9f8' },
+      { name: 'Cool Gray', color: '#a19f9d' },
+      { name: 'Light Magenta', color: '#ead1dc', key: 'lightMagenta' },
+      { name: 'Soft Dark', color: '#323130' },
+      { name: 'Soft Blue', color: '#b4d6fa' },
+      { name: 'Soft Orange', color: '#f8d2aa' },
+      { name: 'Soft Yellow', color: '#fae69e' },
+      { name: 'Soft Green', color: '#b9dfaf' },
+      { name: 'Soft Cyan', color: '#a2c8cf' },
+      { name: 'Soft Purple', color: '#b7a8d4' },
+    ],
+    [
+      { name: 'Border Gray', color: '#edebe9' },
+      { name: 'Medium Gray', color: '#797775' },
+      { name: 'Deep Gray', color: '#201f1e' },
+      { name: 'Pure Red', color: '#cc0000', key: 'red' },
+      { name: 'Medium Blue', color: '#2b73b5' },
+      { name: 'Medium Orange', color: '#d17d26' },
+      { name: 'Medium Yellow', color: '#dab028' },
+      { name: 'Medium Green', color: '#57923d' },
+      { name: 'Medium Cyan', color: '#386c77' },
+      { name: 'Medium Purple', color: '#543e8c' },
+    ],
+    [
+      { name: 'Neutral Gray', color: '#e1dfdd' },
+      { name: 'Slate Gray', color: '#605e5c' },
+      { name: 'Charcoal', color: '#1b1a19' },
+      { name: 'Deep Red', color: '#a80000' },
+      { name: 'Dark Blue', color: '#1e5a91' },
+      { name: 'Dark Orange', color: '#b86718' },
+      { name: 'Dark Yellow', color: '#ba941c' },
+      { name: 'Dark Green', color: '#44782e' },
+      { name: 'Dark Cyan', color: '#2c5861' },
+      { name: 'Dark Purple', color: '#432f73' },
+    ],
+    [
+      { name: 'Shadow Gray', color: '#c8c6c4' },
+      { name: 'Dim Gray', color: '#484644' },
+      { name: 'Night', color: '#11100f' },
+      { name: 'Maroon', color: '#750b1c' },
+      { name: 'Navy Blue', color: '#133e66' },
+      { name: 'Rust Orange', color: '#85470d' },
+      { name: 'Olive Yellow', color: '#876910' },
+      { name: 'Forest Green', color: '#2f551f' },
+      { name: 'Deep Cyan', color: '#1e3d43' },
+      { name: 'Midnight Purple', color: '#2f2054' },
+    ],
+  ];
+
+  readonly standardColorsList = [
+    { name: 'Dark Red', color: '#c00000', key: 'darkRed' },
+    { name: 'Red', color: '#cc0000', key: 'red' },
+    { name: 'Orange', color: '#e69138', key: 'orange' },
+    { name: 'Yellow', color: '#f1c232', key: 'yellow' },
+    { name: 'Light Green', color: '#d9ead3', key: 'lightGreen' },
+    { name: 'Green', color: '#6aa84f', key: 'green' },
+    { name: 'Light Blue', color: '#cfe2f3', key: 'lightBlue' },
+    { name: 'Blue', color: '#3d85c6', key: 'blue' },
+    { name: 'Dark Blue', color: '#002060', key: 'darkBlue' },
+    { name: 'Purple', color: '#674ea7', key: 'purple' },
+  ];
   readonly selectedTocEl = signal<HTMLElement | null>(null);
   private lastTocNavigated = false;
   private taskStartHtml: string | null = null;
@@ -364,6 +1193,9 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.openMenuName.set(null);
     this.showTablePicker.set(false);
     this.showOrientationPicker.set(false);
+    this.showTableStylesGallery.set(false);
+    this.showCellShadingDropdown.set(false);
+    this.showTableInsertMenu.set(false);
   }
 
   @HostListener('document:click', ['$event'])
@@ -382,6 +1214,15 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!target?.closest('.styles-dropdown-menu') && !target?.closest('[data-demo-target="styles-more-btn"]')) {
       this.showStylesMenu.set(false);
     }
+    if (!target?.closest('.table-styles-flyout') && !target?.closest('[data-demo-target="table-styles-more"]')) {
+      this.showTableStylesGallery.set(false);
+    }
+    if (!target?.closest('.cell-shading-flyout') && !target?.closest('[data-demo-target="cell-shading"]')) {
+      this.showCellShadingDropdown.set(false);
+    }
+    if (!target?.closest('.table-insert-menu') && !target?.closest('[data-demo-target="table-insert"]')) {
+      this.showTableInsertMenu.set(false);
+    }
   }
 
   @HostListener('document:keydown.escape')
@@ -391,6 +1232,9 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.showHighlightColorPicker.set(false);
     this.showCommentDialog.set(false);
     this.showOrientationPicker.set(false);
+    this.showTableStylesGallery.set(false);
+    this.showCellShadingDropdown.set(false);
+    this.showTableInsertMenu.set(false);
     this.showStylesMenu.set(false);
     this.showMoreStylesDialog.set(false);
     this.showCreateStyleDialog.set(false);
@@ -400,11 +1244,28 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.selectedPageNum.set(false);
     this.activeRegion.set('body');
     this.clearFindHighlights();
+    if (this.isEditingChartTitle()) {
+      this.cancelChartTitleEdit();
+    }
+    this.showInsertChartDialog.set(false);
+    if (this.selectedChartEl()) {
+      const allCharts = Array.from(document.querySelectorAll('figure.doc-chart'));
+      allCharts.forEach(c => c.classList.remove('selected'));
+      this.selectedChartEl.set(null);
+      if (this.activeRibbonTab() === 'Chart Design' || this.activeRibbonTab() === 'Format') {
+        this.activeRibbonTab.set('Home');
+      }
+    }
   }
 
   @HostListener('document:keydown', ['$event'])
   onDocumentKeydown(e: KeyboardEvent): void {
     if (e.key === 'Backspace' || e.key === 'Delete') {
+      if (this.selectedChartEl() && !this.isEditingChartTitle()) {
+        e.preventDefault();
+        this.deleteSelectedChart();
+        return;
+      }
       if (this.selectedImageEl()) {
         e.preventDefault();
         this.deleteSelectedImage();
@@ -580,6 +1441,7 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.wordDoc.rich) {
       this.wordDoc.rich.taskStartHtml = this.taskStartHtml;
       this.wordDoc.rich.getDocumentHtml = () => this.getCurrentDocumentHtml();
+      (this.wordDoc.rich as any).customUndo = () => this.undoTableAction();
     }
   }
 
@@ -587,6 +1449,15 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.editorRef) return;
     this.selectedImageEl.set(null);
     this.selectedTableEl.set(null);
+    this.selectedTableCell.set(null);
+    this.selectedChartEl.set(null);
+    this.isEditingChartTitle.set(false);
+    this.showInsertChartDialog.set(false);
+    if (this.activeRibbonTab() === 'Chart Design' || this.activeRibbonTab() === 'Format') {
+      this.activeRibbonTab.set('Home');
+    }
+    this.tableUndoStack = [];
+    this.lastTablePostHtml = null;
     this.selectedTocEl.set(null);
     this.selectedPageNum.set(false);
     this.activeRegion.set('body');
@@ -699,6 +1570,12 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onEditorKeydown(e: KeyboardEvent): void {
+    if ((e.key === 'Delete' || e.key === 'Backspace') && this.selectedChartEl() && !this.isEditingChartTitle()) {
+      e.preventDefault();
+      this.deleteSelectedChart();
+      return;
+    }
+
     if (e.key === 'Delete' && this.hasPageBreak()) {
       const sel = window.getSelection();
       if (sel && sel.rangeCount > 0 && this.editorRef?.nativeElement.contains(sel.anchorNode)) {
@@ -790,6 +1667,12 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onPage2Keydown(e: KeyboardEvent): void {
+    if ((e.key === 'Delete' || e.key === 'Backspace') && this.selectedChartEl() && !this.isEditingChartTitle()) {
+      e.preventDefault();
+      this.deleteSelectedChart();
+      return;
+    }
+
     if (e.key === 'Backspace' && this.page2EditorRef) {
       const p2 = this.page2EditorRef.nativeElement;
       const text = p2.innerText.trim();
@@ -900,6 +1783,9 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (cmd === 'undo') {
       const currentHtml = this.getCurrentDocumentHtml();
       if (this.taskStartHtml !== null && currentHtml === this.taskStartHtml) {
+        return;
+      }
+      if (this.undoTableAction()) {
         return;
       }
     }
@@ -1322,8 +2208,40 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       this.selectedImageEl.set(null);
     }
 
+    const chart = target?.closest('figure.doc-chart') as HTMLElement | null;
+    if (chart) {
+      const allCharts = Array.from(document.querySelectorAll('figure.doc-chart'));
+      allCharts.forEach(c => c.classList.remove('selected'));
+      chart.classList.add('selected');
+      this.selectedChartEl.set(chart);
+      this.activeRibbonTab.set('Chart Design');
+      this.wordDoc.logAction('selectChart', chart.getAttribute('data-chart-type') || 'chart');
+      setTimeout(() => this.updateChartBoxRect());
+
+      if (target.classList?.contains('chart-title-text') || target.closest('.chart-title-text')) {
+        this.startChartTitleEdit();
+      }
+    } else {
+      if (this.selectedChartEl()) {
+        const allCharts = Array.from(document.querySelectorAll('figure.doc-chart'));
+        allCharts.forEach(c => c.classList.remove('selected'));
+        this.selectedChartEl.set(null);
+        if (this.isEditingChartTitle()) {
+          this.finishChartTitleEdit();
+        }
+        if (this.activeRibbonTab() === 'Chart Design' || this.activeRibbonTab() === 'Format') {
+          this.activeRibbonTab.set('Home');
+        }
+      }
+    }
+
     const table = target?.closest('table') as HTMLTableElement | null;
     this.selectedTableEl.set(table);
+    const cell = target?.closest('td, th') as HTMLTableCellElement | null;
+    if (cell) this.selectedTableCell.set(cell);
+    if (!table && (this.activeRibbonTab() === 'Table Design' || this.activeRibbonTab() === 'Table Layout')) {
+      this.activeRibbonTab.set('Home');
+    }
 
     const toc = target?.closest('.table-of-contents') as HTMLElement | null;
     this.selectedTocEl.set(toc);
@@ -1401,6 +2319,19 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const target = event.target as HTMLElement;
     if (!target.closest('.page-header') && !target.closest('.page-footer')) {
       this.activeRegion.set('body');
+    }
+    if (!target.closest('figure.doc-chart') && !target.closest('.chart-resize-box') && !target.closest('.chart-title-edit-overlay')) {
+      if (this.selectedChartEl()) {
+        const allCharts = Array.from(document.querySelectorAll('figure.doc-chart'));
+        allCharts.forEach(c => c.classList.remove('selected'));
+        this.selectedChartEl.set(null);
+        if (this.isEditingChartTitle()) {
+          this.finishChartTitleEdit();
+        }
+        if (this.activeRibbonTab() === 'Chart Design' || this.activeRibbonTab() === 'Format') {
+          this.activeRibbonTab.set('Home');
+        }
+      }
     }
   }
 
@@ -1572,6 +2503,247 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   insertSampleTable(): void {
     this.insertGridTable(2, 2);
+  }
+
+  saveTableUndo(): void {
+    const html = this.getCurrentDocumentHtml();
+    this.tableUndoStack.push(html);
+  }
+
+  undoTableAction(): boolean {
+    if (this.tableUndoStack.length > 0) {
+      const currentHtml = this.getCurrentDocumentHtml();
+      if (this.lastTablePostHtml !== null && currentHtml !== this.lastTablePostHtml) {
+        this.tableUndoStack = [];
+        this.lastTablePostHtml = null;
+        return false;
+      }
+      const prev = this.tableUndoStack.pop()!;
+      this.restoreTableUndo(prev);
+      this.lastTablePostHtml = this.tableUndoStack.length > 0 ? prev : null;
+      this.wordDoc.logAction('undo');
+      return true;
+    }
+    return false;
+  }
+
+  restoreTableUndo(html: string): void {
+    if (this.editorRef) {
+      this.editorRef.nativeElement.innerHTML = html;
+    }
+    this.onEditorInput();
+    const s = window.getSelection();
+    if (s && s.anchorNode) {
+      const el = s.anchorNode.nodeType === Node.ELEMENT_NODE ? (s.anchorNode as HTMLElement) : s.anchorNode.parentElement;
+      const tbl = el?.closest('table') as HTMLTableElement | null;
+      this.selectedTableEl.set(tbl);
+      const cell = el?.closest('td, th') as HTMLTableCellElement | null;
+      if (cell) this.selectedTableCell.set(cell);
+      if (!tbl && (this.activeRibbonTab() === 'Table Design' || this.activeRibbonTab() === 'Table Layout')) {
+        this.activeRibbonTab.set('Home');
+      }
+    } else {
+      const tbl = this.editorRef?.nativeElement.querySelector('table') as HTMLTableElement | null;
+      this.selectedTableEl.set(tbl);
+    }
+  }
+
+  getActiveTableCell(): HTMLTableCellElement | null {
+    const sel = window.getSelection();
+    if (sel && sel.anchorNode) {
+      const el = sel.anchorNode.nodeType === Node.ELEMENT_NODE
+        ? (sel.anchorNode as HTMLElement)
+        : sel.anchorNode.parentElement;
+      const cell = el?.closest('td, th') as HTMLTableCellElement | null;
+      if (cell) return cell;
+    }
+    return this.selectedTableCell() || null;
+  }
+
+  toggleTableStylesGallery(event?: MouseEvent): void {
+    if (event) event.stopPropagation();
+    const btn = (event?.currentTarget as HTMLElement) || (document.querySelector('[data-demo-target="table-styles-more"]') as HTMLElement | null);
+    if (btn) {
+      const rect = btn.getBoundingClientRect();
+      const left = Math.max(10, Math.min(window.innerWidth - 350, rect.right - 330));
+      this.tableStylesPos.set({ top: rect.bottom + 4, left });
+    }
+    this.showTableStylesGallery.update(v => !v);
+    this.showCellShadingDropdown.set(false);
+    this.showTableInsertMenu.set(false);
+  }
+
+  toggleCellShading(event?: MouseEvent): void {
+    if (event) event.stopPropagation();
+    const btn = (event?.currentTarget as HTMLElement) || (document.querySelector('[data-demo-target="cell-shading"]') as HTMLElement | null);
+    if (btn) {
+      const rect = btn.getBoundingClientRect();
+      const left = Math.max(10, Math.min(window.innerWidth - 260, rect.left));
+      this.cellShadingPos.set({ top: rect.bottom + 4, left });
+    }
+    this.showCellShadingDropdown.update(v => !v);
+    this.showTableStylesGallery.set(false);
+    this.showTableInsertMenu.set(false);
+  }
+
+  toggleTableInsertMenu(event?: MouseEvent): void {
+    if (event) event.stopPropagation();
+    const btn = (event?.currentTarget as HTMLElement) || (document.querySelector('[data-demo-target="table-insert"]') as HTMLElement | null);
+    if (btn) {
+      const rect = btn.getBoundingClientRect();
+      const left = Math.max(10, Math.min(window.innerWidth - 180, rect.left));
+      this.tableInsertPos.set({ top: rect.bottom + 4, left });
+    }
+    this.showTableInsertMenu.update(v => !v);
+    this.showTableStylesGallery.set(false);
+    this.showCellShadingDropdown.set(false);
+  }
+
+  applyTableStyle(styleName: string): void {
+    const table = this.selectedTableEl();
+    if (!table) return;
+    this.saveTableUndo();
+    table.setAttribute('data-table-style', styleName);
+    this.wordDoc.logAction('tableStyle', styleName);
+    this.showTableStylesGallery.set(false);
+    this.onEditorInput();
+    this.lastTablePostHtml = this.getCurrentDocumentHtml();
+  }
+
+  clearTableStyle(): void {
+    const table = this.selectedTableEl();
+    if (!table) return;
+    this.saveTableUndo();
+    table.removeAttribute('data-table-style');
+    this.wordDoc.logAction('tableStyleClear');
+    this.showTableStylesGallery.set(false);
+    this.onEditorInput();
+    this.lastTablePostHtml = this.getCurrentDocumentHtml();
+  }
+
+  applyCellShading(colorKey: string | null, fallbackHex?: string): void {
+    const table = this.selectedTableEl();
+    if (!table) return;
+    this.saveTableUndo();
+    let colorHex = '';
+    if (colorKey) {
+      if (COLORS[colorKey]) {
+        colorHex = COLORS[colorKey];
+      } else if (fallbackHex) {
+        colorHex = fallbackHex;
+      } else {
+        const stdSwatch = this.standardColorsList.find(c => c.key === colorKey);
+        if (stdSwatch) {
+          colorHex = stdSwatch.color;
+        } else {
+          let foundInPalette: string | undefined;
+          for (const row of this.themeColorPalette) {
+            const sw = row.find(c => c.key === colorKey);
+            if (sw) {
+              foundInPalette = sw.color;
+              break;
+            }
+          }
+          if (foundInPalette) {
+            colorHex = foundInPalette;
+          } else {
+            colorHex = colorKey;
+          }
+        }
+      }
+    }
+
+    const sel = window.getSelection();
+    const cellsToShade: HTMLTableCellElement[] = [];
+
+    if (sel && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      const allCells = Array.from(table.querySelectorAll('td, th')) as HTMLTableCellElement[];
+      for (const cell of allCells) {
+        if (range.intersectsNode(cell)) {
+          cellsToShade.push(cell);
+        }
+      }
+    }
+
+    if (cellsToShade.length === 0) {
+      const activeCell = this.getActiveTableCell();
+      if (activeCell) {
+        cellsToShade.push(activeCell);
+      } else if (table.rows.length > 0 && table.rows[0].cells.length > 0) {
+        cellsToShade.push(table.rows[0].cells[0]);
+      }
+    }
+
+    for (const cell of cellsToShade) {
+      if (colorHex) {
+        cell.style.backgroundColor = colorHex;
+      } else {
+        cell.style.removeProperty('background-color');
+      }
+    }
+
+    if (colorKey) {
+      this.wordDoc.logAction('cellShading', colorKey);
+    } else {
+      this.wordDoc.logAction('cellShadingNoColor');
+    }
+
+    this.showCellShadingDropdown.set(false);
+    this.onEditorInput();
+    this.lastTablePostHtml = this.getCurrentDocumentHtml();
+  }
+
+  insertTableRow(position: 'above' | 'below'): void {
+    const table = this.selectedTableEl();
+    if (!table || table.rows.length === 0) return;
+    this.saveTableUndo();
+
+    const activeCell = this.getActiveTableCell();
+    let rowIndex = table.rows.length - 1;
+    if (activeCell && activeCell.parentElement) {
+      const tr = activeCell.parentElement as HTMLTableRowElement;
+      if (tr.rowIndex >= 0) rowIndex = tr.rowIndex;
+    }
+
+    const colCount = table.rows[rowIndex]?.cells.length || table.rows[0].cells.length || 1;
+    const targetIndex = position === 'above' ? rowIndex : rowIndex + 1;
+    const newRow = table.insertRow(targetIndex);
+    for (let j = 0; j < colCount; j++) {
+      const newCell = newRow.insertCell();
+      newCell.innerHTML = '<br>';
+    }
+
+    this.wordDoc.logAction(position === 'above' ? 'insertTableRowAbove' : 'insertTableRowBelow');
+    this.showTableInsertMenu.set(false);
+    this.onEditorInput();
+    this.lastTablePostHtml = this.getCurrentDocumentHtml();
+  }
+
+  insertTableColumn(position: 'left' | 'right'): void {
+    const table = this.selectedTableEl();
+    if (!table || table.rows.length === 0) return;
+    this.saveTableUndo();
+
+    const activeCell = this.getActiveTableCell();
+    let colIndex = table.rows[0].cells.length - 1;
+    if (activeCell && activeCell.parentElement) {
+      const tr = activeCell.parentElement as HTMLTableRowElement;
+      const idx = Array.from(tr.cells).indexOf(activeCell);
+      if (idx >= 0) colIndex = idx;
+    }
+
+    const targetIndex = position === 'left' ? colIndex : colIndex + 1;
+    for (let r = 0; r < table.rows.length; r++) {
+      const row = table.rows[r];
+      const newCell = row.insertCell(Math.min(targetIndex, row.cells.length));
+      newCell.innerHTML = '<br>';
+    }
+
+    this.wordDoc.logAction(position === 'left' ? 'insertTableColumnLeft' : 'insertTableColumnRight');
+    this.showTableInsertMenu.set(false);
+    this.onEditorInput();
+    this.lastTablePostHtml = this.getCurrentDocumentHtml();
   }
 
   insertPageBreak(): void {
@@ -2234,6 +3406,13 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       if (cs.backgroundColor && cs.backgroundColor !== 'rgba(0, 0, 0, 0)' && cs.backgroundColor !== 'transparent') {
         this.activeHighlightColor.set(cs.backgroundColor);
       }
+      const table = el.closest('table') as HTMLTableElement | null;
+      this.selectedTableEl.set(table);
+      const cell = el.closest('td, th') as HTMLTableCellElement | null;
+      if (cell) this.selectedTableCell.set(cell);
+      if (!table && (this.activeRibbonTab() === 'Table Design' || this.activeRibbonTab() === 'Table Layout')) {
+        this.activeRibbonTab.set('Home');
+      }
     }
   }
 
@@ -2468,6 +3647,255 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       this.groupX.set(Math.round(this.clampX(this.groupX()!)));
       this.groupY.set(Math.round(this.clampY(this.groupY()!)));
     }
+    if (this.selectedChartEl()) {
+      this.updateChartBoxRect();
+    }
+  }
+
+  // --- Chart Management Methods ---
+
+  openInsertChartDialog(): void {
+    this.chartDialogMode.set('insert');
+    this.chartDialogInitialType.set('column');
+    this.chartDialogInitialTitle.set('Chart Title');
+    this.chartDialogInitialData.set(null);
+    this.showInsertChartDialog.set(true);
+    this.wordDoc.logAction('openInsertChartDialog');
+  }
+
+  openChangeChartTypeDialog(): void {
+    const chart = this.selectedChartEl();
+    if (!chart) return;
+    const type = (chart.getAttribute('data-chart-type') || 'column') as WordChartType;
+    const title = chart.getAttribute('data-chart-title') || 'Chart Title';
+    let data: WordChartData | null = null;
+    const dataRaw = chart.getAttribute('data-chart-data');
+    if (dataRaw) {
+      try {
+        data = JSON.parse(dataRaw);
+      } catch {}
+    }
+    this.chartDialogMode.set('change');
+    this.chartDialogInitialType.set(type);
+    this.chartDialogInitialTitle.set(title);
+    this.chartDialogInitialData.set(data);
+    this.showInsertChartDialog.set(true);
+    this.wordDoc.logAction('openChangeChartTypeDialog');
+  }
+
+  onChartDialogResult(result: ChartDialogResult): void {
+    if (this.chartDialogMode() === 'insert') {
+      this.insertChart(result.chartType, result.title, result.data);
+    } else {
+      this.changeSelectedChart(result.chartType, result.title, result.data);
+    }
+  }
+
+  insertChart(type: WordChartType, title: string, data?: WordChartData): void {
+    this.saveTableUndo();
+    const chartData = data || DEFAULT_CHART_DATA;
+    const figure = document.createElement('figure');
+    figure.className = 'doc-chart selected';
+    figure.setAttribute('data-chart-type', type);
+    figure.setAttribute('data-chart-title', title);
+    figure.setAttribute('data-chart-data', JSON.stringify(chartData));
+    figure.setAttribute('contenteditable', 'false');
+    figure.style.width = '480px';
+    figure.style.height = '300px';
+
+    figure.innerHTML = renderChartSvg(type, title, chartData, 480, 300);
+
+    const allCharts = Array.from(document.querySelectorAll('figure.doc-chart'));
+    allCharts.forEach(c => c.classList.remove('selected'));
+
+    const targetEditor = this.activePageNum() === 2 && this.page2EditorRef
+      ? this.page2EditorRef.nativeElement
+      : this.editorRef?.nativeElement;
+
+    const sel = window.getSelection();
+    let inserted = false;
+    if (sel && sel.rangeCount > 0 && targetEditor && targetEditor.contains(sel.anchorNode)) {
+      const range = sel.getRangeAt(0);
+      range.collapse(false);
+      range.insertNode(figure);
+      inserted = true;
+    }
+    if (!inserted && targetEditor) {
+      targetEditor.appendChild(figure);
+    }
+
+    this.selectedChartEl.set(figure);
+    this.activeRibbonTab.set('Chart Design');
+    this.wordDoc.logAction('insertChart', type);
+    this.onEditorInput();
+    this.lastTablePostHtml = this.getCurrentDocumentHtml();
+    setTimeout(() => this.updateChartBoxRect(), 10);
+  }
+
+  changeSelectedChart(type: WordChartType, title: string, data?: WordChartData): void {
+    const chart = this.selectedChartEl();
+    if (!chart) return;
+    this.saveTableUndo();
+    const chartData = data || DEFAULT_CHART_DATA;
+    chart.setAttribute('data-chart-type', type);
+    chart.setAttribute('data-chart-title', title);
+    chart.setAttribute('data-chart-data', JSON.stringify(chartData));
+
+    const w = chart.offsetWidth || 480;
+    const h = chart.offsetHeight || 300;
+    chart.innerHTML = renderChartSvg(type, title, chartData, w, h);
+
+    this.wordDoc.logAction('changeChartType', type);
+    this.onEditorInput();
+    this.lastTablePostHtml = this.getCurrentDocumentHtml();
+    setTimeout(() => this.updateChartBoxRect(), 10);
+  }
+
+  deleteSelectedChart(): void {
+    const chart = this.selectedChartEl();
+    if (!chart) return;
+    this.saveTableUndo();
+    chart.remove();
+    this.selectedChartEl.set(null);
+    this.isEditingChartTitle.set(false);
+    if (this.activeRibbonTab() === 'Chart Design' || this.activeRibbonTab() === 'Format') {
+      this.activeRibbonTab.set('Home');
+    }
+    this.wordDoc.logAction('deleteChart');
+    this.onEditorInput();
+    this.lastTablePostHtml = this.getCurrentDocumentHtml();
+  }
+
+  updateChartBoxRect(): void {
+    const chart = this.selectedChartEl();
+    if (!chart) return;
+    const canvas = document.querySelector('.word-canvas');
+    if (!canvas) return;
+    const canvasRect = canvas.getBoundingClientRect();
+    const chartRect = chart.getBoundingClientRect();
+
+    const scrollLeft = canvas.scrollLeft || 0;
+    const scrollTop = canvas.scrollTop || 0;
+
+    const left = chartRect.left - canvasRect.left + scrollLeft;
+    const top = chartRect.top - canvasRect.top + scrollTop;
+    const width = chartRect.width;
+    const height = chartRect.height;
+
+    this.chartBoxLeft.set(left);
+    this.chartBoxTop.set(top);
+    this.chartBoxWidth.set(width);
+    this.chartBoxHeight.set(height);
+  }
+
+  startChartTitleEdit(): void {
+    const chart = this.selectedChartEl();
+    if (!chart) return;
+    const currentTitle = chart.getAttribute('data-chart-title') || 'Chart Title';
+    this.chartTitleEditingText.set(currentTitle);
+    this.isEditingChartTitle.set(true);
+    setTimeout(() => {
+      const input = document.querySelector('.chart-title-inline-field') as HTMLInputElement | null;
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }, 20);
+  }
+
+  onInlineTitleInput(val: string): void {
+    this.chartTitleEditingText.set(val);
+    const chart = this.selectedChartEl();
+    if (chart) {
+      chart.setAttribute('data-chart-title', val);
+      const titleEl = chart.querySelector('.chart-title-text');
+      if (titleEl) {
+        titleEl.textContent = val;
+      }
+    }
+  }
+
+  finishChartTitleEdit(): void {
+    if (!this.isEditingChartTitle()) return;
+    const chart = this.selectedChartEl();
+    const newTitle = this.chartTitleEditingText().trim() || 'Chart Title';
+    if (chart) {
+      this.saveTableUndo();
+      chart.setAttribute('data-chart-title', newTitle);
+      const titleEl = chart.querySelector('.chart-title-text');
+      if (titleEl) {
+        titleEl.textContent = newTitle;
+      }
+      this.wordDoc.logAction('editChartTitle', newTitle);
+      this.onEditorInput();
+      this.lastTablePostHtml = this.getCurrentDocumentHtml();
+    }
+    this.isEditingChartTitle.set(false);
+  }
+
+  cancelChartTitleEdit(): void {
+    if (!this.isEditingChartTitle()) return;
+    const chart = this.selectedChartEl();
+    if (chart) {
+      const originalTitle = chart.getAttribute('data-chart-title') || 'Chart Title';
+      const titleEl = chart.querySelector('.chart-title-text');
+      if (titleEl) {
+        titleEl.textContent = originalTitle;
+      }
+    }
+    this.isEditingChartTitle.set(false);
+  }
+
+  onChartResizeStart(event: MouseEvent, handle: string): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const chart = this.selectedChartEl();
+    if (!chart) return;
+    this.saveTableUndo();
+
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const startWidth = chart.offsetWidth;
+    const startHeight = chart.offsetHeight;
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const dx = moveEvent.clientX - startX;
+      const dy = moveEvent.clientY - startY;
+
+      let newWidth = startWidth;
+      let newHeight = startHeight;
+
+      if (handle.includes('e')) newWidth = Math.max(200, startWidth + dx);
+      if (handle.includes('w')) newWidth = Math.max(200, startWidth - dx);
+      if (handle.includes('s')) newHeight = Math.max(150, startHeight + dy);
+      if (handle.includes('n')) newHeight = Math.max(150, startHeight - dy);
+
+      chart.style.width = `${newWidth}px`;
+      chart.style.height = `${newHeight}px`;
+
+      const type = (chart.getAttribute('data-chart-type') || 'column') as WordChartType;
+      const title = chart.getAttribute('data-chart-title') || 'Chart Title';
+      let data: WordChartData = DEFAULT_CHART_DATA;
+      const dataRaw = chart.getAttribute('data-chart-data');
+      if (dataRaw) {
+        try {
+          data = JSON.parse(dataRaw);
+        } catch {}
+      }
+      chart.innerHTML = renderChartSvg(type, title, data, newWidth, newHeight);
+      this.updateChartBoxRect();
+    };
+
+    const onMouseUp = () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      this.wordDoc.logAction('resizeChart');
+      this.onEditorInput();
+      this.lastTablePostHtml = this.getCurrentDocumentHtml();
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
   }
 }
 

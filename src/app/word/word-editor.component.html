@@ -76,6 +76,50 @@
       <button type="button" class="ribbon-tab-btn disabled" disabled>Review</button>
       <button type="button" class="ribbon-tab-btn disabled" disabled>View</button>
       <button type="button" class="ribbon-tab-btn disabled" disabled>Help</button>
+
+      <!-- Contextual Table Tabs (Shown only when cursor is in a table) -->
+      <ng-container *ngIf="selectedTableEl()">
+        <button
+          type="button"
+          class="ribbon-tab-btn contextual-table-tab"
+          [class.active]="activeRibbonTab() === 'Table Design'"
+          (click)="activeRibbonTab.set('Table Design'); closeMenus()"
+          data-demo-target="table-design-tab"
+        >
+          Table Design
+        </button>
+        <button
+          type="button"
+          class="ribbon-tab-btn contextual-table-tab"
+          [class.active]="activeRibbonTab() === 'Table Layout'"
+          (click)="activeRibbonTab.set('Table Layout'); closeMenus()"
+          data-demo-target="table-layout-tab"
+        >
+          Table Layout
+        </button>
+      </ng-container>
+
+      <!-- Contextual Chart Tabs (Shown only when a chart is selected) -->
+      <ng-container *ngIf="selectedChartEl()">
+        <button
+          type="button"
+          class="ribbon-tab-btn contextual-table-tab"
+          [class.active]="activeRibbonTab() === 'Chart Design'"
+          (click)="activeRibbonTab.set('Chart Design'); closeMenus()"
+          data-demo-target="chart-design-tab"
+        >
+          Chart Design
+        </button>
+        <button
+          type="button"
+          class="ribbon-tab-btn contextual-table-tab"
+          [class.active]="activeRibbonTab() === 'Format'"
+          (click)="activeRibbonTab.set('Format'); closeMenus()"
+          data-demo-target="chart-format-tab"
+        >
+          Format
+        </button>
+      </ng-container>
     </div>
 
   </nav>
@@ -847,8 +891,14 @@
           <span class="rl-label">SmartArt</span>
         </button>
 
-        <!-- Chart (Disabled) -->
-        <button type="button" class="ribbon-large-btn disabled" disabled title="Chart">
+        <!-- Chart (ENABLED) -->
+        <button
+          type="button"
+          class="ribbon-large-btn"
+          (click)="openInsertChartDialog()"
+          title="Chart"
+          data-demo-target="insert-chart"
+        >
           <span class="rl-icon">
             <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.4">
               <rect x="4" y="12" width="4" height="9" rx="0.5" fill="#8a8886" stroke="none" />
@@ -1641,6 +1691,550 @@
       </div>
     </div>
   </ng-container>
+
+  <!-- TABLE DESIGN TAB RIBBON COMMANDS -->
+  <ng-container *ngIf="activeRibbonTab() === 'Table Design'">
+    <!-- 1. Table Styles Group -->
+    <div class="ribbon-group group-table-styles table-styles-gallery-wrap">
+      <div class="group-content">
+        <div class="table-styles-gallery-row">
+          <!-- Plain -->
+          <button
+            type="button"
+            class="table-style-tile-btn"
+            [class.active]="selectedTableEl()?.getAttribute('data-table-style') === 'Plain'"
+            (click)="applyTableStyle('Plain')"
+            data-demo-target="table-style-plain"
+            title="Plain"
+          >
+            <table class="mini-table-preview style-plain">
+              <tr><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td></tr>
+            </table>
+          </button>
+          <!-- Banded Rows -->
+          <button
+            type="button"
+            class="table-style-tile-btn"
+            [class.active]="selectedTableEl()?.getAttribute('data-table-style') === 'Banded Rows'"
+            (click)="applyTableStyle('Banded Rows')"
+            data-demo-target="table-style-banded-rows"
+            title="Banded Rows"
+          >
+            <table class="mini-table-preview style-banded">
+              <tr><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td></tr>
+            </table>
+          </button>
+          <!-- Grid -->
+          <button
+            type="button"
+            class="table-style-tile-btn"
+            [class.active]="selectedTableEl()?.getAttribute('data-table-style') === 'Grid'"
+            (click)="applyTableStyle('Grid')"
+            data-demo-target="table-style-grid"
+            title="Grid"
+          >
+            <table class="mini-table-preview style-grid">
+              <tr><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td></tr>
+            </table>
+          </button>
+          <!-- Grid Blue -->
+          <button
+            type="button"
+            class="table-style-tile-btn"
+            [class.active]="selectedTableEl()?.getAttribute('data-table-style') === 'Grid Blue'"
+            (click)="applyTableStyle('Grid Blue')"
+            data-demo-target="table-style-grid-blue"
+            title="Grid Blue"
+          >
+            <table class="mini-table-preview style-grid-blue">
+              <tr><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td></tr>
+            </table>
+          </button>
+          <!-- Grid Green -->
+          <button
+            type="button"
+            class="table-style-tile-btn"
+            [class.active]="selectedTableEl()?.getAttribute('data-table-style') === 'Grid Green'"
+            (click)="applyTableStyle('Grid Green')"
+            data-demo-target="table-style-grid-green"
+            title="Grid Green"
+          >
+            <table class="mini-table-preview style-grid-green">
+              <tr><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td></tr>
+            </table>
+          </button>
+          <!-- List Blue -->
+          <button
+            type="button"
+            class="table-style-tile-btn"
+            [class.active]="selectedTableEl()?.getAttribute('data-table-style') === 'List Blue'"
+            (click)="applyTableStyle('List Blue')"
+            data-demo-target="table-style-list-blue"
+            title="List Blue"
+          >
+            <table class="mini-table-preview style-list-blue">
+              <tr><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td></tr>
+            </table>
+          </button>
+
+          <!-- Gallery Dropdown Trigger -->
+          <button
+            type="button"
+            class="table-styles-more-btn"
+            (click)="toggleTableStylesGallery($event)"
+            data-demo-target="table-styles-more"
+            title="More Table Styles"
+          >
+            ⌄
+          </button>
+        </div>
+
+        <button type="button" class="ribbon-btn disabled" disabled title="Table Color" style="display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.5; padding: 4px 6px;">
+          <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+            <path d="M12.433 10.07C14.133 10.585 16 9.71 16 8a8 8 0 1 0-8 8c1.66 0 2.585-1.867 2.07-3.567A2 2 0 0 1 12.433 10.07zM3.5 6.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0zm4-3a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0zm4 3a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0z"/>
+          </svg>
+          <span style="font-size: 11px;">Table Color ⌄</span>
+        </button>
+      </div>
+      <div class="group-footer">
+        <span class="group-name">Table Styles</span>
+      </div>
+    </div>
+
+    <div class="ribbon-divider"></div>
+
+    <!-- 2. Table Style Options Group -->
+    <div class="ribbon-group group-table-options">
+      <div class="group-content">
+        <div class="table-options-grid">
+          <label class="table-checkbox-label" title="Header Row">
+            <input type="checkbox" checked disabled>
+            <span>Header Row</span>
+          </label>
+          <label class="table-checkbox-label" title="First Column">
+            <input type="checkbox" checked disabled>
+            <span>First Column</span>
+          </label>
+          <label class="table-checkbox-label" title="Total Row">
+            <input type="checkbox" disabled>
+            <span>Total Row</span>
+          </label>
+          <label class="table-checkbox-label" title="Last Column">
+            <input type="checkbox" disabled>
+            <span>Last Column</span>
+          </label>
+          <label class="table-checkbox-label" title="Banded Rows">
+            <input type="checkbox" checked disabled>
+            <span>Banded Rows</span>
+          </label>
+          <label class="table-checkbox-label" title="Banded Columns">
+            <input type="checkbox" disabled>
+            <span>Banded Columns</span>
+          </label>
+        </div>
+      </div>
+      <div class="group-footer">
+        <span class="group-name">Table Style Options</span>
+      </div>
+    </div>
+
+    <div class="ribbon-divider"></div>
+
+    <!-- 3. Borders & Shading Group -->
+    <div class="ribbon-group group-borders-shading cell-shading-wrap">
+      <div class="group-content" style="display: flex; gap: 4px; align-items: center;">
+        <!-- Table Borders (Disabled) -->
+        <button
+          type="button"
+          class="ribbon-large-btn disabled"
+          disabled
+          title="Table Borders"
+          style="opacity: 0.5;"
+        >
+          <span class="rl-icon">
+            <svg viewBox="0 0 16 16" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.2">
+              <rect x="2" y="2" width="12" height="12"/>
+              <line x1="8" y1="2" x2="8" y2="14"/>
+              <line x1="2" y1="8" x2="14" y2="8"/>
+            </svg>
+          </span>
+          <span class="rl-label">Table<br>Borders ⌄</span>
+        </button>
+
+        <!-- Cell Shading (Working) -->
+        <button
+          type="button"
+          class="ribbon-large-btn"
+          (click)="toggleCellShading($event)"
+          data-demo-target="cell-shading"
+          title="Cell Shading"
+        >
+          <span class="rl-icon">
+            <svg viewBox="0 0 16 16" width="22" height="22" fill="currentColor">
+              <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-3-3zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11l.178-.178z"/>
+            </svg>
+          </span>
+          <span class="rl-label">Cell<br>Shading ⌄</span>
+        </button>
+      </div>
+      <div class="group-footer">
+        <span class="group-name">Borders & Shading</span>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- TABLE LAYOUT TAB RIBBON COMMANDS -->
+  <ng-container *ngIf="activeRibbonTab() === 'Table Layout'">
+    <!-- 1. Rows & Columns Group -->
+    <div class="ribbon-group group-rows-columns table-insert-wrap">
+      <div class="group-content" style="display: flex; gap: 4px; align-items: center;">
+        <button type="button" class="ribbon-large-btn disabled" disabled title="Select" style="opacity: 0.5;">
+          <span class="rl-icon">
+            <svg viewBox="0 0 16 16" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.2">
+              <rect x="2" y="2" width="12" height="12" stroke-dasharray="2,2"/>
+              <path d="M6 10l3-5 1 3 3 1-5 2z" fill="currentColor"/>
+            </svg>
+          </span>
+          <span class="rl-label">Select ⌄</span>
+        </button>
+
+        <button type="button" class="ribbon-large-btn disabled" disabled title="Delete" style="opacity: 0.5;">
+          <span class="rl-icon">
+            <svg viewBox="0 0 16 16" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.2">
+              <rect x="2" y="2" width="12" height="12"/>
+              <path d="M4 4l8 8M12 4l-8 8" stroke="#a80000" stroke-width="1.5"/>
+            </svg>
+          </span>
+          <span class="rl-label">Delete ⌄</span>
+        </button>
+
+        <!-- Insert (Working) -->
+        <button
+          type="button"
+          class="ribbon-large-btn"
+          (click)="toggleTableInsertMenu($event)"
+          data-demo-target="table-insert"
+          title="Insert"
+        >
+          <span class="rl-icon">
+            <svg viewBox="0 0 16 16" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.2">
+              <rect x="2" y="2" width="12" height="12"/>
+              <line x1="2" y1="7" x2="14" y2="7" stroke="#0f6cbd" stroke-width="1.8"/>
+              <path d="M8 4.5v5M5.5 7h5" stroke="#0f6cbd" stroke-width="1.4"/>
+            </svg>
+          </span>
+          <span class="rl-label">Insert ⌄</span>
+        </button>
+      </div>
+      <div class="group-footer">
+        <span class="group-name">Rows & Columns</span>
+      </div>
+    </div>
+
+    <div class="ribbon-divider"></div>
+
+    <!-- 2. Merge Group -->
+    <div class="ribbon-group group-table-merge">
+      <div class="group-content" style="display: flex; gap: 4px; align-items: center;">
+        <button type="button" class="ribbon-large-btn disabled" disabled title="Merge Cells" style="opacity: 0.5;">
+          <span class="rl-icon">
+            <svg viewBox="0 0 16 16" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.2">
+              <rect x="2" y="3" width="12" height="10"/>
+              <line x1="8" y1="3" x2="8" y2="7"/>
+            </svg>
+          </span>
+          <span class="rl-label">Merge</span>
+        </button>
+
+        <button type="button" class="ribbon-large-btn disabled" disabled title="Split Cells" style="opacity: 0.5;">
+          <span class="rl-icon">
+            <svg viewBox="0 0 16 16" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.2">
+              <rect x="2" y="3" width="12" height="10"/>
+              <line x1="8" y1="3" x2="8" y2="13" stroke-dasharray="2,2"/>
+            </svg>
+          </span>
+          <span class="rl-label">Split</span>
+        </button>
+      </div>
+      <div class="group-footer">
+        <span class="group-name">Merge</span>
+      </div>
+    </div>
+
+    <div class="ribbon-divider"></div>
+
+    <!-- 3. Cell Size Group -->
+    <div class="ribbon-group group-cell-size">
+      <div class="group-content" style="display: flex; gap: 8px; align-items: center;">
+        <div class="cell-size-col">
+          <div class="size-input-row">
+            <span>Height:</span>
+            <input type="text" class="size-input-field" value='0.208"' disabled>
+          </div>
+          <div class="size-input-row">
+            <span>Width:</span>
+            <input type="text" class="size-input-field" value='0.929"' disabled>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <button type="button" class="ribbon-stack-item disabled" disabled title="Distribute Rows">
+            <span>Distribute Rows</span>
+          </button>
+          <button type="button" class="ribbon-stack-item disabled" disabled title="Distribute Columns">
+            <span>Distribute Columns</span>
+          </button>
+        </div>
+      </div>
+      <div class="group-footer">
+        <span class="group-name">Cell Size</span>
+      </div>
+    </div>
+
+    <div class="ribbon-divider"></div>
+
+    <!-- 4. Align Group (3x3 grid) -->
+    <div class="ribbon-group group-table-align">
+      <div class="group-content">
+        <div class="align-grid-3x3" title="Alignment">
+          <button type="button" class="align-cell-btn disabled" disabled>↖</button>
+          <button type="button" class="align-cell-btn disabled" disabled>↑</button>
+          <button type="button" class="align-cell-btn disabled" disabled>↗</button>
+          <button type="button" class="align-cell-btn disabled" disabled>←</button>
+          <button type="button" class="align-cell-btn disabled" disabled>•</button>
+          <button type="button" class="align-cell-btn disabled" disabled>→</button>
+          <button type="button" class="align-cell-btn disabled" disabled>↙</button>
+          <button type="button" class="align-cell-btn disabled" disabled>↓</button>
+          <button type="button" class="align-cell-btn disabled" disabled>↘</button>
+        </div>
+      </div>
+      <div class="group-footer">
+        <span class="group-name">Align</span>
+      </div>
+    </div>
+
+    <div class="ribbon-divider"></div>
+
+    <!-- 5. Data Group -->
+    <div class="ribbon-group group-table-data">
+      <div class="group-content" style="display: flex; gap: 4px; align-items: center;">
+        <button type="button" class="ribbon-large-btn disabled" disabled title="Sort Ascending" style="opacity: 0.5;">
+          <span class="rl-icon">A↓</span>
+          <span class="rl-label">Sort<br>Ascending</span>
+        </button>
+        <button type="button" class="ribbon-large-btn disabled" disabled title="Sort Descending" style="opacity: 0.5;">
+          <span class="rl-icon">Z↓</span>
+          <span class="rl-label">Sort<br>Descending</span>
+        </button>
+        <button type="button" class="ribbon-large-btn disabled" disabled title="Pin Rows" style="opacity: 0.5;">
+          <span class="rl-icon">📌</span>
+          <span class="rl-label">Pin<br>Rows</span>
+        </button>
+        <button type="button" class="ribbon-large-btn disabled" disabled title="Unpin Rows" style="opacity: 0.5;">
+          <span class="rl-icon">📍</span>
+          <span class="rl-label">Unpin<br>Rows</span>
+        </button>
+      </div>
+      <div class="group-footer">
+        <span class="group-name">Data</span>
+      </div>
+    </div>
+
+    <div class="ribbon-divider"></div>
+
+    <!-- 6. Table Group -->
+    <div class="ribbon-group group-table-meta">
+      <div class="group-content">
+        <button type="button" class="ribbon-large-btn disabled" disabled title="Alt Text" style="opacity: 0.5;">
+          <span class="rl-icon">ℹ️</span>
+          <span class="rl-label">Alt<br>Text</span>
+        </button>
+      </div>
+      <div class="group-footer">
+        <span class="group-name">Table</span>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- CHART DESIGN TAB RIBBON COMMANDS -->
+  <ng-container *ngIf="activeRibbonTab() === 'Chart Design'">
+    <!-- 1. Chart Layouts Group -->
+    <div class="ribbon-group group-chart-layouts">
+      <div class="group-content">
+        <button type="button" class="ribbon-large-btn disabled" disabled title="Add Chart Element">
+          <span class="rl-icon">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.4">
+              <rect x="3" y="3" width="18" height="18" rx="2" stroke="#0f6cbd" />
+              <path d="M12 7v10M7 12h10" stroke="#0f6cbd" stroke-width="2" />
+            </svg>
+          </span>
+          <span class="rl-label">Add Chart<br>Element <small>▼</small></span>
+        </button>
+        <button type="button" class="ribbon-large-btn disabled" disabled title="Quick Layout">
+          <span class="rl-icon">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.4">
+              <rect x="3" y="3" width="8" height="8" rx="1" fill="#0f6cbd" fill-opacity="0.3" stroke="#0f6cbd" />
+              <rect x="13" y="3" width="8" height="8" rx="1" stroke="currentColor" />
+              <rect x="3" y="13" width="8" height="8" rx="1" stroke="currentColor" />
+              <rect x="13" y="13" width="8" height="8" rx="1" stroke="currentColor" />
+            </svg>
+          </span>
+          <span class="rl-label">Quick<br>Layout <small>▼</small></span>
+        </button>
+      </div>
+      <div class="group-footer">
+        <span class="group-name">Chart Layouts</span>
+      </div>
+    </div>
+
+    <div class="ribbon-divider"></div>
+
+    <!-- 2. Chart Styles Group -->
+    <div class="ribbon-group group-chart-styles">
+      <div class="group-content" style="display: flex; align-items: center; gap: 8px;">
+        <button type="button" class="ribbon-large-btn disabled" disabled title="Change Colors">
+          <span class="rl-icon">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none">
+              <circle cx="8" cy="8" r="4" fill="#4472c4" />
+              <circle cx="16" cy="8" r="4" fill="#ed7d31" />
+              <circle cx="8" cy="16" r="4" fill="#a5a5a5" />
+              <circle cx="16" cy="16" r="4" fill="#ffc000" />
+            </svg>
+          </span>
+          <span class="rl-label">Change<br>Colors <small>▼</small></span>
+        </button>
+
+        <div class="chart-styles-strip" title="Chart Styles">
+          <div class="chart-style-tile active" title="Style 1 (Standard)">
+            <div class="cst-bars">
+              <span style="background: #4472c4;"></span>
+              <span style="background: #ed7d31;"></span>
+              <span style="background: #a5a5a5;"></span>
+            </div>
+          </div>
+          <div class="chart-style-tile" title="Style 2">
+            <div class="cst-bars">
+              <span style="background: #5b9bd5;"></span>
+              <span style="background: #41719c;"></span>
+              <span style="background: #1f4e79;"></span>
+            </div>
+          </div>
+          <div class="chart-style-tile" title="Style 3">
+            <div class="cst-bars">
+              <span style="background: #70ad47;"></span>
+              <span style="background: #548235;"></span>
+              <span style="background: #375623;"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="group-footer">
+        <span class="group-name">Chart Styles</span>
+      </div>
+    </div>
+
+    <div class="ribbon-divider"></div>
+
+    <!-- 3. Data Group -->
+    <div class="ribbon-group group-chart-data">
+      <div class="group-content">
+        <button type="button" class="ribbon-btn disabled" disabled title="Switch Row/Column">
+          <span class="rb-icon">⇄</span>
+          <span class="rb-label">Switch Row/Column</span>
+        </button>
+        <button type="button" class="ribbon-btn disabled" disabled title="Select Data">
+          <span class="rb-icon">▦</span>
+          <span class="rb-label">Select Data</span>
+        </button>
+        <button type="button" class="ribbon-btn disabled" disabled title="Edit Data">
+          <span class="rb-icon">✏️</span>
+          <span class="rb-label">Edit Data</span>
+        </button>
+      </div>
+      <div class="group-footer">
+        <span class="group-name">Data</span>
+      </div>
+    </div>
+
+    <div class="ribbon-divider"></div>
+
+    <!-- 4. Type Group -->
+    <div class="ribbon-group group-chart-type">
+      <div class="group-content">
+        <button
+          type="button"
+          class="ribbon-large-btn"
+          (click)="openChangeChartTypeDialog()"
+          title="Change Chart Type"
+          data-demo-target="change-chart-type"
+        >
+          <span class="rl-icon">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.4">
+              <rect x="3" y="11" width="3.5" height="10" rx="0.5" fill="#0f6cbd" stroke="none" />
+              <rect x="8" y="6" width="3.5" height="15" rx="0.5" fill="#ed7d31" stroke="none" />
+              <path d="M14 15l3-4 4 3" stroke="#70ad47" stroke-width="2" fill="none" />
+              <circle cx="21" cy="14" r="1.5" fill="#70ad47" />
+            </svg>
+          </span>
+          <span class="rl-label">Change<br>Chart Type</span>
+        </button>
+      </div>
+      <div class="group-footer">
+        <span class="group-name">Type</span>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- FORMAT TAB RIBBON COMMANDS -->
+  <ng-container *ngIf="activeRibbonTab() === 'Format'">
+    <div class="ribbon-group group-chart-format-shapes">
+      <div class="group-content">
+        <button type="button" class="ribbon-large-btn disabled" disabled title="Insert Shapes">
+          <span class="rl-icon">⬡</span>
+          <span class="rl-label">Insert<br>Shapes</span>
+        </button>
+      </div>
+      <div class="group-footer">
+        <span class="group-name">Insert Shapes</span>
+      </div>
+    </div>
+    <div class="ribbon-divider"></div>
+    <div class="ribbon-group group-chart-format-styles">
+      <div class="group-content">
+        <button type="button" class="ribbon-large-btn disabled" disabled title="Shape Styles">
+          <span class="rl-icon">🎨</span>
+          <span class="rl-label">Shape<br>Styles</span>
+        </button>
+      </div>
+      <div class="group-footer">
+        <span class="group-name">Shape Styles</span>
+      </div>
+    </div>
+    <div class="ribbon-divider"></div>
+    <div class="ribbon-group group-chart-format-size">
+      <div class="group-content">
+        <button type="button" class="ribbon-large-btn disabled" disabled title="Size">
+          <span class="rl-icon">📐</span>
+          <span class="rl-label">Size</span>
+        </button>
+      </div>
+      <div class="group-footer">
+        <span class="group-name">Size</span>
+      </div>
+    </div>
+  </ng-container>
 </div>
 
   <!-- Word Horizontal Ruler -->
@@ -1958,6 +2552,70 @@
     <!-- Main Document Canvas & Status Bar -->
     <section class="work" aria-label="Word document workspace" [attr.inert]="isFrozen ? '' : null">
       <div class="word-canvas" (click)="onPaperClick($event)">
+        <!-- Chart Selection Box Overlay -->
+        <div
+          class="chart-resize-box"
+          *ngIf="selectedChartEl()"
+          [style.position]="'absolute'"
+          [style.left.px]="chartBoxLeft()"
+          [style.top.px]="chartBoxTop()"
+          [style.width.px]="chartBoxWidth()"
+          [style.height.px]="chartBoxHeight()"
+          [style.pointerEvents]="'none'"
+          [style.border]="'1px solid #0f6cbd'"
+          [style.boxSizing]="'border-box'"
+          [style.zIndex]="'50'"
+        >
+          <!-- 8 Resize handles -->
+          <span class="resize-handle nw" (mousedown)="onChartResizeStart($event, 'nw')" style="position: absolute; width: 8px; height: 8px; background: #ffffff; border: 1px solid #0f6cbd; border-radius: 50%; left: -4px; top: -4px; cursor: nwse-resize; pointer-events: auto;"></span>
+          <span class="resize-handle n"  (mousedown)="onChartResizeStart($event, 'n')"  style="position: absolute; width: 8px; height: 8px; background: #ffffff; border: 1px solid #0f6cbd; border-radius: 50%; left: 50%; top: -4px; transform: translateX(-50%); cursor: ns-resize; pointer-events: auto;"></span>
+          <span class="resize-handle ne" (mousedown)="onChartResizeStart($event, 'ne')" style="position: absolute; width: 8px; height: 8px; background: #ffffff; border: 1px solid #0f6cbd; border-radius: 50%; right: -4px; top: -4px; cursor: nesw-resize; pointer-events: auto;"></span>
+          <span class="resize-handle e"  (mousedown)="onChartResizeStart($event, 'e')"  style="position: absolute; width: 8px; height: 8px; background: #ffffff; border: 1px solid #0f6cbd; border-radius: 50%; right: -4px; top: 50%; transform: translateY(-50%); cursor: ew-resize; pointer-events: auto;"></span>
+          <span class="resize-handle se" (mousedown)="onChartResizeStart($event, 'se')" style="position: absolute; width: 8px; height: 8px; background: #ffffff; border: 1px solid #0f6cbd; border-radius: 50%; right: -4px; bottom: -4px; cursor: nwse-resize; pointer-events: auto;"></span>
+          <span class="resize-handle s"  (mousedown)="onChartResizeStart($event, 's')"  style="position: absolute; width: 8px; height: 8px; background: #ffffff; border: 1px solid #0f6cbd; border-radius: 50%; left: 50%; bottom: -4px; transform: translateX(-50%); cursor: ns-resize; pointer-events: auto;"></span>
+          <span class="resize-handle sw" (mousedown)="onChartResizeStart($event, 'sw')" style="position: absolute; width: 8px; height: 8px; background: #ffffff; border: 1px solid #0f6cbd; border-radius: 50%; left: -4px; bottom: -4px; cursor: nesw-resize; pointer-events: auto;"></span>
+          <span class="resize-handle w"  (mousedown)="onChartResizeStart($event, 'w')"  style="position: absolute; width: 8px; height: 8px; background: #ffffff; border: 1px solid #0f6cbd; border-radius: 50%; left: -4px; top: 50%; transform: translateY(-50%); cursor: ew-resize; pointer-events: auto;"></span>
+
+          <!-- Word Floating Side Action Buttons (+, paintbrush, funnel) (Screenshot 5) -->
+          <div class="chart-side-buttons">
+            <button type="button" class="cs-btn" title="Chart Elements" (click)="$event.stopPropagation()">
+              <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+                <path d="M8 3.5a.75.75 0 0 1 .75.75v3h3a.75.75 0 0 1 0 1.5h-3v3a.75.75 0 0 1-1.5 0v-3h-3a.75.75 0 0 1 0-1.5h3v-3A.75.75 0 0 1 8 3.5z"/>
+              </svg>
+            </button>
+            <button type="button" class="cs-btn" title="Chart Styles" (click)="$event.stopPropagation()">
+              <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+                <path d="M12.433 10.07C14.133 10.585 15 11.5 15 12.5 15 14 13 15 8 15s-7-1-7-2.5c0-.987.84-1.898 2.502-2.416.337.378.732.716 1.176.999C3.627 11.458 3 12.028 3 12.5 3 13.2 4.9 14 8 14s5-.8 5-1.5c0-.464-.61-1.025-1.65-1.424a6.29 6.29 0 0 0 1.083-1.006zM9.5 2.5a2.5 2.5 0 1 0-5 0v5.626a3.5 3.5 0 1 0 5 0V2.5z"/>
+              </svg>
+            </button>
+            <button type="button" class="cs-btn" title="Chart Filters" (click)="$event.stopPropagation()">
+              <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+                <path d="M1.5 2h13l-5.5 6.5v5l-2 1.5v-6.5L1.5 2z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Inline Chart Title Edit Field (Screenshot 6) -->
+        <div
+          class="chart-title-edit-overlay"
+          *ngIf="isEditingChartTitle() && selectedChartEl()"
+          [style.left.px]="chartBoxLeft() + (chartBoxWidth() - 240) / 2"
+          [style.top.px]="chartBoxTop() + 10"
+        >
+          <input
+            #inlineTitleInput
+            type="text"
+            class="chart-title-inline-field"
+            [ngModel]="chartTitleEditingText()"
+            (ngModelChange)="onInlineTitleInput($event)"
+            (keydown.enter)="finishChartTitleEdit()"
+            (keydown.escape)="cancelChartTitleEdit()"
+            (blur)="finishChartTitleEdit()"
+            data-demo-target="chart-title-inline-input"
+            placeholder="Chart Title"
+          />
+        </div>
         <!-- Document Pages Container (Multi-Page Vertical Flow) -->
         <div
           class="pages-container"
@@ -2693,4 +3351,254 @@
       </div>
     </div>
   </div>
+
+  <!-- Table Styles Gallery Flyout -->
+  <div
+    class="table-styles-flyout"
+    *ngIf="showTableStylesGallery()"
+    [style.top.px]="tableStylesPos().top"
+    [style.left.px]="tableStylesPos().left"
+    (click)="$event.stopPropagation()"
+  >
+    <!-- Plain Tables -->
+    <div class="table-styles-section-title">Plain Tables</div>
+    <div class="table-styles-grid">
+      <button
+        type="button"
+        class="table-style-tile-btn"
+        [class.active]="selectedTableEl()?.getAttribute('data-table-style') === 'Plain'"
+        (click)="applyTableStyle('Plain')"
+        data-demo-target="table-style-plain"
+        title="Plain"
+      >
+        <table class="mini-table-preview style-plain">
+          <tr><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td></tr>
+        </table>
+      </button>
+      <button
+        type="button"
+        class="table-style-tile-btn"
+        [class.active]="selectedTableEl()?.getAttribute('data-table-style') === 'Banded Rows'"
+        (click)="applyTableStyle('Banded Rows')"
+        data-demo-target="table-style-banded-rows"
+        title="Banded Rows"
+      >
+        <table class="mini-table-preview style-banded">
+          <tr><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td></tr>
+        </table>
+      </button>
+    </div>
+
+    <!-- Grid Tables -->
+    <div class="table-styles-section-title">Grid Tables</div>
+    <div class="table-styles-grid">
+      <button
+        type="button"
+        class="table-style-tile-btn"
+        [class.active]="selectedTableEl()?.getAttribute('data-table-style') === 'Grid'"
+        (click)="applyTableStyle('Grid')"
+        data-demo-target="table-style-grid"
+        title="Grid"
+      >
+        <table class="mini-table-preview style-grid">
+          <tr><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td></tr>
+        </table>
+      </button>
+      <button
+        type="button"
+        class="table-style-tile-btn"
+        [class.active]="selectedTableEl()?.getAttribute('data-table-style') === 'Grid Blue'"
+        (click)="applyTableStyle('Grid Blue')"
+        data-demo-target="table-style-grid-blue"
+        title="Grid Blue"
+      >
+        <table class="mini-table-preview style-grid-blue">
+          <tr><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td></tr>
+        </table>
+      </button>
+      <button
+        type="button"
+        class="table-style-tile-btn"
+        [class.active]="selectedTableEl()?.getAttribute('data-table-style') === 'Grid Green'"
+        (click)="applyTableStyle('Grid Green')"
+        data-demo-target="table-style-grid-green"
+        title="Grid Green"
+      >
+        <table class="mini-table-preview style-grid-green">
+          <tr><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td></tr>
+        </table>
+      </button>
+    </div>
+
+    <!-- List Tables -->
+    <div class="table-styles-section-title">List Tables</div>
+    <div class="table-styles-grid">
+      <button
+        type="button"
+        class="table-style-tile-btn"
+        [class.active]="selectedTableEl()?.getAttribute('data-table-style') === 'List Blue'"
+        (click)="applyTableStyle('List Blue')"
+        data-demo-target="table-style-list-blue"
+        title="List Blue"
+      >
+        <table class="mini-table-preview style-list-blue">
+          <tr><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td></tr>
+        </table>
+      </button>
+    </div>
+
+    <!-- Clear -->
+    <button
+      type="button"
+      class="table-style-clear-btn"
+      (click)="clearTableStyle()"
+      data-demo-target="table-style-clear"
+    >
+      <span style="font-size: 14px;">⌫</span>
+      <span>Clear</span>
+    </button>
+  </div>
+
+  <!-- Cell Shading Flyout -->
+  <div
+    class="cell-shading-flyout"
+    *ngIf="showCellShadingDropdown()"
+    [style.top.px]="cellShadingPos().top"
+    [style.left.px]="cellShadingPos().left"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="cell-shading-header">Theme Colors</div>
+    <div class="theme-colors-matrix">
+      <ng-container *ngFor="let row of themeColorPalette">
+        <button
+          *ngFor="let c of row"
+          type="button"
+          class="shading-swatch"
+          [style.backgroundColor]="c.color"
+          [title]="c.name"
+          [attr.data-demo-target]="c.key ? 'cell-shading-' + c.key : null"
+          (click)="applyCellShading(c.key || c.color, c.color)"
+        ></button>
+      </ng-container>
+    </div>
+
+    <div class="cell-shading-header" style="margin-top: 4px;">Standard Colors</div>
+    <div class="standard-colors-row">
+      <button
+        *ngFor="let c of standardColorsList"
+        type="button"
+        class="shading-swatch"
+        [style.backgroundColor]="c.color"
+        [title]="c.name"
+        (click)="applyCellShading(c.key || c.color, c.color)"
+      ></button>
+    </div>
+
+    <div style="border-top: 1px solid #edebe9; margin: 6px 0 2px 0;"></div>
+
+    <button
+      type="button"
+      class="cell-shading-action-btn"
+      (click)="applyCellShading(null)"
+      data-demo-target="cell-shading-no-color"
+    >
+      <span class="no-color-icon">✕</span>
+      <span>No Color</span>
+    </button>
+
+    <button
+      type="button"
+      class="cell-shading-action-btn disabled"
+      disabled
+      data-demo-target="cell-shading-more-colors"
+    >
+      <span style="font-size: 14px;">🎨</span>
+      <span>More Colors...</span>
+    </button>
+  </div>
+
+  <!-- Table Insert Dropdown Menu -->
+  <div
+    class="table-insert-menu"
+    *ngIf="showTableInsertMenu()"
+    [style.top.px]="tableInsertPos().top"
+    [style.left.px]="tableInsertPos().left"
+    (click)="$event.stopPropagation()"
+  >
+    <button
+      type="button"
+      class="table-insert-item"
+      (click)="insertTableRow('above')"
+      data-demo-target="table-insert-above"
+    >
+      <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.3">
+        <rect x="2" y="2" width="12" height="12"/>
+        <line x1="2" y1="6" x2="14" y2="6" stroke="#0f6cbd" stroke-width="2"/>
+        <path d="M8 9.5V4M5.5 6.5l2.5-2.5 2.5 2.5" stroke="#0f6cbd" stroke-width="1.3"/>
+      </svg>
+      <span>Insert Above</span>
+    </button>
+    <button
+      type="button"
+      class="table-insert-item"
+      (click)="insertTableRow('below')"
+      data-demo-target="table-insert-below"
+    >
+      <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.3">
+        <rect x="2" y="2" width="12" height="12"/>
+        <line x1="2" y1="10" x2="14" y2="10" stroke="#0f6cbd" stroke-width="2"/>
+        <path d="M8 6.5v5.5M5.5 9.5l2.5 2.5 2.5-2.5" stroke="#0f6cbd" stroke-width="1.3"/>
+      </svg>
+      <span>Insert Below</span>
+    </button>
+    <button
+      type="button"
+      class="table-insert-item"
+      (click)="insertTableColumn('left')"
+      data-demo-target="table-insert-left"
+    >
+      <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.3">
+        <rect x="2" y="2" width="12" height="12"/>
+        <line x1="6" y1="2" x2="6" y2="14" stroke="#0f6cbd" stroke-width="2"/>
+        <path d="M9.5 8H4M6.5 5.5l-2.5 2.5 2.5 2.5" stroke="#0f6cbd" stroke-width="1.3"/>
+      </svg>
+      <span>Insert Left</span>
+    </button>
+    <button
+      type="button"
+      class="table-insert-item"
+      (click)="insertTableColumn('right')"
+      data-demo-target="table-insert-right"
+    >
+      <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.3">
+        <rect x="2" y="2" width="12" height="12"/>
+        <line x1="10" y1="2" x2="10" y2="14" stroke="#0f6cbd" stroke-width="2"/>
+        <path d="M6.5 8h5.5M9.5 5.5l2.5 2.5-2.5 2.5" stroke="#0f6cbd" stroke-width="1.3"/>
+      </svg>
+      <span>Insert Right</span>
+    </button>
+  </div>
+  <!-- Word Insert / Change Chart Modal Dialog -->
+  <app-word-chart-dialog
+    *ngIf="showInsertChartDialog()"
+    [isOpen]="showInsertChartDialog()"
+    [mode]="chartDialogMode()"
+    [initialChartType]="chartDialogInitialType()"
+    [initialTitle]="chartDialogInitialTitle()"
+    [initialData]="chartDialogInitialData()"
+    (closeDialog)="showInsertChartDialog.set(false)"
+    (insertChart)="onChartDialogResult($event)"
+  ></app-word-chart-dialog>
 </main>

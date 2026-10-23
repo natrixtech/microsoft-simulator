@@ -172,6 +172,7 @@ export class RichEditor {
   private lastCopyTime = 0;
   taskStartHtml: string | null = null;
   getDocumentHtml?: () => string;
+  customUndo?: () => boolean;
 
   private onInput = () => this.changed();
   private onMouseUp = () => {
@@ -199,6 +200,9 @@ export class RichEditor {
         } else {
           const currentHtml = this.getDocumentHtml ? this.getDocumentHtml() : this.root.innerHTML;
           if (this.taskStartHtml !== null && currentHtml === this.taskStartHtml) {
+            return;
+          }
+          if (this.customUndo && this.customUndo()) {
             return;
           }
           this.command('undo');

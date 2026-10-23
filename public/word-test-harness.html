@@ -69,6 +69,14 @@
         <option value="superscript">Lesson 25: Apply Superscript (textStyle)</option>
         <option value="subscript">Lesson 26: Apply Subscript (textStyle)</option>
         <option value="customStyle">Lesson 27: Create a Custom Style (style)</option>
+        <option value="tableStyle">Lesson 28: Apply a Table Style (table)</option>
+        <option value="tableShading">Lesson 29: Shade Table Cells (table)</option>
+        <option value="tableInsertRow">Lesson 30: Insert a Table Row (table)</option>
+        <option value="tableInsertCol">Lesson 31: Insert a Table Column (table)</option>
+        <option value="chartPie">Lesson 32: Insert a Pie Chart (chart)</option>
+        <option value="chartColumn">Lesson 33: Insert a Column Chart (chart)</option>
+        <option value="chartLine">Lesson 34: Insert a Line Chart (chart)</option>
+        <option value="chartBar">Lesson 35: Insert a Bar Chart (chart)</option>
       </select>
 
       <button id="load-btn" class="primary">Load Activity</button>
@@ -686,6 +694,182 @@
               hint: 'Select the first paragraph, click the ⌄ button next to the styles, choose `Create a Style`, name it Quote, then click into the second paragraph and choose Quote.',
               startingDocument: '<p style="font-style: italic; color: gray;">All the world’s a stage.</p><p>To be or not to be.</p>',
               goals: [{ type: 'style', name: 'Quote', italic: true, color: 'gray', appliedTo: 'To be or not to be' }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        tableStyle: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Apply a Table Style',
+          tasks: [
+            {
+              title: 'Apply Grid Blue style',
+              explanation: 'Table styles let you quickly format borders, shading, and header rows with professional color schemes.',
+              instructions: [
+                'Click anywhere inside the table.',
+                'Open the Table Design tab on the ribbon.',
+                'In the Table Styles group, choose `Grid Blue`.'
+              ],
+              hint: 'Click inside the table, go to Table Design, and select the Grid Blue style tile.',
+              startingDocument: '<table class="doc-table"><tr><td>Product</td><td>Qty</td><td>Price</td></tr><tr><td>Notebook</td><td>2</td><td>$5.00</td></tr><tr><td>Pen</td><td>10</td><td>$1.50</td></tr></table>',
+              goals: [{ type: 'table', style: 'Grid Blue' }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        tableShading: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Shade Table Cells',
+          tasks: [
+            {
+              title: 'Apply cell shading',
+              explanation: 'Cell shading highlights specific data points, header rows, or totals to improve readability.',
+              instructions: [
+                'Click inside the cell with `Product` (row 1, column 1).',
+                'Go to Table Design and click `Cell Shading`.',
+                'Select `blue` from the color palette.'
+              ],
+              hint: 'Click the Product cell, click Cell Shading on the Table Design tab, and choose blue.',
+              startingDocument: '<table class="doc-table"><tr><td>Product</td><td>Qty</td><td>Price</td></tr><tr><td>Notebook</td><td>2</td><td>$5.00</td></tr><tr><td>Pen</td><td>10</td><td>$1.50</td></tr></table>',
+              goals: [{ type: 'table', cellColors: [{ row: 0, col: 0, color: 'blue' }] }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        tableInsertRow: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Insert a Table Row',
+          tasks: [
+            {
+              title: 'Insert row below',
+              explanation: 'Inserting rows allows you to add additional entries to your table without recreating the structure.',
+              instructions: [
+                'Click inside any cell in the table.',
+                'Switch to the Table Layout tab on the ribbon.',
+                'Click `Insert` and select `Insert Below`.'
+              ],
+              hint: 'Click inside the table, go to Table Layout > Insert, and click Insert Below.',
+              startingDocument: '<table class="doc-table"><tr><td>Product</td><td>Qty</td><td>Price</td></tr><tr><td>Notebook</td><td>2</td><td>$5.00</td></tr><tr><td>Pen</td><td>10</td><td>$1.50</td></tr></table>',
+              goals: [{ type: 'table', rows: 4, columns: 3 }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        tableInsertCol: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Insert a Table Column',
+          tasks: [
+            {
+              title: 'Insert column right',
+              explanation: 'Inserting columns expands your table to include new attributes or data fields.',
+              instructions: [
+                'Click inside any cell in the table.',
+                'Switch to the Table Layout tab on the ribbon.',
+                'Click `Insert` and select `Insert Right`.'
+              ],
+              hint: 'Click inside the table, go to Table Layout > Insert, and click Insert Right.',
+              startingDocument: '<table class="doc-table"><tr><td>Product</td><td>Qty</td><td>Price</td></tr><tr><td>Notebook</td><td>2</td><td>$5.00</td></tr><tr><td>Pen</td><td>10</td><td>$1.50</td></tr></table>',
+              goals: [{ type: 'table', rows: 3, columns: 4 }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        chartPie: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Insert a Pie Chart',
+          tasks: [
+            {
+              title: 'Insert a pie chart',
+              explanation: 'Pie charts display proportions of a whole, making data distributions easy to visualize.',
+              instructions: [
+                'Click Insert > Chart.',
+                'Choose Pie and type `Sales Distribution` as the chart title.',
+                'Click Insert.'
+              ],
+              hint: 'Click Insert > Chart, choose Pie and enter Sales Distribution, then click Insert.',
+              startingDocument: '<p>Below is the quarterly summary of our product category distribution:</p>',
+              goals: [{ type: 'chart', chartType: 'pie', title: 'Sales Distribution' }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        chartColumn: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Insert a Column Chart',
+          tasks: [
+            {
+              title: 'Insert a column chart',
+              explanation: 'Column charts compare values across categories using vertical bars.',
+              instructions: [
+                'Click Insert > Chart.',
+                'Choose Column and type `Quarterly Revenue` as the chart title.',
+                'Click Insert.'
+              ],
+              hint: 'Click Insert > Chart, choose Column and enter Quarterly Revenue, then click Insert.',
+              startingDocument: '<p>Review the financial performance across all business units:</p>',
+              goals: [{ type: 'chart', chartType: 'column', title: 'Quarterly Revenue' }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        chartLine: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Insert a Line Chart',
+          tasks: [
+            {
+              title: 'Insert a line chart',
+              explanation: 'Line charts illustrate continuous data trends over time intervals.',
+              instructions: [
+                'Click Insert > Chart.',
+                'Choose Line and type `Growth Trends` as the chart title.',
+                'Click Insert.'
+              ],
+              hint: 'Click Insert > Chart, choose Line and enter Growth Trends, then click Insert.',
+              startingDocument: '<p>Annual subscription trajectory over the past twelve months:</p>',
+              goals: [{ type: 'chart', chartType: 'line', title: 'Growth Trends' }],
+              showMeHow: true
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        chartBar: {
+          app: 'word',
+          mode: 'lesson',
+          title: 'Insert a Bar Chart',
+          tasks: [
+            {
+              title: 'Insert a bar chart',
+              explanation: 'Bar charts represent grouped metrics horizontally for direct comparison.',
+              instructions: [
+                'Click Insert > Chart.',
+                'Choose Bar and type `Market Share` as the chart title.',
+                'Click Insert.'
+              ],
+              hint: 'Click Insert > Chart, choose Bar and enter Market Share, then click Insert.',
+              startingDocument: '<p>Regional competitive breakdown across primary product segments:</p>',
+              goals: [{ type: 'chart', chartType: 'bar', title: 'Market Share' }],
               showMeHow: true
             }
           ],

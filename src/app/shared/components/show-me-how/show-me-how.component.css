@@ -281,6 +281,13 @@
       color: #a19f9d;
       cursor: default;
     }
+    .rw-tab.contextual-table-tab {
+      color: #0f6cbd;
+      font-weight: 600;
+    }
+    .rw-tab.contextual-table-tab.active {
+      border-bottom-color: #0f6cbd;
+    }
     .replica-ribbon-commands {
       background: #f3f2f1;
       border-bottom: 1px solid #d2d0ce;
@@ -427,13 +434,10 @@
       align-items: flex-start;
       justify-content: center;
     }
-    .replica-doc-stage.landscape .replica-doc-page {
-      width: 100%;
-      min-height: 160px;
-    }
     .replica-doc-page {
-      flex: 1;
-      min-height: 220px;
+      width: 250px;
+      min-height: 330px;
+      flex: none;
       background: #ffffff;
       border: 1px solid #d2d0ce;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
@@ -443,6 +447,25 @@
       line-height: 1.5;
       color: #201f1e;
       position: relative;
+      transition: width 0.3s ease, min-height 0.3s ease, padding 0.3s ease;
+    }
+    .replica-doc-stage.landscape .replica-doc-page {
+      width: 440px;
+      min-height: 220px;
+    }
+    .replica-doc-page[data-paper-size="A4"] {
+      min-height: 350px;
+    }
+    .replica-doc-page[data-paper-size="Legal"] {
+      min-height: 390px;
+    }
+    .replica-doc-stage.landscape .replica-doc-page[data-paper-size="A4"] {
+      width: 460px;
+      min-height: 220px;
+    }
+    .replica-doc-stage.landscape .replica-doc-page[data-paper-size="Legal"] {
+      width: 500px;
+      min-height: 220px;
     }
     .replica-header-area {
       font-size: 10px;
@@ -678,6 +701,457 @@
       0% { transform: scale(0.3); opacity: 1; }
       100% { transform: scale(1.6); opacity: 0; }
     }
+
+    /* Replica Contextual Popovers & Tables */
+    .replica-cell-shading-popover {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background: #ffffff;
+      border: 1px solid #d2d0ce;
+      border-radius: 4px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+      padding: 6px;
+      width: 140px;
+      box-sizing: border-box;
+    }
+    .rcs-title {
+      font-size: 10px;
+      font-weight: 600;
+      color: #605e5c;
+      margin-bottom: 4px;
+    }
+    .rcs-palette {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 3px;
+    }
+    .rcs-swatch {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      cursor: pointer;
+      display: inline-block;
+      box-sizing: border-box;
+    }
+    .replica-insert-popover {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background: #ffffff;
+      border: 1px solid #d2d0ce;
+      border-radius: 4px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+      padding: 4px 0;
+      min-width: 110px;
+      box-sizing: border-box;
+    }
+    .rip-item {
+      padding: 4px 8px;
+      font-size: 10.5px;
+      color: #201f1e;
+      cursor: pointer;
+    }
+    .rip-item:hover {
+      background: #eff6fc;
+      color: #0f6cbd;
+    }
+
+    /* Replica Styles Menu Popover */
+    .replica-styles-menu {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background: #ffffff;
+      border: 1px solid #d2d0ce;
+      border-radius: 4px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+      padding: 4px 0;
+      min-width: 130px;
+      box-sizing: border-box;
+    }
+    .rsm-item {
+      padding: 5px 10px;
+      font-size: 10.5px;
+      color: #201f1e;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .rsm-item:hover {
+      background: #eff6fc;
+      color: #0f6cbd;
+    }
+
+    /* Replica Orientation Popover */
+    .replica-orientation-popover {
+      position: absolute;
+      top: 100%;
+      left: 30px;
+      background: #ffffff;
+      border: 1px solid #d2d0ce;
+      border-radius: 4px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+      padding: 4px 0;
+      min-width: 100px;
+      box-sizing: border-box;
+    }
+    .rop-item {
+      padding: 5px 10px;
+      font-size: 10.5px;
+      color: #201f1e;
+      cursor: pointer;
+    }
+    .rop-item:hover {
+      background: #eff6fc;
+      color: #0f6cbd;
+    }
+    .rop-item.active {
+      background: #eff6fc;
+      color: #185abd;
+      font-weight: 600;
+    }
+
+    ::ng-deep .replica-doc-content ol,
+    ::ng-deep .replica-doc-content ul {
+      margin: 6px 0;
+      padding-left: 24px;
+    }
+    ::ng-deep .replica-doc-content sub {
+      vertical-align: sub;
+      font-size: 0.75em;
+      line-height: 0;
+    }
+    ::ng-deep .replica-doc-content sup {
+      vertical-align: super;
+      font-size: 0.75em;
+      line-height: 0;
+    }
+
+    /* Dark Mode Theme Support (without :is() as per RULES.md) */
+    :host-context(.dark-theme) .replica-styles-menu,
+    :host-context([data-theme='DARK']) .replica-styles-menu,
+    :host-context([data-theme='dark']) .replica-styles-menu {
+      background: #2b2b2b;
+      border-color: #484848;
+      color: #f3f2f1;
+    }
+    :host-context(.dark-theme) .rsm-item,
+    :host-context([data-theme='DARK']) .rsm-item,
+    :host-context([data-theme='dark']) .rsm-item {
+      color: #f3f2f1;
+    }
+    :host-context(.dark-theme) .rsm-item:hover,
+    :host-context([data-theme='DARK']) .rsm-item:hover,
+    :host-context([data-theme='dark']) .rsm-item:hover {
+      background: #3c3c3c;
+      color: #4da3ff;
+    }
+
+    :host-context(.dark-theme) .replica-orientation-popover,
+    :host-context([data-theme='DARK']) .replica-orientation-popover,
+    :host-context([data-theme='dark']) .replica-orientation-popover {
+      background: #2b2b2b;
+      border-color: #484848;
+      color: #f3f2f1;
+    }
+    :host-context(.dark-theme) .rop-item,
+    :host-context([data-theme='DARK']) .rop-item,
+    :host-context([data-theme='dark']) .rop-item {
+      color: #f3f2f1;
+    }
+    :host-context(.dark-theme) .rop-item:hover,
+    :host-context([data-theme='DARK']) .rop-item:hover,
+    :host-context([data-theme='dark']) .rop-item:hover {
+      background: #3c3c3c;
+      color: #4da3ff;
+    }
+    :host-context(.dark-theme) .rop-item.active,
+    :host-context([data-theme='DARK']) .rop-item.active,
+    :host-context([data-theme='dark']) .rop-item.active {
+      background: #1f3b5c;
+      color: #4da3ff;
+    }
+
+    :host-context(.dark-theme) .create-style-dialog,
+    :host-context([data-theme='DARK']) .create-style-dialog,
+    :host-context([data-theme='dark']) .create-style-dialog {
+      background: #252526;
+      border-color: #484848;
+      color: #f3f2f1;
+    }
+
+    :host-context(.dark-theme) .replica-dialog-box,
+    :host-context([data-theme='DARK']) .replica-dialog-box,
+    :host-context([data-theme='dark']) .replica-dialog-box {
+      background: #252526;
+      border-color: #484848;
+      color: #f3f2f1;
+    }
+    :host-context(.dark-theme) .rd-header,
+    :host-context([data-theme='DARK']) .rd-header,
+    :host-context([data-theme='dark']) .rd-header {
+      background: #1f1f1f;
+      border-bottom-color: #3c3c3c;
+      color: #f3f2f1;
+    }
+    :host-context(.dark-theme) .rd-field input,
+    :host-context([data-theme='DARK']) .rd-field input,
+    :host-context([data-theme='dark']) .rd-field input {
+      background: #333333;
+      border-color: #555555;
+      color: #f3f2f1;
+    }
+    :host-context(.dark-theme) .rd-pill,
+    :host-context([data-theme='DARK']) .rd-pill,
+    :host-context([data-theme='dark']) .rd-pill {
+      background: #333333;
+      border-color: #555555;
+      color: #cccccc;
+    }
+    :host-context(.dark-theme) .rd-pill.active,
+    :host-context([data-theme='DARK']) .rd-pill.active,
+    :host-context([data-theme='dark']) .rd-pill.active {
+      background: #1f3b5c;
+      border-color: #4da3ff;
+      color: #4da3ff;
+    }
+    :host-context(.dark-theme) .rd-input-fake,
+    :host-context([data-theme='DARK']) .rd-input-fake,
+    :host-context([data-theme='dark']) .rd-input-fake {
+      background: #333333;
+      border-color: #555555;
+      color: #f3f2f1;
+    }
+    :host-context(.dark-theme) .rd-btn,
+    :host-context([data-theme='DARK']) .rd-btn,
+    :host-context([data-theme='dark']) .rd-btn {
+      background: #333333;
+      border-color: #555555;
+      color: #f3f2f1;
+    }
+    :host-context(.dark-theme) .rd-btn.primary,
+    :host-context([data-theme='DARK']) .rd-btn.primary,
+    :host-context([data-theme='dark']) .rd-btn.primary {
+      background: #0f6cbd;
+      border-color: #0f6cbd;
+      color: #ffffff;
+    }
+
+    ::ng-deep .replica-doc-content table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 8px 0;
+    }
+    ::ng-deep .replica-doc-content td,
+    ::ng-deep .replica-doc-content th {
+      border: 1px solid #d2d0ce;
+      padding: 4px 8px;
+      font-size: 11px;
+    }
+    ::ng-deep .replica-doc-content table[data-table-style="Plain"] td {
+      border: 1px solid #d2d0ce;
+      background-color: transparent;
+    }
+    ::ng-deep .replica-doc-content table[data-table-style="Banded Rows"] tr:nth-child(even) td {
+      background-color: #f3f2f1;
+    }
+    ::ng-deep .replica-doc-content table[data-table-style="Grid"] td {
+      border: 1px solid #605e5c;
+    }
+    ::ng-deep .replica-doc-content table[data-table-style="Grid Blue"] tr:first-child td {
+      background-color: #0f6cbd;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    ::ng-deep .replica-doc-content table[data-table-style="Grid Blue"] tr:not(:first-child):nth-child(even) td {
+      background-color: #eff6fc;
+    }
+    ::ng-deep .replica-doc-content table[data-table-style="Grid Green"] tr:first-child td {
+      background-color: #107c41;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    ::ng-deep .replica-doc-content table[data-table-style="Grid Green"] tr:not(:first-child):nth-child(even) td {
+      background-color: #f1f8f3;
+    }
+    ::ng-deep .replica-doc-content table[data-table-style="List Blue"] tr:first-child td {
+      background-color: #0f6cbd;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    ::ng-deep .replica-doc-content table[data-table-style="List Blue"] tr:not(:first-child):nth-child(even) td {
+      background-color: #eff6fc;
+    }
+
+    .replica-chart-dialog {
+      width: 380px;
+    }
+    .replica-chart-dialog-tabs {
+      display: flex;
+      padding: 0 10px;
+      border-bottom: 1px solid #edebe9;
+      background: #f8f8f8;
+    }
+    .rcd-tab {
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #0f6cbd;
+      border-bottom: 2px solid #0f6cbd;
+    }
+    .rcd-body {
+      display: flex;
+      gap: 10px;
+      padding: 8px 10px;
+      min-height: 120px;
+    }
+    .rcd-sidebar {
+      width: 100px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      border-right: 1px solid #edebe9;
+      padding-right: 6px;
+    }
+    .rcd-type-item {
+      padding: 4px 6px;
+      font-size: 10.5px;
+      border-radius: 2px;
+      cursor: pointer;
+      user-select: none;
+      color: #323130;
+    }
+    .rcd-type-item:hover {
+      background: #f3f2f1;
+    }
+    .rcd-type-item.active {
+      background: #e1dfdd;
+      color: #0f6cbd;
+      font-weight: 600;
+    }
+    .rcd-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .rcd-title-field {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+    }
+    .rcd-title-field label {
+      font-weight: 600;
+      color: #484644;
+      white-space: nowrap;
+    }
+    .rcd-input {
+      flex: 1;
+      font-size: 11px;
+      padding: 2px 6px;
+      border: 1px solid #8a8886;
+      border-radius: 2px;
+      background: #ffffff;
+      color: #242424;
+    }
+    .rcd-preview-area {
+      flex: 1;
+      border: 1px dashed #c8c6c4;
+      border-radius: 2px;
+      background: #faf9f8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 50px;
+    }
+    .rcd-type-badge {
+      font-size: 10px;
+      font-weight: 600;
+      color: #0f6cbd;
+      letter-spacing: 0.5px;
+    }
+
+    ::ng-deep .replica-doc-content figure.doc-chart {
+      display: block;
+      margin: 10px auto;
+      max-width: 95%;
+      border: 1px solid #e1dfdd;
+      border-radius: 2px;
+      background: #ffffff;
+      padding: 4px;
+      box-sizing: border-box;
+    }
+    ::ng-deep .replica-doc-content figure.doc-chart svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    /* Dark theme for replica chart dialog - NO :is() selectors! */
+    :host-context(.dark-theme) .replica-chart-dialog-tabs,
+    :host-context([data-theme='DARK']) .replica-chart-dialog-tabs,
+    :host-context([data-theme='dark']) .replica-chart-dialog-tabs {
+      background: #252423;
+      border-color: #3b3a39;
+    }
+    :host-context(.dark-theme) .rcd-tab,
+    :host-context([data-theme='DARK']) .rcd-tab,
+    :host-context([data-theme='dark']) .rcd-tab {
+      color: #4ea2ea;
+      border-bottom-color: #4ea2ea;
+    }
+    :host-context(.dark-theme) .rcd-sidebar,
+    :host-context([data-theme='DARK']) .rcd-sidebar,
+    :host-context([data-theme='dark']) .rcd-sidebar {
+      border-color: #3b3a39;
+    }
+    :host-context(.dark-theme) .rcd-type-item,
+    :host-context([data-theme='DARK']) .rcd-type-item,
+    :host-context([data-theme='dark']) .rcd-type-item {
+      color: #d2d0ce;
+    }
+    :host-context(.dark-theme) .rcd-type-item:hover,
+    :host-context([data-theme='DARK']) .rcd-type-item:hover,
+    :host-context([data-theme='dark']) .rcd-type-item:hover {
+      background: #3b3a39;
+    }
+    :host-context(.dark-theme) .rcd-type-item.active,
+    :host-context([data-theme='DARK']) .rcd-type-item.active,
+    :host-context([data-theme='dark']) .rcd-type-item.active {
+      background: #323130;
+      color: #4ea2ea;
+    }
+    :host-context(.dark-theme) .rcd-title-field label,
+    :host-context([data-theme='DARK']) .rcd-title-field label,
+    :host-context([data-theme='dark']) .rcd-title-field label {
+      color: #d2d0ce;
+    }
+    :host-context(.dark-theme) .rcd-input,
+    :host-context([data-theme='DARK']) .rcd-input,
+    :host-context([data-theme='dark']) .rcd-input {
+      background: #2d2c2b;
+      border-color: #605e5c;
+      color: #f3f2f1;
+    }
+    :host-context(.dark-theme) .rcd-preview-area,
+    :host-context([data-theme='DARK']) .rcd-preview-area,
+    :host-context([data-theme='dark']) .rcd-preview-area {
+      background: #201f1e;
+      border-color: #3b3a39;
+    }
+    :host-context(.dark-theme) .replica-doc-content figure.doc-chart,
+    :host-context([data-theme='DARK']) .replica-doc-content figure.doc-chart,
+    :host-context([data-theme='dark']) .replica-doc-content figure.doc-chart {
+      background: #252423;
+      border-color: #3b3a39;
+    }
+
     @media (max-width: 680px) {
       .demo-dialog {
         padding: 12px 14px;

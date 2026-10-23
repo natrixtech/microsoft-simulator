@@ -15,6 +15,11 @@ import {
   setSelection,
   styleMatches,
 } from './rich-text.service';
+import {
+  DEFAULT_CHART_DATA,
+  WordChartType,
+  renderChartSvg,
+} from '../chart-svg.helper';
 
 export interface PageSetup {
   orientation: 'portrait' | 'landscape';
@@ -226,7 +231,24 @@ export class WordDocumentService {
             g['cells'].every((r: string[], i: number) =>
               r.every((c: string, j: number) => t.rows[i]?.cells[j]?.textContent === c)
             );
-          return rowsMatch && colsMatch && cellsMatch;
+          const styleMatch =
+            g['style'] === undefined ||
+            t.getAttribute('data-table-style') === g['style'];
+          const colorsMatch =
+            !g['cellColors'] ||
+            g['cellColors'].every((cc: { row: number; col: number; color: string }) => {
+              const cell = t.rows[cc.row]?.cells[cc.col];
+              if (!cell) return false;
+              const expectedRaw = COLORS[cc.color] || cc.color;
+              const probe = document.createElement('span');
+              probe.style.backgroundColor = expectedRaw;
+              root.append(probe);
+              const expectedComputed = window.getComputedStyle(probe).backgroundColor;
+              probe.remove();
+              const actualComputed = window.getComputedStyle(cell).backgroundColor;
+              return actualComputed === expectedComputed;
+            });
+          return rowsMatch && colsMatch && cellsMatch && styleMatch && colorsMatch;
         });
       }
 
@@ -308,6 +330,31 @@ export class WordDocumentService {
         }
 
         return true;
+      }
+
+      case 'chart': {
+        const charts = [
+          ...Array.from(root.querySelectorAll<HTMLElement>('figure.doc-chart, [data-element="chart"]')),
+          ...(p2 ? Array.from(p2.querySelectorAll<HTMLElement>('figure.doc-chart, [data-element="chart"]')) : []),
+        ];
+
+        if (g['count'] !== undefined) {
+          if (charts.length !== Number(g['count'])) return false;
+        }
+
+        if (g['chartType'] !== undefined || g['title'] !== undefined) {
+          return charts.some((ch) => {
+            const typeMatch =
+              !g['chartType'] ||
+              (ch.getAttribute('data-chart-type') || '').toLowerCase() === String(g['chartType']).toLowerCase();
+            const titleMatch =
+              g['title'] === undefined ||
+              (ch.getAttribute('data-chart-title') || '').trim() === String(g['title']).trim();
+            return typeMatch && titleMatch;
+          });
+        }
+
+        return g['count'] !== undefined ? true : charts.length > 0;
       }
 
       default:
@@ -418,18 +465,47 @@ export class WordDocumentService {
       }
 
       case 'table': {
-        const rows = g['rows'] || 2;
-        const cols = g['columns'] || 2;
-        const tbl = document.createElement('table');
-        tbl.className = 'doc-table';
-        for (let i = 0; i < rows; i++) {
+        let tbl = root.querySelector('table');
+        if (!tbl) {
+          tbl = document.createElement('table');
+          tbl.className = 'doc-table';
+          root.append(tbl);
+        }
+        if (g['style']) {
+          tbl.setAttribute('data-table-style', g['style']);
+        }
+        const rows = g['rows'] || tbl.rows.length || 2;
+        const cols = g['columns'] || tbl.rows[0]?.cells.length || 2;
+        while (tbl.rows.length < rows) {
           const tr = tbl.insertRow();
           for (let j = 0; j < cols; j++) {
             const td = tr.insertCell();
-            td.textContent = g['cells']?.[i]?.[j] || 'Cell';
+            td.textContent = 'Cell';
           }
         }
-        root.append(tbl);
+        for (let i = 0; i < tbl.rows.length; i++) {
+          while (tbl.rows[i].cells.length < cols) {
+            const td = tbl.rows[i].insertCell();
+            td.textContent = 'Cell';
+          }
+        }
+        if (g['cells']) {
+          for (let i = 0; i < g['cells'].length; i++) {
+            for (let j = 0; j < g['cells'][i].length; j++) {
+              if (tbl.rows[i]?.cells[j]) {
+                tbl.rows[i].cells[j].textContent = g['cells'][i][j];
+              }
+            }
+          }
+        }
+        if (g['cellColors']) {
+          for (const cc of g['cellColors']) {
+            const cell = tbl.rows[cc.row]?.cells[cc.col];
+            if (cell) {
+              cell.style.backgroundColor = COLORS[cc.color] || cc.color;
+            }
+          }
+        }
         break;
       }
 
@@ -535,6 +611,22 @@ export class WordDocumentService {
       case 'action':
         this.logAction(g['action'], g['text']);
         break;
+
+      case 'chart': {
+        const type = ((g['chartType'] as string) || 'column').toLowerCase() as WordChartType;
+        const title = (g['title'] as string) || (type.charAt(0).toUpperCase() + type.slice(1) + ' Chart');
+        const data = DEFAULT_CHART_DATA;
+        const fig = document.createElement('figure');
+        fig.className = 'doc-chart';
+        fig.setAttribute('data-element', 'chart');
+        fig.setAttribute('data-chart-type', type);
+        fig.setAttribute('data-chart-title', title);
+        fig.setAttribute('data-chart-data', JSON.stringify(data));
+        fig.setAttribute('contenteditable', 'false');
+        fig.innerHTML = renderChartSvg(type, title, data);
+        root.append(fig);
+        break;
+      }
     }
   }
 
