@@ -139,6 +139,10 @@
       (quickSort)="($event === 'asc' ? sortAsc.emit() : sortDesc.emit())"
       (openSortDialog)="openSortDialog.emit()"
       (toggleFilter)="toggleFilter.emit()"
+      (insertRow)="insertRow.emit()"
+      (insertColumn)="insertColumn.emit()"
+      (deleteRow)="deleteRow.emit()"
+      (deleteColumn)="deleteColumn.emit()"
     ></app-home-tab>
 
     <app-insert-tab

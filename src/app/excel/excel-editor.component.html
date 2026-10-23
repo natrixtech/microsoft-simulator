@@ -29,6 +29,10 @@
     (toggleFilter)="onToggleFilter()"
     (openDataValidation)="openDataValidationDialog()"
     (openRemoveDuplicates)="openRemoveDuplicatesDialog()"
+    (insertRow)="onInsertRow()"
+    (insertColumn)="onInsertColumn()"
+    (deleteRow)="onDeleteRow()"
+    (deleteColumn)="onDeleteColumn()"
   ></app-excel-ribbon>
 
   <!-- 3. Formula Bar -->
@@ -62,6 +66,7 @@
 
     <!-- Spreadsheet Grid -->
     <app-excel-grid
+      [style.zoom]="zoomLevel() / 100"
       [isCompleted]="isCompleted()"
       (openFilterDropdown)="onOpenFilterDropdown($event)"
       (openCommentPopup)="onOpenCommentPopup($event)"
@@ -107,12 +112,75 @@
   <footer class="excel-statusbar-strip" [attr.inert]="isFrozen ? '' : null">
     <!-- Sheet tabs -->
     <div class="sheet-tabs-container">
-      <button type="button" class="sheet-nav-btn disabled" disabled title="First Sheet">◀</button>
-      <button type="button" class="sheet-nav-btn disabled" disabled title="Next Sheet">▶</button>
-      <div class="sheet-tab active" data-demo-target="sheet1-tab">
-        <span>Sheet1</span>
+      <button
+        type="button"
+        class="sheet-nav-btn"
+        [class.disabled]="state.sheets().length <= 1"
+        [disabled]="state.sheets().length <= 1"
+        title="First Sheet"
+        (click)="onSelectSheet(state.sheets()[0].id)"
+      >◀</button>
+      <button
+        type="button"
+        class="sheet-nav-btn"
+        [class.disabled]="state.sheets().length <= 1"
+        [disabled]="state.sheets().length <= 1"
+        title="Last Sheet"
+        (click)="onSelectSheet(state.sheets()[state.sheets().length - 1].id)"
+      >▶</button>
+      <div
+        *ngFor="let s of state.sheets(); let i = index; let first = first; let last = last"
+        class="sheet-tab"
+        [class.active]="s.id === state.activeSheetId()"
+        [attr.data-demo-target]="s.id === 'sheet1' ? 'sheet1-tab' : null"
+        (click)="onSelectSheet(s.id)"
+        (contextmenu)="openSheetContextMenu($event, s.id)"
+      >
+        <ng-container *ngIf="editingSheetId() === s.id; else tabDisplay">
+          <input
+            #renameInput
+            type="text"
+            class="sheet-rename-input"
+            [ngModel]="sheetRenameValue()"
+            (ngModelChange)="sheetRenameValue.set($event)"
+            (keydown.enter)="commitRenameSheet()"
+            (keydown.escape)="cancelRenameSheet()"
+            (blur)="commitRenameSheet()"
+            (click)="$event.stopPropagation()"
+            autofocus
+          />
+        </ng-container>
+        <ng-template #tabDisplay>
+          <span
+            class="sheet-tab-name"
+            title="Double-click to rename, right-click for options"
+            (dblclick)="startRenameSheet(s.id, s.name)"
+          >{{ s.name }}</span>
+          <div class="sheet-tab-actions" *ngIf="s.id === state.activeSheetId() && state.sheets().length > 1" (click)="$event.stopPropagation()">
+            <button
+              type="button"
+              class="sheet-move-btn"
+              [disabled]="first"
+              title="Move Sheet Left"
+              (click)="moveSheetLeft(i)"
+            >‹</button>
+            <button
+              type="button"
+              class="sheet-move-btn"
+              [disabled]="last"
+              title="Move Sheet Right"
+              (click)="moveSheetRight(i)"
+            >›</button>
+          </div>
+        </ng-template>
       </div>
-      <button type="button" class="sheet-add-btn disabled" disabled title="New Sheet">+</button>
+      <button
+        type="button"
+        class="sheet-add-btn"
+        title="New Sheet"
+        data-demo-target="add-sheet-btn"
+        (click)="onAddSheet()"
+      >+</button>
     </div>
 
     <!-- Status bar items -->
@@ -126,9 +194,19 @@
       <span class="view-icon" title="Page Layout">📄</span>
       <span class="view-icon" title="Page Break Preview">▦</span>
       <div class="zoom-controls">
-        <button type="button" class="zoom-btn" title="Zoom Out">−</button>
-        <span class="zoom-level">100%</span>
-        <button type="button" class="zoom-btn" title="Zoom In">+</button>
+        <button type="button" class="zoom-btn" title="Zoom Out" (click)="zoomOut()">−</button>
+        <input
+          type="range"
+          min="50"
+          max="200"
+          step="10"
+          [value]="zoomLevel()"
+          (input)="onZoomSliderChange($event)"
+          class="zoom-slider"
+          aria-label="Zoom"
+        />
+        <button type="button" class="zoom-btn" title="Zoom In" (click)="zoomIn()">+</button>
+        <span class="zoom-level">{{ zoomLevel() }}%</span>
       </div>
     </div>
   </footer>
@@ -208,6 +286,49 @@
     (selectFunction)="onInsertNamedFunction($event)"
     (closeDialog)="closeDialog('fnPicker')"
   ></app-function-picker-dialog>
+
+  <!-- Sheet Context Menu Popover -->
+  <div
+    class="context-dropdown-menu fixed-popover sheet-context-menu"
+    *ngIf="showSheetContextMenu()"
+    [style.top.px]="sheetContextMenuPos().top"
+    [style.left.px]="sheetContextMenuPos().left"
+    (click)="$event.stopPropagation()"
+  >
+    <button
+      type="button"
+      class="menu-item"
+      *ngIf="contextMenuSheet"
+      (click)="startRenameSheet(contextMenuSheet!.id, contextMenuSheet!.name)"
+    >
+      <span>Rename</span>
+    </button>
+    <button
+      type="button"
+      class="menu-item"
+      *ngIf="contextMenuSheetIndex > 0"
+      (click)="moveSheetLeft(contextMenuSheetIndex); closeSheetContextMenu()"
+    >
+      <span>Move Left</span>
+    </button>
+    <button
+      type="button"
+      class="menu-item"
+      *ngIf="contextMenuSheetIndex >= 0 && contextMenuSheetIndex < state.sheets().length - 1"
+      (click)="moveSheetRight(contextMenuSheetIndex); closeSheetContextMenu()"
+    >
+      <span>Move Right</span>
+    </button>
+    <div class="menu-divider" *ngIf="state.sheets().length > 1"></div>
+    <button
+      type="button"
+      class="menu-item text-danger"
+      *ngIf="state.sheets().length > 1 && contextMenuSheet"
+      (click)="onDeleteSheet(contextMenuSheet!.id)"
+    >
+      <span>Delete</span>
+    </button>
+  </div>
 
   <!-- Pause Overlay -->
   <div class="pause-overlay" *ngIf="bridge.isPaused()" role="status">

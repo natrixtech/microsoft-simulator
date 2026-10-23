@@ -12,6 +12,7 @@ import {
   PivotTableItem,
   SheetFilter,
   SheetSnapshot,
+  SheetTabInfo,
   SortOrder,
   TextAlign,
 } from '../models/excel.types';
@@ -64,12 +65,24 @@ export class ExcelStateService {
   // Selected chart (for delete / move)
   readonly selectedChartId = signal<string | null>(null);
 
+  // Multiple Sheets
+  readonly sheets = signal<SheetTabInfo[]>([{ id: 'sheet1', name: 'Sheet1' }]);
+  readonly activeSheetId = signal<string>('sheet1');
+  private sheetStore = new Map<string, SheetSnapshot>();
+
   constructor(private formulaEngine: FormulaEngineService) {}
 
   /**
    * Initializes state from startingSheet object.
    */
   initFromStartingSheet(sheet: any): void {
+    this.sheets.set([{ id: 'sheet1', name: 'Sheet1' }]);
+    this.activeSheetId.set('sheet1');
+    this.sheetStore.clear();
+    this.loadSheetData(sheet);
+  }
+
+  loadSheetData(sheet: any): void {
     const newCells = new Map<string, CellData>();
     const newFormats = new Map<string, CellFormat>();
     const newWidths = new Map<string, number>();
@@ -233,7 +246,7 @@ export class ExcelStateService {
 
     const getRangeValues = (rangeStr: string): any[][] => {
       const parsed = parseRange(rangeStr);
-      if (!parsed) return [[]];
+      if (!parsed) return [['#REF!']];
       const result: any[][] = [];
       for (let r = parsed.startRow; r <= parsed.endRow; r++) {
         const rowVals: any[] = [];
@@ -1042,8 +1055,10 @@ export class ExcelStateService {
 
   /**
    * Creates a snapshot of the current sheet state.
+  /**
+   * Captures snapshot of only the active sheet's cells and features.
    */
-  getSnapshot(): SheetSnapshot {
+  captureCurrentSheetOnly(): SheetSnapshot {
     const cellsObj: Record<string, string | number> = {};
     for (const [addr, c] of this.cells().entries()) {
       cellsObj[addr] = c.formula || (typeof c.value === 'number' ? c.value : c.raw);
@@ -1078,25 +1093,578 @@ export class ExcelStateService {
   }
 
   /**
-   * Restores sheet state from snapshot.
+   * Restores only the active sheet's cells and features without changing workbook sheet tabs.
    */
-  restoreSnapshot(snap: SheetSnapshot): void {
-    this.initFromStartingSheet({
+  restoreSheetOnly(snap: SheetSnapshot): void {
+    this.loadSheetData({
       cells: snap.cells,
       formats: snap.formats,
       columnWidths: snap.columnWidths,
     });
 
     const commMap = new Map<string, string>();
-    for (const [addr, txt] of Object.entries(snap.comments)) {
+    for (const [addr, txt] of Object.entries(snap.comments || {})) {
       commMap.set(addr, txt);
     }
     this.comments.set(commMap);
 
-    this.charts.set(snap.charts.map((c) => ({ ...c })));
-    this.pivotTables.set(snap.pivotTables.map((pt) => ({ ...pt, rows: [...pt.rows] })));
+    this.charts.set((snap.charts || []).map((c) => ({ ...c })));
+    this.pivotTables.set((snap.pivotTables || []).map((pt) => ({ ...pt, rows: [...pt.rows] })));
     this.filter.set(snap.filter ? { ...snap.filter, columnFilters: { ...snap.filter.columnFilters } } : null);
-    this.conditionalFormats.set(snap.conditionalFormats.map((r) => ({ ...r })));
-    this.dataValidations.set(snap.dataValidations.map((dv) => ({ ...dv, allowed: [...dv.allowed] })));
+    this.conditionalFormats.set((snap.conditionalFormats || []).map((r) => ({ ...r })));
+    this.dataValidations.set((snap.dataValidations || []).map((dv) => ({ ...dv, allowed: [...dv.allowed] })));
+  }
+
+  /**
+   * Switches to another worksheet tab, preserving each sheet's state.
+   */
+  switchSheet(id: string): void {
+    if (id === this.activeSheetId()) return;
+    this.sheetStore.set(this.activeSheetId(), this.captureCurrentSheetOnly());
+    this.activeSheetId.set(id);
+    const existing = this.sheetStore.get(id);
+    if (existing) {
+      this.restoreSheetOnly(existing);
+    } else {
+      this.restoreSheetOnly({
+        cells: {},
+        formats: {},
+        columnWidths: {},
+        charts: [],
+        comments: {},
+        pivotTables: [],
+        filter: null,
+        conditionalFormats: [],
+        dataValidations: [],
+      });
+    }
+  }
+
+  /**
+   * Adds a new worksheet tab.
+   */
+  addSheet(): string {
+    let nextNum = this.sheets().length + 1;
+    let nextName = `Sheet${nextNum}`;
+    while (this.sheets().some((s) => s.name.toLowerCase() === nextName.toLowerCase())) {
+      nextNum++;
+      nextName = `Sheet${nextNum}`;
+    }
+    const newId = `sheet_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const newSheet: SheetTabInfo = { id: newId, name: nextName };
+    this.sheets.set([...this.sheets(), newSheet]);
+    this.switchSheet(newId);
+    return newId;
+  }
+
+  /**
+   * Renames a worksheet tab.
+   */
+  renameSheet(id: string, newName: string): boolean {
+    const clean = newName.trim();
+    if (!clean) return false;
+    const exists = this.sheets().some((s) => s.id !== id && s.name.toLowerCase() === clean.toLowerCase());
+    if (exists) return false;
+    this.sheets.set(
+      this.sheets().map((s) => (s.id === id ? { ...s, name: clean } : s))
+    );
+    return true;
+  }
+
+  /**
+   * Moves/reorders a worksheet tab from one index to another.
+   */
+  moveSheet(fromIndex: number, toIndex: number): void {
+    if (fromIndex < 0 || fromIndex >= this.sheets().length) return;
+    if (toIndex < 0 || toIndex >= this.sheets().length) return;
+    if (fromIndex === toIndex) return;
+    const arr = [...this.sheets()];
+    const [moved] = arr.splice(fromIndex, 1);
+    arr.splice(toIndex, 0, moved);
+    this.sheets.set(arr);
+  }
+
+  /**
+   * Deletes a worksheet tab if more than 1 sheet exists.
+   */
+  deleteSheet(id: string): boolean {
+    if (this.sheets().length <= 1) return false;
+    const curSheets = this.sheets();
+    const idx = curSheets.findIndex((s) => s.id === id);
+    if (idx === -1) return false;
+
+    const remaining = curSheets.filter((s) => s.id !== id);
+    this.sheetStore.delete(id);
+    this.sheets.set(remaining);
+
+    if (this.activeSheetId() === id) {
+      const nextActiveIdx = Math.min(idx, remaining.length - 1);
+      this.switchSheet(remaining[nextActiveIdx].id);
+    }
+    return true;
+  }
+
+  /**
+   * Structurally inserts a row at rowIdx (0-indexed). Defaults to active cell row.
+   */
+  insertRow(rowIdx?: number): void {
+    const targetRow = rowIdx !== undefined ? rowIdx : (parseAddress(this.activeCell())?.row ?? 0);
+    if (targetRow < 0 || targetRow >= this.maxRows) return;
+
+    const oldCells = this.cells();
+    const oldFormats = this.cellFormats();
+    const oldComments = this.comments();
+
+    const newCells = new Map<string, CellData>();
+    const newFormats = new Map<string, CellFormat>();
+    const newComments = new Map<string, string>();
+
+    for (const [addr, cell] of oldCells.entries()) {
+      const p = parseAddress(addr);
+      if (!p) continue;
+      if (p.row < targetRow) {
+        newCells.set(addr, { ...cell });
+      } else if (p.row + 1 < this.maxRows) {
+        const newAddr = formatAddress({ row: p.row + 1, col: p.col });
+        newCells.set(newAddr, { ...cell });
+      }
+    }
+
+    for (const [addr, fmt] of oldFormats.entries()) {
+      const p = parseAddress(addr);
+      if (!p) continue;
+      if (p.row < targetRow) {
+        newFormats.set(addr, { ...fmt, border: fmt.border ? { ...fmt.border } : undefined });
+      } else if (p.row + 1 < this.maxRows) {
+        const newAddr = formatAddress({ row: p.row + 1, col: p.col });
+        newFormats.set(newAddr, { ...fmt, border: fmt.border ? { ...fmt.border } : undefined });
+      }
+    }
+
+    for (const [addr, comm] of oldComments.entries()) {
+      const p = parseAddress(addr);
+      if (!p) continue;
+      if (p.row < targetRow) {
+        newComments.set(addr, comm);
+      } else if (p.row + 1 < this.maxRows) {
+        const newAddr = formatAddress({ row: p.row + 1, col: p.col });
+        newComments.set(newAddr, comm);
+      }
+    }
+
+    for (const [addr, cell] of newCells.entries()) {
+      if (cell.formula) {
+        cell.formula = this.formulaEngine.updateFormulaOnRowColChange(cell.formula, 'insertRow', targetRow);
+        cell.raw = cell.formula;
+      }
+    }
+
+    this.cells.set(newCells);
+    this.cellFormats.set(newFormats);
+    this.comments.set(newComments);
+
+    const newCond = this.conditionalFormats().map((cf) => ({
+      ...cf,
+      range: this.formulaEngine.updateRangeOnRowColChange(cf.range, 'insertRow', targetRow),
+    }));
+    this.conditionalFormats.set(newCond);
+
+    const newDv = this.dataValidations().map((dv) => ({
+      ...dv,
+      range: this.formulaEngine.updateRangeOnRowColChange(dv.range, 'insertRow', targetRow),
+    }));
+    this.dataValidations.set(newDv);
+
+    const newCharts = this.charts().map((c) => ({
+      ...c,
+      range: this.formulaEngine.updateRangeOnRowColChange(c.range, 'insertRow', targetRow),
+    }));
+    this.charts.set(newCharts);
+
+    const newPivots = this.pivotTables().map((pt) => ({
+      ...pt,
+      range: this.formulaEngine.updateRangeOnRowColChange(pt.range, 'insertRow', targetRow),
+    }));
+    this.pivotTables.set(newPivots);
+
+    const active = parseAddress(this.activeCell());
+    if (active && active.row >= targetRow) {
+      this.activeCell.set(formatAddress({ row: Math.min(this.maxRows - 1, active.row + 1), col: active.col }));
+    }
+    const newSelRange = this.formulaEngine.updateRangeOnRowColChange(this.selectedRange(), 'insertRow', targetRow);
+    if (newSelRange && newSelRange !== '#REF!') {
+      this.selectedRange.set(newSelRange);
+    }
+
+    this.recalculateAll();
+  }
+
+  /**
+   * Structurally deletes a row at rowIdx (0-indexed). Defaults to active cell row.
+   */
+  deleteRow(rowIdx?: number): void {
+    const targetRow = rowIdx !== undefined ? rowIdx : (parseAddress(this.activeCell())?.row ?? 0);
+    if (targetRow < 0 || targetRow >= this.maxRows) return;
+
+    const oldCells = this.cells();
+    const oldFormats = this.cellFormats();
+    const oldComments = this.comments();
+
+    const newCells = new Map<string, CellData>();
+    const newFormats = new Map<string, CellFormat>();
+    const newComments = new Map<string, string>();
+
+    for (const [addr, cell] of oldCells.entries()) {
+      const p = parseAddress(addr);
+      if (!p) continue;
+      if (p.row < targetRow) {
+        newCells.set(addr, { ...cell });
+      } else if (p.row > targetRow) {
+        const newAddr = formatAddress({ row: p.row - 1, col: p.col });
+        newCells.set(newAddr, { ...cell });
+      }
+    }
+
+    for (const [addr, fmt] of oldFormats.entries()) {
+      const p = parseAddress(addr);
+      if (!p) continue;
+      if (p.row < targetRow) {
+        newFormats.set(addr, { ...fmt, border: fmt.border ? { ...fmt.border } : undefined });
+      } else if (p.row > targetRow) {
+        const newAddr = formatAddress({ row: p.row - 1, col: p.col });
+        newFormats.set(newAddr, { ...fmt, border: fmt.border ? { ...fmt.border } : undefined });
+      }
+    }
+
+    for (const [addr, comm] of oldComments.entries()) {
+      const p = parseAddress(addr);
+      if (!p) continue;
+      if (p.row < targetRow) {
+        newComments.set(addr, comm);
+      } else if (p.row > targetRow) {
+        const newAddr = formatAddress({ row: p.row - 1, col: p.col });
+        newComments.set(newAddr, comm);
+      }
+    }
+
+    for (const [addr, cell] of newCells.entries()) {
+      if (cell.formula) {
+        cell.formula = this.formulaEngine.updateFormulaOnRowColChange(cell.formula, 'deleteRow', targetRow);
+        cell.raw = cell.formula;
+      }
+    }
+
+    this.cells.set(newCells);
+    this.cellFormats.set(newFormats);
+    this.comments.set(newComments);
+
+    const newCond = this.conditionalFormats()
+      .map((cf) => ({
+        ...cf,
+        range: this.formulaEngine.updateRangeOnRowColChange(cf.range, 'deleteRow', targetRow),
+      }))
+      .filter((cf) => cf.range && cf.range !== '#REF!');
+    this.conditionalFormats.set(newCond);
+
+    const newDv = this.dataValidations()
+      .map((dv) => ({
+        ...dv,
+        range: this.formulaEngine.updateRangeOnRowColChange(dv.range, 'deleteRow', targetRow),
+      }))
+      .filter((dv) => dv.range && dv.range !== '#REF!');
+    this.dataValidations.set(newDv);
+
+    const newCharts = this.charts().map((c) => ({
+      ...c,
+      range: this.formulaEngine.updateRangeOnRowColChange(c.range, 'deleteRow', targetRow),
+    }));
+    this.charts.set(newCharts);
+
+    const newPivots = this.pivotTables().map((pt) => ({
+      ...pt,
+      range: this.formulaEngine.updateRangeOnRowColChange(pt.range, 'deleteRow', targetRow),
+    }));
+    this.pivotTables.set(newPivots);
+
+    const active = parseAddress(this.activeCell());
+    if (active) {
+      const nextRow = active.row > targetRow ? active.row - 1 : Math.min(active.row, this.maxRows - 1);
+      this.activeCell.set(formatAddress({ row: nextRow, col: active.col }));
+    }
+    const newSelRange = this.formulaEngine.updateRangeOnRowColChange(this.selectedRange(), 'deleteRow', targetRow);
+    if (newSelRange && newSelRange !== '#REF!') {
+      this.selectedRange.set(newSelRange);
+    } else {
+      this.selectedRange.set(this.activeCell());
+    }
+
+    this.recalculateAll();
+  }
+
+  /**
+   * Structurally inserts a column at colIdx (0-indexed). Defaults to active cell column.
+   */
+  insertColumn(colIdx?: number): void {
+    const targetCol = colIdx !== undefined ? colIdx : (parseAddress(this.activeCell())?.col ?? 0);
+    if (targetCol < 0 || targetCol >= this.maxCols) return;
+
+    const oldCells = this.cells();
+    const oldFormats = this.cellFormats();
+    const oldComments = this.comments();
+    const oldWidths = this.columnWidths();
+
+    const newCells = new Map<string, CellData>();
+    const newFormats = new Map<string, CellFormat>();
+    const newComments = new Map<string, string>();
+    const newWidths = new Map<string, number>();
+
+    for (let c = 0; c < this.maxCols; c++) {
+      const colLetter = indexToColLetter(c);
+      const w = oldWidths.get(colLetter);
+      if (w !== undefined) {
+        if (c < targetCol) {
+          newWidths.set(colLetter, w);
+        } else if (c + 1 < this.maxCols) {
+          newWidths.set(indexToColLetter(c + 1), w);
+        }
+      }
+    }
+    this.columnWidths.set(newWidths);
+
+    for (const [addr, cell] of oldCells.entries()) {
+      const p = parseAddress(addr);
+      if (!p) continue;
+      if (p.col < targetCol) {
+        newCells.set(addr, { ...cell });
+      } else if (p.col + 1 < this.maxCols) {
+        const newAddr = formatAddress({ row: p.row, col: p.col + 1 });
+        newCells.set(newAddr, { ...cell });
+      }
+    }
+
+    for (const [addr, fmt] of oldFormats.entries()) {
+      const p = parseAddress(addr);
+      if (!p) continue;
+      if (p.col < targetCol) {
+        newFormats.set(addr, { ...fmt, border: fmt.border ? { ...fmt.border } : undefined });
+      } else if (p.col + 1 < this.maxCols) {
+        const newAddr = formatAddress({ row: p.row, col: p.col + 1 });
+        newFormats.set(newAddr, { ...fmt, border: fmt.border ? { ...fmt.border } : undefined });
+      }
+    }
+
+    for (const [addr, comm] of oldComments.entries()) {
+      const p = parseAddress(addr);
+      if (!p) continue;
+      if (p.col < targetCol) {
+        newComments.set(addr, comm);
+      } else if (p.col + 1 < this.maxCols) {
+        const newAddr = formatAddress({ row: p.row, col: p.col + 1 });
+        newComments.set(newAddr, comm);
+      }
+    }
+
+    for (const [addr, cell] of newCells.entries()) {
+      if (cell.formula) {
+        cell.formula = this.formulaEngine.updateFormulaOnRowColChange(cell.formula, 'insertCol', targetCol);
+        cell.raw = cell.formula;
+      }
+    }
+
+    this.cells.set(newCells);
+    this.cellFormats.set(newFormats);
+    this.comments.set(newComments);
+
+    const newCond = this.conditionalFormats().map((cf) => ({
+      ...cf,
+      range: this.formulaEngine.updateRangeOnRowColChange(cf.range, 'insertCol', targetCol),
+    }));
+    this.conditionalFormats.set(newCond);
+
+    const newDv = this.dataValidations().map((dv) => ({
+      ...dv,
+      range: this.formulaEngine.updateRangeOnRowColChange(dv.range, 'insertCol', targetCol),
+    }));
+    this.dataValidations.set(newDv);
+
+    const newCharts = this.charts().map((c) => ({
+      ...c,
+      range: this.formulaEngine.updateRangeOnRowColChange(c.range, 'insertCol', targetCol),
+    }));
+    this.charts.set(newCharts);
+
+    const newPivots = this.pivotTables().map((pt) => ({
+      ...pt,
+      range: this.formulaEngine.updateRangeOnRowColChange(pt.range, 'insertCol', targetCol),
+    }));
+    this.pivotTables.set(newPivots);
+
+    const active = parseAddress(this.activeCell());
+    if (active && active.col >= targetCol) {
+      this.activeCell.set(formatAddress({ row: active.row, col: Math.min(this.maxCols - 1, active.col + 1) }));
+    }
+    const newSelRange = this.formulaEngine.updateRangeOnRowColChange(this.selectedRange(), 'insertCol', targetCol);
+    if (newSelRange && newSelRange !== '#REF!') {
+      this.selectedRange.set(newSelRange);
+    }
+
+    this.recalculateAll();
+  }
+
+  /**
+   * Structurally deletes a column at colIdx (0-indexed). Defaults to active cell column.
+   */
+  deleteColumn(colIdx?: number): void {
+    const targetCol = colIdx !== undefined ? colIdx : (parseAddress(this.activeCell())?.col ?? 0);
+    if (targetCol < 0 || targetCol >= this.maxCols) return;
+
+    const oldCells = this.cells();
+    const oldFormats = this.cellFormats();
+    const oldComments = this.comments();
+    const oldWidths = this.columnWidths();
+
+    const newCells = new Map<string, CellData>();
+    const newFormats = new Map<string, CellFormat>();
+    const newComments = new Map<string, string>();
+    const newWidths = new Map<string, number>();
+
+    for (let c = 0; c < this.maxCols; c++) {
+      const colLetter = indexToColLetter(c);
+      const w = oldWidths.get(colLetter);
+      if (w !== undefined) {
+        if (c < targetCol) {
+          newWidths.set(colLetter, w);
+        } else if (c > targetCol) {
+          newWidths.set(indexToColLetter(c - 1), w);
+        }
+      }
+    }
+    this.columnWidths.set(newWidths);
+
+    for (const [addr, cell] of oldCells.entries()) {
+      const p = parseAddress(addr);
+      if (!p) continue;
+      if (p.col < targetCol) {
+        newCells.set(addr, { ...cell });
+      } else if (p.col > targetCol) {
+        const newAddr = formatAddress({ row: p.row, col: p.col - 1 });
+        newCells.set(newAddr, { ...cell });
+      }
+    }
+
+    for (const [addr, fmt] of oldFormats.entries()) {
+      const p = parseAddress(addr);
+      if (!p) continue;
+      if (p.col < targetCol) {
+        newFormats.set(addr, { ...fmt, border: fmt.border ? { ...fmt.border } : undefined });
+      } else if (p.col > targetCol) {
+        const newAddr = formatAddress({ row: p.row, col: p.col - 1 });
+        newFormats.set(newAddr, { ...fmt, border: fmt.border ? { ...fmt.border } : undefined });
+      }
+    }
+
+    for (const [addr, comm] of oldComments.entries()) {
+      const p = parseAddress(addr);
+      if (!p) continue;
+      if (p.col < targetCol) {
+        newComments.set(addr, comm);
+      } else if (p.col > targetCol) {
+        const newAddr = formatAddress({ row: p.row, col: p.col - 1 });
+        newComments.set(newAddr, comm);
+      }
+    }
+
+    for (const [addr, cell] of newCells.entries()) {
+      if (cell.formula) {
+        cell.formula = this.formulaEngine.updateFormulaOnRowColChange(cell.formula, 'deleteCol', targetCol);
+        cell.raw = cell.formula;
+      }
+    }
+
+    this.cells.set(newCells);
+    this.cellFormats.set(newFormats);
+    this.comments.set(newComments);
+
+    const newCond = this.conditionalFormats()
+      .map((cf) => ({
+        ...cf,
+        range: this.formulaEngine.updateRangeOnRowColChange(cf.range, 'deleteCol', targetCol),
+      }))
+      .filter((cf) => cf.range && cf.range !== '#REF!');
+    this.conditionalFormats.set(newCond);
+
+    const newDv = this.dataValidations()
+      .map((dv) => ({
+        ...dv,
+        range: this.formulaEngine.updateRangeOnRowColChange(dv.range, 'deleteCol', targetCol),
+      }))
+      .filter((dv) => dv.range && dv.range !== '#REF!');
+    this.dataValidations.set(newDv);
+
+    const newCharts = this.charts().map((c) => ({
+      ...c,
+      range: this.formulaEngine.updateRangeOnRowColChange(c.range, 'deleteCol', targetCol),
+    }));
+    this.charts.set(newCharts);
+
+    const newPivots = this.pivotTables().map((pt) => ({
+      ...pt,
+      range: this.formulaEngine.updateRangeOnRowColChange(pt.range, 'deleteCol', targetCol),
+    }));
+    this.pivotTables.set(newPivots);
+
+    const active = parseAddress(this.activeCell());
+    if (active) {
+      const nextCol = active.col > targetCol ? active.col - 1 : Math.min(active.col, this.maxCols - 1);
+      this.activeCell.set(formatAddress({ row: active.row, col: nextCol }));
+    }
+    const newSelRange = this.formulaEngine.updateRangeOnRowColChange(this.selectedRange(), 'deleteCol', targetCol);
+    if (newSelRange && newSelRange !== '#REF!') {
+      this.selectedRange.set(newSelRange);
+    } else {
+      this.selectedRange.set(this.activeCell());
+    }
+
+    this.recalculateAll();
+  }
+
+  /**
+   * Captures complete snapshot of current sheet state and workbook sheets for undo/redo.
+   */
+  getSnapshot(): SheetSnapshot {
+    const currentSheetSnap = this.captureCurrentSheetOnly();
+
+    // Store current in sheetStore
+    this.sheetStore.set(this.activeSheetId(), currentSheetSnap);
+
+    const storeDataObj: Record<string, SheetSnapshot> = {};
+    for (const [sId, sSnap] of this.sheetStore.entries()) {
+      storeDataObj[sId] = sSnap;
+    }
+
+    return {
+      ...currentSheetSnap,
+      sheets: this.sheets().map((s) => ({ ...s })),
+      activeSheetId: this.activeSheetId(),
+      sheetStoreData: storeDataObj,
+    };
+  }
+
+  /**
+   * Restores sheet state from snapshot.
+   */
+  restoreSnapshot(snap: SheetSnapshot): void {
+    if (snap.sheets && snap.sheets.length > 0) {
+      this.sheets.set(snap.sheets.map((s) => ({ ...s })));
+      this.activeSheetId.set(snap.activeSheetId || snap.sheets[0].id);
+      if (snap.sheetStoreData) {
+        this.sheetStore.clear();
+        for (const [sId, sData] of Object.entries(snap.sheetStoreData)) {
+          this.sheetStore.set(sId, sData);
+        }
+      }
+    }
+
+    this.restoreSheetOnly(snap);
   }
 }

@@ -93,8 +93,14 @@
     <div class="group-controls font-controls-box">
       <!-- Row 1: Font Comboboxes & Size Scaling -->
       <div class="control-row">
-        <select class="ribbon-select font-family-select" disabled title="Font" tabindex="-1">
-          <option>Calibri</option>
+        <select
+          class="ribbon-select font-family-select"
+          [ngModel]="fontFamily"
+          (ngModelChange)="setFontFamily($event)"
+          title="Font"
+          data-demo-target="font-family-select"
+        >
+          <option *ngFor="let f of fontFamilies" [value]="f">{{ f }}</option>
         </select>
 
         <select
@@ -415,11 +421,23 @@
   <!-- 6. Cells -->
   <div class="ribbon-group group-cells">
     <div class="group-controls">
-      <button type="button" class="ribbon-btn btn-medium disabled" disabled title="Insert Cells" tabindex="-1">
+      <button
+        type="button"
+        class="ribbon-btn btn-medium"
+        title="Insert Cells, Rows, or Columns"
+        data-demo-target="insert-cells-btn"
+        (click)="toggleInsertMenu($event)"
+      >
         <app-excel-icon name="insertCells" [size]="28"></app-excel-icon>
         <span class="btn-text-sub">Insert <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon></span>
       </button>
-      <button type="button" class="ribbon-btn btn-medium disabled" disabled title="Delete Cells" tabindex="-1">
+      <button
+        type="button"
+        class="ribbon-btn btn-medium"
+        title="Delete Cells, Rows, or Columns"
+        data-demo-target="delete-cells-btn"
+        (click)="toggleDeleteMenu($event)"
+      >
         <app-excel-icon name="deleteCells" [size]="28"></app-excel-icon>
         <span class="btn-text-sub">Delete <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon></span>
       </button>
@@ -665,6 +683,40 @@
   <div class="menu-divider"></div>
   <button type="button" class="menu-item" (click)="onSelectMoreFunctions()" data-demo-target="autosum-more">
     <span>More Functions…</span>
+  </button>
+</div>
+
+<!-- Insert Menu Popover -->
+<div
+  class="context-dropdown-menu fixed-popover"
+  *ngIf="showInsertMenu()"
+  [style.top.px]="insertMenuPos().top"
+  [style.left.px]="insertMenuPos().left"
+>
+  <button type="button" class="menu-item" (click)="onInsertRowClick()" data-demo-target="insert-sheet-rows">
+    <app-excel-icon name="insertCells" [size]="16"></app-excel-icon>
+    <span>Insert Sheet Rows</span>
+  </button>
+  <button type="button" class="menu-item" (click)="onInsertColClick()" data-demo-target="insert-sheet-columns">
+    <app-excel-icon name="insertCells" [size]="16"></app-excel-icon>
+    <span>Insert Sheet Columns</span>
+  </button>
+</div>
+
+<!-- Delete Menu Popover -->
+<div
+  class="context-dropdown-menu fixed-popover"
+  *ngIf="showDeleteMenu()"
+  [style.top.px]="deleteMenuPos().top"
+  [style.left.px]="deleteMenuPos().left"
+>
+  <button type="button" class="menu-item" (click)="onDeleteRowClick()" data-demo-target="delete-sheet-rows">
+    <app-excel-icon name="deleteCells" [size]="16"></app-excel-icon>
+    <span>Delete Sheet Rows</span>
+  </button>
+  <button type="button" class="menu-item" (click)="onDeleteColClick()" data-demo-target="delete-sheet-columns">
+    <app-excel-icon name="deleteCells" [size]="16"></app-excel-icon>
+    <span>Delete Sheet Columns</span>
   </button>
 </div>
 

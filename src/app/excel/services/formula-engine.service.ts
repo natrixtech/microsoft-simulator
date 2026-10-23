@@ -13,7 +13,8 @@ export interface Token {
     | 'COMMA'
     | 'LPAREN'
     | 'RPAREN'
-    | 'PERCENT';
+    | 'PERCENT'
+    | 'ERROR';
   value: string;
 }
 
@@ -290,17 +291,19 @@ export class FormulaEngineService {
         continue;
       }
 
-      // Identifiers, Cell references, Ranges ($A$1:$B$5 or A1 or SUM)
-      if (/[A-Za-z_$]/.test(ch)) {
+      // Identifiers, Cell references, Ranges ($A$1:$B$5 or A1 or SUM), Errors (#REF!, etc.)
+      if (ch === '#' || /[A-Za-z_$]/.test(ch)) {
         let ident = '';
-        while (i < len && /[A-Za-z0-9_$:]/.test(formula[i])) {
+        while (i < len && /[A-Za-z0-9_$:#/?!]/.test(formula[i])) {
           ident += formula[i];
           i++;
         }
 
-        // Check if range or cell
+        // Check if range or error or cell
         if (ident.includes(':')) {
           tokens.push({ type: 'RANGE', value: ident.toUpperCase() });
+        } else if (ident.startsWith('#')) {
+          tokens.push({ type: 'ERROR', value: ident.toUpperCase() });
         } else if (/^\$?[A-Za-z]+\$?[0-9]+$/.test(ident)) {
           tokens.push({ type: 'CELL', value: ident.toUpperCase() });
         } else if (ident.toUpperCase() === 'TRUE' || ident.toUpperCase() === 'FALSE') {
@@ -346,6 +349,118 @@ export class FormulaEngineService {
 
       return (colAbs || '') + indexToColLetter(col) + (rowAbs || '') + (row + 1);
     });
+  }
+
+  /**
+   * Updates cell/range references in formula when rows or columns are inserted or deleted structurally.
+   * Unlike copy-relative shifting, absolute references ($) are also updated structurally to point to
+   * the shifted row/col, and deleted rows/cols become #REF!.
+   */
+  updateFormulaOnRowColChange(
+    formula: string,
+    type: 'insertRow' | 'deleteRow' | 'insertCol' | 'deleteCol',
+    index: number
+  ): string {
+    if (!formula.startsWith('=')) return formula;
+
+    // 1. Process ranges first: e.g. A1:B5, $A$1:$B$5
+    const rangeRegex = /(?<![A-Za-z0-9_])((\$?)([A-Za-z]+)(\$?)([1-9]\d*))\s*:\s*((\$?)([A-Za-z]+)(\$?)([1-9]\d*))(?![A-Za-z0-9_])/g;
+    let res = formula.replace(
+      rangeRegex,
+      (match, p1, colAbs1, colStr1, rowAbs1, rowStr1, p2, colAbs2, colStr2, rowAbs2, rowStr2) => {
+        const c1 = colLetterToIndex(colStr1);
+        const r1 = parseInt(rowStr1, 10) - 1;
+        const c2 = colLetterToIndex(colStr2);
+        const r2 = parseInt(rowStr2, 10) - 1;
+
+        const startRow = Math.min(r1, r2);
+        const endRow = Math.max(r1, r2);
+        const startCol = Math.min(c1, c2);
+        const endCol = Math.max(c1, c2);
+
+        let newR1 = r1;
+        let newR2 = r2;
+        let newC1 = c1;
+        let newC2 = c2;
+
+        if (type === 'insertRow') {
+          if (index <= startRow) {
+            newR1++;
+            newR2++;
+          } else if (index <= endRow + 1) {
+            if (r1 >= r2) newR1++;
+            else newR2++;
+          }
+        } else if (type === 'deleteRow') {
+          if (index < startRow) {
+            newR1--;
+            newR2--;
+          } else if (index >= startRow && index <= endRow) {
+            if (startRow === endRow) {
+              return '#REF!';
+            }
+            if (r1 >= r2) newR1--;
+            else newR2--;
+          }
+        } else if (type === 'insertCol') {
+          if (index <= startCol) {
+            newC1++;
+            newC2++;
+          } else if (index <= endCol + 1) {
+            if (c1 >= c2) newC1++;
+            else newC2++;
+          }
+        } else if (type === 'deleteCol') {
+          if (index < startCol) {
+            newC1--;
+            newC2--;
+          } else if (index >= startCol && index <= endCol) {
+            if (startCol === endCol) {
+              return '#REF!';
+            }
+            if (c1 >= c2) newC1--;
+            else newC2--;
+          }
+        }
+
+        const part1 = (colAbs1 || '') + indexToColLetter(newC1) + (rowAbs1 || '') + (newR1 + 1);
+        const part2 = (colAbs2 || '') + indexToColLetter(newC2) + (rowAbs2 || '') + (newR2 + 1);
+        return `${part1}:${part2}`;
+      }
+    );
+
+    // 2. Process single cell references (not part of range)
+    const singleCellRegex = /(?<![A-Za-z0-9_:])(\$?)([A-Za-z]+)(\$?)([1-9]\d*)(?![A-Za-z0-9_:(]|(?:\s*:))/g;
+    res = res.replace(singleCellRegex, (match, colAbs, colStr, rowAbs, rowStr) => {
+      let col = colLetterToIndex(colStr);
+      let row = parseInt(rowStr, 10) - 1;
+
+      if (type === 'insertRow') {
+        if (row >= index) row++;
+      } else if (type === 'deleteRow') {
+        if (row === index) return '#REF!';
+        if (row > index) row--;
+      } else if (type === 'insertCol') {
+        if (col >= index) col++;
+      } else if (type === 'deleteCol') {
+        if (col === index) return '#REF!';
+        if (col > index) col--;
+      }
+
+      return (colAbs || '') + indexToColLetter(col) + (rowAbs || '') + (row + 1);
+    });
+
+    return res;
+  }
+
+  updateRangeOnRowColChange(
+    rangeStr: string,
+    type: 'insertRow' | 'deleteRow' | 'insertCol' | 'deleteCol',
+    index: number
+  ): string {
+    const dummyFormula = `=${rangeStr}`;
+    const updated = this.updateFormulaOnRowColChange(dummyFormula, type, index);
+    return updated.startsWith('=') ? updated.substring(1) : updated;
   }
 
   /**
@@ -762,10 +877,19 @@ class FormulaParser {
       return cur.value === 'TRUE';
     }
 
+    // Error Literal (e.g. #REF!, #DIV/0!, #NAME?, #VALUE!, #N/A)
+    if (cur.type === 'ERROR') {
+      this.consume();
+      throw new Error(cur.value);
+    }
+
     // Cell Reference (e.g. A1, $B$5)
     if (cur.type === 'CELL') {
       this.consume();
       const val = this.getCellValue(cur.value);
+      if (typeof val === 'string' && ['#REF!', '#DIV/0!', '#NAME?', '#VALUE!', '#N/A'].includes(val)) {
+        throw new Error(val);
+      }
       if (typeof val === 'number') return val;
       if (val === undefined || val === null || val === '') return 0;
       if (!isNaN(Number(val))) return Number(val);
@@ -776,7 +900,11 @@ class FormulaParser {
     if (cur.type === 'RANGE') {
       this.consume();
       const vals = this.getRangeValues(cur.value);
-      return vals[0]?.[0] ?? 0;
+      const topVal = vals[0]?.[0] ?? 0;
+      if (typeof topVal === 'string' && ['#REF!', '#DIV/0!', '#NAME?', '#VALUE!', '#N/A'].includes(topVal)) {
+        throw new Error(topVal);
+      }
+      return topVal;
     }
 
     // Function Call (e.g. SUM, AVERAGE, IF, etc.)
@@ -817,6 +945,9 @@ class FormulaParser {
       if (arg && arg.isRange) {
         for (const row of arg.values as any[][]) {
           for (const cell of row) {
+            if (typeof cell === 'string' && ['#REF!', '#DIV/0!', '#NAME?', '#VALUE!', '#N/A'].includes(cell)) {
+              throw new Error(cell);
+            }
             if (typeof cell === 'number') {
               nums.push(cell);
             } else if (cell !== null && cell !== '' && !isNaN(Number(cell))) {
@@ -826,6 +957,8 @@ class FormulaParser {
         }
       } else if (Array.isArray(arg)) {
         nums.push(...this.flattenNumbers(arg));
+      } else if (typeof arg === 'string' && ['#REF!', '#DIV/0!', '#NAME?', '#VALUE!', '#N/A'].includes(arg)) {
+        throw new Error(arg);
       } else if (typeof arg === 'number') {
         nums.push(arg);
       } else if (arg !== null && arg !== '' && !isNaN(Number(arg))) {

@@ -5,6 +5,7 @@ import {
   Component,
   ElementRef,
   EventEmitter,
+  HostListener,
   Input,
   OnDestroy,
   OnInit,
@@ -21,6 +22,16 @@ export interface DemoStep {
   label: string;
   state: 'pending' | 'active' | 'done';
 }
+
+// ============================================================================
+// Show Me How Timing Constants (Word & Excel replica demo playback)
+// ============================================================================
+export const CURSOR_MOVE_DURATION_MS = 1100;     // ~2x slower glide to target (was ~550ms)
+export const PRE_CLICK_PAUSE_MS = 500;           // 400–600 ms pause before clicking
+export const CLICK_EFFECT_DURATION_MS = 400;     // Visible click pulse effect duration
+export const POST_OPEN_PAUSE_MS = 600;           // Pause after menu / dropdown / dialog opens
+export const STEP_TRANSITION_PAUSE_MS = 500;     // Pause between actions / steps
+export const REPLICA_BASE_WIDTH = 1160;          // Base ribbon width to fit all ribbon groups (no overflow/scroll)
 
 @Component({
   selector: 'lib-show-me-how',
@@ -111,7 +122,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   // Coherent scaling state
-  readonly baseWidth = 680;
+  readonly baseWidth = REPLICA_BASE_WIDTH;
   readonly scaleTransform = signal<string>('none');
   readonly scalerWidth = signal<string>('100%');
   readonly scalerHeight = signal<string>('100%');
@@ -410,6 +421,11 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.updateScaling();
+  }
+
   updateScaling(): void {
     if (!this.replicaAreaRef) return;
     const el = this.replicaAreaRef.nativeElement;
@@ -551,7 +567,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
     let target = (host.querySelector(`[data-demo-target="${targetName}"]`) ||
       host.querySelector(`[data-demo-target-alt="${targetName}"]`)) as HTMLElement;
     if (!target) {
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < 10; i++) {
         await this.delay(60);
         if (this.isCancelled) return false;
         target = (host.querySelector(`[data-demo-target="${targetName}"]`) ||
@@ -561,13 +577,25 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     if (!target) return false;
 
+    if (typeof target.scrollIntoView === 'function') {
+      try {
+        target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      } catch {}
+    }
+
     this.positionCursorOver(target.getBoundingClientRect());
 
-    await this.delay(300);
+    // Glide smoothly to target (~2x slower)
+    await this.delay(CURSOR_MOVE_DURATION_MS);
     if (this.isCancelled) return false;
 
+    // Short pause (400-600ms) before clicking
+    await this.delay(PRE_CLICK_PAUSE_MS);
+    if (this.isCancelled) return false;
+
+    // Visible click effect
     this.isClicking.set(true);
-    await this.delay(100);
+    await this.delay(CLICK_EFFECT_DURATION_MS);
     this.isClicking.set(false);
     return true;
   }
@@ -579,11 +607,17 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
     const targetRect = rects.length > 0 ? rects[0] : range.getBoundingClientRect();
     this.positionCursorOver(targetRect);
 
-    await this.delay(300);
+    // Glide smoothly to target range (~2x slower)
+    await this.delay(CURSOR_MOVE_DURATION_MS);
     if (this.isCancelled) return false;
 
+    // Short pause (400-600ms) before clicking
+    await this.delay(PRE_CLICK_PAUSE_MS);
+    if (this.isCancelled) return false;
+
+    // Visible click effect
     this.isClicking.set(true);
-    await this.delay(100);
+    await this.delay(CLICK_EFFECT_DURATION_MS);
     this.isClicking.set(false);
     return true;
   }
@@ -597,12 +631,13 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
   async play(): Promise<void> {
     await this.delay(350);
     if (this.isCancelled) return;
+    this.updateScaling();
 
     const goalsList = this.goals || [];
     const total = goalsList.length;
 
     if (total === 0) {
-      await this.delay(300);
+      await this.delay(STEP_TRANSITION_PAUSE_MS);
       if (this.isCancelled) return;
       this.showToast.set(true);
       return;
@@ -623,7 +658,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
         allSuccess = false;
         // Do not mark step done if required target or action failed
       }
-      await this.delay(300);
+      await this.delay(STEP_TRANSITION_PAUSE_MS);
     }
 
     if (this.isCancelled) return;
@@ -719,7 +754,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
         await this.moveTo('font');
         this.replicaFontDropdownOpen.set(true);
         this.cdr.markForCheck();
-        await this.delay(250);
+        await this.delay(POST_OPEN_PAUSE_MS);
 
         const fontSlug = 'font-item-' + g.font.toLowerCase().replace(/\s+/g, '-');
         await this.moveTo(fontSlug);
@@ -727,7 +762,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
         selSpan.style.fontFamily = g.font;
         this.replicaFontDropdownOpen.set(false);
         this.cdr.markForCheck();
-        await this.delay(250);
+        await this.delay(STEP_TRANSITION_PAUSE_MS);
       }
 
       // 6. Size
@@ -736,7 +771,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
         await this.moveTo('size');
         this.replicaSizeDropdownOpen.set(true);
         this.cdr.markForCheck();
-        await this.delay(250);
+        await this.delay(POST_OPEN_PAUSE_MS);
 
         const sizeTarget = 'size-item-' + g.size;
         await this.moveTo(sizeTarget);
@@ -744,7 +779,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
         selSpan.style.fontSize = g.size + 'pt';
         this.replicaSizeDropdownOpen.set(false);
         this.cdr.markForCheck();
-        await this.delay(250);
+        await this.delay(STEP_TRANSITION_PAUSE_MS);
       }
 
       // 7. Color (mapping through COLORS palette)
@@ -753,7 +788,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
         await this.moveTo('color');
         this.replicaFontColorOpen.set(true);
         this.cdr.markForCheck();
-        await this.delay(250);
+        await this.delay(POST_OPEN_PAUSE_MS);
 
         const swatchTarget = 'swatch-' + g.color;
         await this.moveTo(swatchTarget);
@@ -762,7 +797,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
         selSpan.style.color = mappedColor;
         this.replicaFontColorOpen.set(false);
         this.cdr.markForCheck();
-        await this.delay(250);
+        await this.delay(STEP_TRANSITION_PAUSE_MS);
       }
 
       // 8. Highlight (mapping through COLORS palette)
@@ -771,7 +806,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
         await this.moveTo('highlight');
         this.replicaHighlightOpen.set(true);
         this.cdr.markForCheck();
-        await this.delay(250);
+        await this.delay(POST_OPEN_PAUSE_MS);
 
         const swatchTarget = 'highlight-swatch-' + g.highlight;
         await this.moveTo(swatchTarget);
@@ -780,7 +815,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
         selSpan.style.backgroundColor = mappedHl;
         this.replicaHighlightOpen.set(false);
         this.cdr.markForCheck();
-        await this.delay(250);
+        await this.delay(STEP_TRANSITION_PAUSE_MS);
       }
 
       // Remove selection highlight while preserving applied formatting
@@ -823,7 +858,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
         await this.moveTo('line-spacing');
         this.replicaLineSpacingOpen.set(true);
         this.cdr.markForCheck();
-        await this.delay(250);
+        await this.delay(POST_OPEN_PAUSE_MS);
 
         const spacingNum = Number(g.lineSpacing);
         const spacingStr = spacingNum % 1 === 0 ? spacingNum.toFixed(1) : String(spacingNum);
@@ -833,7 +868,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
         block.dataset['lineSpacing'] = String(g.lineSpacing);
         this.replicaLineSpacingOpen.set(false);
         this.cdr.markForCheck();
-        await this.delay(250);
+        await this.delay(STEP_TRANSITION_PAUSE_MS);
       }
 
       // Paragraph Style
@@ -924,7 +959,8 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
           this.activeAction.set('replace');
           await this.moveTo('replace');
           this.replicaDialog.set('findReplace');
-          await this.delay(250);
+          this.cdr.markForCheck();
+          await this.delay(POST_OPEN_PAUSE_MS);
 
           // Type wrong word
           this.findWhatInput.set('');
@@ -1066,7 +1102,8 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
       this.activeAction.set('insert-image');
       await this.moveTo('insert-image');
       this.replicaDialog.set('insertImage');
-      await this.delay(250);
+      this.cdr.markForCheck();
+      await this.delay(POST_OPEN_PAUSE_MS);
 
       await this.moveTo('insert-image-ok-btn');
       this.replicaDialog.set(null);
@@ -1096,14 +1133,14 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
         await this.moveTo('menu-layout-orientation');
         this.replicaOrientationOpen.set(true);
         this.cdr.markForCheck();
-        await this.delay(200);
+        await this.delay(POST_OPEN_PAUSE_MS);
 
         const orientTarget = g.orientation === 'portrait' ? 'orient-portrait' : 'orient-landscape';
         await this.moveTo(orientTarget);
         this.replicaOrientation.set(g.orientation);
         this.replicaOrientationOpen.set(false);
         this.cdr.markForCheck();
-        await this.delay(250);
+        await this.delay(STEP_TRANSITION_PAUSE_MS);
       }
 
       if (g.paperSize) {
@@ -1111,7 +1148,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
         await this.moveTo('page-size');
         this.replicaDialog.set('pageSetup');
         this.cdr.markForCheck();
-        await this.delay(250);
+        await this.delay(POST_OPEN_PAUSE_MS);
 
         await this.moveTo('ps-size');
         this.replicaPaperSize.set(g.paperSize);
@@ -1120,7 +1157,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
         await this.moveTo('pagesetup-ok-btn');
         this.replicaDialog.set(null);
         this.cdr.markForCheck();
-        await this.delay(250);
+        await this.delay(STEP_TRANSITION_PAUSE_MS);
       }
 
       if (g.margins) {
@@ -1128,7 +1165,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
         await this.moveTo('page-margins');
         this.replicaDialog.set('pageSetup');
         this.cdr.markForCheck();
-        await this.delay(250);
+        await this.delay(POST_OPEN_PAUSE_MS);
 
         for (const [side, val] of Object.entries(g.margins)) {
           const mTarget = 'ps-margin-' + side;
@@ -1140,14 +1177,15 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
         await this.moveTo('pagesetup-ok-btn');
         this.replicaDialog.set(null);
         this.cdr.markForCheck();
-        await this.delay(250);
+        await this.delay(STEP_TRANSITION_PAUSE_MS);
       }
 
       if (!g.orientation && !g.paperSize && !g.margins) {
         this.activeAction.set('page-margins');
         await this.moveTo('page-margins');
         this.replicaDialog.set('pageSetup');
-        await this.delay(250);
+        this.cdr.markForCheck();
+        await this.delay(POST_OPEN_PAUSE_MS);
         await this.moveTo('pagesetup-ok-btn');
         this.replicaDialog.set(null);
       }
@@ -1205,7 +1243,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
             await this.moveTo('cell-shading');
             this.replicaShadingOpen.set(true);
             this.cdr.markForCheck();
-            await this.delay(250);
+            await this.delay(POST_OPEN_PAUSE_MS);
 
             const colorKey = cc.color;
             await this.moveTo('cell-shading-' + colorKey);
@@ -1214,7 +1252,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
             targetCell.classList.remove('demo-selection-box');
             this.replicaShadingOpen.set(false);
             this.cdr.markForCheck();
-            await this.delay(300);
+            await this.delay(STEP_TRANSITION_PAUSE_MS);
           }
           for (let i = 1; i < g.cellColors.length; i++) {
             const extraCc = g.cellColors[i];
@@ -1245,7 +1283,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
           await this.moveTo('table-insert');
           this.replicaInsertOpen.set(true);
           this.cdr.markForCheck();
-          await this.delay(250);
+          await this.delay(POST_OPEN_PAUSE_MS);
 
           const startRows = (rawDoc.match(/<tr/gi) || []).length || 3;
           const isRows = g.rows && (!g.columns || g.rows > startRows);
@@ -1294,7 +1332,8 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
       this.activeAction.set('insert-table');
       await this.moveTo('insert-table');
       this.replicaDialog.set('insertTable');
-      await this.delay(250);
+      this.cdr.markForCheck();
+      await this.delay(POST_OPEN_PAUSE_MS);
 
       await this.moveTo('insert-table-ok-btn');
       this.replicaDialog.set(null);
@@ -1394,7 +1433,8 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
         this.activeAction.set('tools-variables');
         await this.moveTo('tools-variables');
         this.replicaDialog.set('variables');
-        await this.delay(250);
+        this.cdr.markForCheck();
+        await this.delay(POST_OPEN_PAUSE_MS);
         await this.moveTo('variables-insert-btn');
         this.replicaDialog.set(null);
 
@@ -1462,7 +1502,8 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
         this.activeAction.set('replace');
         await this.moveTo('replace');
         this.replicaDialog.set('findReplace');
-        await this.delay(300);
+        this.cdr.markForCheck();
+        await this.delay(POST_OPEN_PAUSE_MS);
       } else if (act === 'find') {
         this.activeAction.set('find');
         await this.moveTo('find');
@@ -1474,7 +1515,8 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
         this.activeAction.set('page-margins');
         await this.moveTo('page-margins');
         this.replicaDialog.set('pageSetup');
-        await this.delay(300);
+        this.cdr.markForCheck();
+        await this.delay(POST_OPEN_PAUSE_MS);
       } else if (act === 'nextCell') {
         const tbl = docEl.querySelector('table');
         if (!tbl) return false;
@@ -1492,7 +1534,8 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
         this.activeAction.set('tools-variables');
         await this.moveTo('tools-variables');
         this.replicaDialog.set('variables');
-        await this.delay(300);
+        this.cdr.markForCheck();
+        await this.delay(POST_OPEN_PAUSE_MS);
       } else {
         await this.moveTo('doc-canvas');
       }
@@ -1522,13 +1565,13 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
       await this.moveTo('styles-more-btn');
       this.replicaStylesMenuOpen.set(true);
       this.cdr.markForCheck();
-      await this.delay(250);
+      await this.delay(POST_OPEN_PAUSE_MS);
 
       await this.moveTo('style-create');
       this.replicaStylesMenuOpen.set(false);
       this.replicaDialog.set('createStyle');
       this.cdr.markForCheck();
-      await this.delay(250);
+      await this.delay(POST_OPEN_PAUSE_MS);
 
       this.createStyleNameInput.set('');
       await this.moveTo('create-style-name');
@@ -1592,7 +1635,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
       this.replicaChartDialogType.set('column');
       this.replicaChartTitleInput.set('Chart Title');
       this.cdr.markForCheck();
-      await this.delay(250);
+      await this.delay(POST_OPEN_PAUSE_MS);
 
       // 3. Click the type
       if (chartType !== 'column') {

@@ -63,6 +63,10 @@ export class RibbonComponent {
   @Output() readonly openDataValidation = new EventEmitter<void>();
   @Output() readonly openRemoveDuplicates = new EventEmitter<void>();
   @Output() readonly focusGrid = new EventEmitter<void>();
+  @Output() readonly insertRow = new EventEmitter<void>();
+  @Output() readonly insertColumn = new EventEmitter<void>();
+  @Output() readonly deleteRow = new EventEmitter<void>();
+  @Output() readonly deleteColumn = new EventEmitter<void>();
 
   searchQuery: string = '';
   isSearchOpen: boolean = false;
@@ -194,6 +198,34 @@ export class RibbonComponent {
       icon: 'conditionalFormatting',
       keywords: ['conditional formatting', 'highlight cells', 'rules'],
       run: () => this.openConditionalFormat.emit(),
+    },
+    {
+      id: 'insertRows',
+      label: 'Insert Sheet Rows',
+      icon: 'insertCells',
+      keywords: ['insert rows', 'insert sheet rows', 'insert row', 'add row'],
+      run: () => this.insertRow.emit(),
+    },
+    {
+      id: 'insertColumns',
+      label: 'Insert Sheet Columns',
+      icon: 'insertCells',
+      keywords: ['insert columns', 'insert sheet columns', 'insert column', 'add column'],
+      run: () => this.insertColumn.emit(),
+    },
+    {
+      id: 'deleteRows',
+      label: 'Delete Sheet Rows',
+      icon: 'deleteCells',
+      keywords: ['delete rows', 'delete sheet rows', 'delete row', 'remove row'],
+      run: () => this.deleteRow.emit(),
+    },
+    {
+      id: 'deleteColumns',
+      label: 'Delete Sheet Columns',
+      icon: 'deleteCells',
+      keywords: ['delete columns', 'delete sheet columns', 'delete column', 'remove column'],
+      run: () => this.deleteColumn.emit(),
     },
     {
       id: 'autoSum',

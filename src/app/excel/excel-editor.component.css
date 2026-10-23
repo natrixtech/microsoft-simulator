@@ -113,25 +113,41 @@
   background: transparent;
   border: none;
   font-size: 10px;
+  color: var(--text, #323130);
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.sheet-nav-btn.disabled,
+.sheet-nav-btn:disabled {
   color: var(--muted, #8a8886);
   cursor: default;
-  padding: 2px 4px;
+  opacity: 0.5;
 }
 
 .sheet-tab {
   display: flex;
   align-items: center;
-  padding: 4px 12px;
+  gap: 4px;
+  padding: 4px 10px;
   font-size: 11px;
   color: var(--text, #242424);
   position: relative;
   background: var(--surface, #ffffff);
   cursor: pointer;
+  border: 1px solid transparent;
+  border-bottom: none;
+  user-select: none;
+}
+
+.sheet-tab:hover {
+  background: var(--surface-hover, #f3f2f1);
 }
 
 .sheet-tab.active {
   font-weight: 600;
   color: #107c41;
+  background: var(--surface, #ffffff);
 }
 
 .sheet-tab.active::after {
@@ -144,13 +160,98 @@
   background: #107c41;
 }
 
+.sheet-rename-input {
+  border: 1px solid #107c41;
+  outline: none;
+  font-size: 11px;
+  font-family: inherit;
+  padding: 1px 4px;
+  width: 70px;
+  background: var(--surface, #ffffff);
+  color: var(--text, #242424);
+}
+
+.sheet-tab-actions {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 2px;
+}
+
+.sheet-move-btn {
+  background: transparent;
+  border: none;
+  padding: 0 2px;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--muted, #616161);
+}
+
+.sheet-move-btn:hover:not(:disabled) {
+  color: #107c41;
+}
+
+.sheet-move-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
 .sheet-add-btn {
   background: transparent;
   border: none;
-  font-size: 14px;
-  color: var(--muted, #8a8886);
-  cursor: default;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--muted, #616161);
+  cursor: pointer;
   padding: 0 6px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sheet-add-btn:hover {
+  color: #107c41;
+}
+
+.sheet-context-menu {
+  position: fixed;
+  z-index: 10000;
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--line, #d1d1d1);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+  border-radius: 4px;
+  min-width: 130px;
+  padding: 4px 0;
+}
+
+.sheet-context-menu .menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 12px;
+  background: transparent;
+  border: none;
+  font-size: 11px;
+  font-family: inherit;
+  color: var(--text, #242424);
+  cursor: pointer;
+  text-align: left;
+}
+
+.sheet-context-menu .menu-item:hover {
+  background: var(--soft, #f3f2f1);
+}
+
+.sheet-context-menu .menu-item.text-danger {
+  color: #a80000;
+}
+
+.sheet-context-menu .menu-divider {
+  height: 1px;
+  background: var(--line, #e1dfdd);
+  margin: 4px 0;
 }
 
 .statusbar-info {
@@ -187,22 +288,65 @@
 .zoom-controls {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
 .zoom-btn {
   background: transparent;
   border: none;
-  font-size: 12px;
+  font-size: 14px;
+  line-height: 1;
   cursor: pointer;
   color: var(--muted, #616161);
   padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.zoom-btn:hover {
+  color: var(--text, #242424);
+}
+
+.zoom-slider {
+  width: 70px;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--line, #d1d5db);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0 2px;
+}
+
+.zoom-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text, #374151);
+  cursor: pointer;
+}
+
+.zoom-slider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text, #374151);
+  cursor: pointer;
+  border: none;
 }
 
 .zoom-level {
-  font-size: 10px;
-  min-width: 32px;
-  text-align: center;
+  font-size: 11px;
+  min-width: 36px;
+  text-align: right;
+  color: var(--text, #242424);
+  user-select: none;
 }
 
 /* Dark Theme Overrides */
@@ -275,9 +419,86 @@
   color: #c8c6c4;
 }
 
+:host-context([data-theme="dark"]) .sheet-tab,
+:host-context(.dark-theme) .sheet-tab {
+  background: #252423;
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .sheet-tab:hover,
+:host-context(.dark-theme) .sheet-tab:hover {
+  background: #2d2c2c;
+}
+
+:host-context([data-theme="dark"]) .sheet-tab.active,
+:host-context(.dark-theme) .sheet-tab.active {
+  background: #1f1f1f;
+  color: #52b99d;
+}
+
+:host-context([data-theme="dark"]) .sheet-tab.active::after,
+:host-context(.dark-theme) .sheet-tab.active::after {
+  background: #52b99d;
+}
+
+:host-context([data-theme="dark"]) .sheet-rename-input,
+:host-context(.dark-theme) .sheet-rename-input {
+  background: #1f1f1f;
+  color: #ffffff;
+  border-color: #52b99d;
+}
+
+:host-context([data-theme="dark"]) .sheet-move-btn,
+:host-context(.dark-theme) .sheet-move-btn {
+  color: #a19f9d;
+}
+
+:host-context([data-theme="dark"]) .sheet-move-btn:hover:not(:disabled),
+:host-context(.dark-theme) .sheet-move-btn:hover:not(:disabled) {
+  color: #52b99d;
+}
+
+:host-context([data-theme="dark"]) .sheet-context-menu,
+:host-context(.dark-theme) .sheet-context-menu {
+  background: #252423;
+  border-color: #3b3a39;
+}
+
+:host-context([data-theme="dark"]) .sheet-context-menu .menu-item,
+:host-context(.dark-theme) .sheet-context-menu .menu-item {
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .sheet-context-menu .menu-item:hover,
+:host-context(.dark-theme) .sheet-context-menu .menu-item:hover {
+  background: #333230;
+}
+
+:host-context([data-theme="dark"]) .sheet-context-menu .menu-divider,
+:host-context(.dark-theme) .sheet-context-menu .menu-divider {
+  background: #3b3a39;
+}
+
 :host-context([data-theme="dark"]) .view-icon.active,
 :host-context(.dark-theme) .view-icon.active {
   color: #52b99d;
+}
+
+:host-context([data-theme="dark"]) .zoom-slider::-webkit-slider-thumb,
+:host-context(.dark-theme) .zoom-slider::-webkit-slider-thumb,
+:host-context([data-theme="dark"]) .zoom-slider::-moz-range-thumb,
+:host-context(.dark-theme) .zoom-slider::-moz-range-thumb {
+  background: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .zoom-btn:hover,
+:host-context(.dark-theme) .zoom-btn:hover {
+  color: #ffffff;
+}
+
+:host-context([data-theme="dark"]) .zoom-level,
+:host-context(.dark-theme) .zoom-level {
+  color: #f3f2f1;
 }
 
 /* Pause Overlay */

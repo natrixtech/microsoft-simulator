@@ -121,10 +121,16 @@ export class ExcelEvaluatorService {
 
     // Check references if given
     if (goal.references !== undefined) {
-      const expectedRef = String(goal.references).replace(/[\s$]/g, '').toUpperCase();
-      const formulaWithoutDollar = normFormula.replace(/\$/g, '');
-      if (!formulaWithoutDollar.includes(expectedRef)) {
+      const actualRefs = this.extractFormulaReferences(formulaRaw).sort();
+      const expectedRefs = this.normalizeExpectedReferences(goal.references).sort();
+
+      if (actualRefs.length !== expectedRefs.length) {
         return false;
+      }
+      for (let i = 0; i < actualRefs.length; i++) {
+        if (actualRefs[i] !== expectedRefs[i]) {
+          return false;
+        }
       }
     }
 
@@ -138,9 +144,37 @@ export class ExcelEvaluatorService {
     return true;
   }
 
+  private extractFormulaReferences(formula: string): string[] {
+    const cleanFormula = formula.startsWith('=') ? formula.slice(1) : formula;
+    const refRegex = /(?<![A-Za-z0-9_])(\$?[A-Za-z]+\$?[1-9]\d*(?:\s*:\s*\$?[A-Za-z]+\$?[1-9]\d*)?)(?!\s*\()/g;
+    const matches: string[] = [];
+    let m: RegExpExecArray | null;
+    while ((m = refRegex.exec(cleanFormula)) !== null) {
+      matches.push(m[1].replace(/[\s$]/g, '').toUpperCase());
+    }
+    return matches;
+  }
+
+  private normalizeExpectedReferences(refs: any): string[] {
+    if (Array.isArray(refs)) {
+      return refs.flatMap((r) => this.normalizeExpectedReferences(r));
+    }
+    const str = String(refs);
+    const refRegex = /(?<![A-Za-z0-9_])(\$?[A-Za-z]+\$?[1-9]\d*(?:\s*:\s*\$?[A-Za-z]+\$?[1-9]\d*)?)(?!\s*\()/g;
+    const matches: string[] = [];
+    let m: RegExpExecArray | null;
+    while ((m = refRegex.exec(str)) !== null) {
+      matches.push(m[1].replace(/[\s$]/g, '').toUpperCase());
+    }
+    if (matches.length === 0 && str.trim()) {
+      matches.push(str.replace(/[\s$]/g, '').toUpperCase());
+    }
+    return matches;
+  }
+
   // 3. cellFormat
   private evalCellFormat(goal: any): boolean {
-    const rangeStr = goal.range;
+    const rangeStr = goal.range || goal.cell;
     if (!rangeStr) return false;
 
     const parsed = parseRange(rangeStr);
@@ -157,6 +191,10 @@ export class ExcelEvaluatorService {
         if (goal.fontSize !== undefined) {
           const actualSize = fmt.fontSize !== undefined ? fmt.fontSize : 10;
           if (actualSize !== Number(goal.fontSize)) return false;
+        }
+        if (goal.fontFamily !== undefined) {
+          const actualFont = fmt.fontFamily || 'Calibri';
+          if (actualFont.toLowerCase() !== String(goal.fontFamily).toLowerCase()) return false;
         }
 
         if (goal.numberFormat !== undefined) {

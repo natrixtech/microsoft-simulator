@@ -43,6 +43,10 @@ export class HomeTabComponent {
   @Output() readonly quickSort = new EventEmitter<'asc' | 'desc'>();
   @Output() readonly openSortDialog = new EventEmitter<void>();
   @Output() readonly toggleFilter = new EventEmitter<void>();
+  @Output() readonly insertRow = new EventEmitter<void>();
+  @Output() readonly insertColumn = new EventEmitter<void>();
+  @Output() readonly deleteRow = new EventEmitter<void>();
+  @Output() readonly deleteColumn = new EventEmitter<void>();
 
   private state = inject(ExcelStateService);
   private formulaEngine = inject(FormulaEngineService);
@@ -54,15 +58,28 @@ export class HomeTabComponent {
   readonly showSortMenu = signal<boolean>(false);
   readonly showBordersMenu = signal<boolean>(false);
   readonly showAutoSumMenu = signal<boolean>(false);
+  readonly showInsertMenu = signal<boolean>(false);
+  readonly showDeleteMenu = signal<boolean>(false);
 
   readonly fillPickerPos = signal<{ top: number; left: number }>({ top: 0, left: 0 });
   readonly textPickerPos = signal<{ top: number; left: number }>({ top: 0, left: 0 });
   readonly sortMenuPos = signal<{ top: number; left: number }>({ top: 0, left: 0 });
   readonly bordersMenuPos = signal<{ top: number; left: number }>({ top: 0, left: 0 });
   readonly autoSumMenuPos = signal<{ top: number; left: number }>({ top: 0, left: 0 });
+  readonly insertMenuPos = signal<{ top: number; left: number }>({ top: 0, left: 0 });
+  readonly deleteMenuPos = signal<{ top: number; left: number }>({ top: 0, left: 0 });
 
   readonly fontSizes = [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 36];
-  readonly fontFamilies = ['Calibri', 'Arial', 'Segoe UI', 'Times New Roman'];
+  readonly fontFamilies = [
+    'Calibri',
+    'Arial',
+    'Segoe UI',
+    'Times New Roman',
+    'Courier New',
+    'Georgia',
+    'Verdana',
+    'Comic Sans MS',
+  ];
 
   readonly colorPalette = [
     { key: 'black', hex: COLORS['black'] || '#000000' },
@@ -97,6 +114,14 @@ export class HomeTabComponent {
 
   get isUnderline(): boolean {
     return !!this.currentFormat.underline;
+  }
+
+  get fontFamily(): string {
+    return this.currentFormat.fontFamily || 'Calibri';
+  }
+
+  setFontFamily(fontFamily: string): void {
+    this.formatChange.emit({ fontFamily });
   }
 
   get fontSize(): number {
@@ -260,6 +285,54 @@ export class HomeTabComponent {
     this.showFillColorPicker.set(false);
   }
 
+  toggleInsertMenu(event: MouseEvent): void {
+    event.stopPropagation();
+    const el = event.currentTarget as HTMLElement;
+    const rect = el.getBoundingClientRect();
+    this.insertMenuPos.set({ top: rect.bottom + 2, left: rect.left });
+    this.showInsertMenu.update((v) => !v);
+    this.showDeleteMenu.set(false);
+    this.showFillColorPicker.set(false);
+    this.showTextColorPicker.set(false);
+    this.showSortMenu.set(false);
+    this.showBordersMenu.set(false);
+    this.showAutoSumMenu.set(false);
+  }
+
+  toggleDeleteMenu(event: MouseEvent): void {
+    event.stopPropagation();
+    const el = event.currentTarget as HTMLElement;
+    const rect = el.getBoundingClientRect();
+    this.deleteMenuPos.set({ top: rect.bottom + 2, left: rect.left });
+    this.showDeleteMenu.update((v) => !v);
+    this.showInsertMenu.set(false);
+    this.showFillColorPicker.set(false);
+    this.showTextColorPicker.set(false);
+    this.showSortMenu.set(false);
+    this.showBordersMenu.set(false);
+    this.showAutoSumMenu.set(false);
+  }
+
+  onInsertRowClick(): void {
+    this.insertRow.emit();
+    this.showInsertMenu.set(false);
+  }
+
+  onInsertColClick(): void {
+    this.insertColumn.emit();
+    this.showInsertMenu.set(false);
+  }
+
+  onDeleteRowClick(): void {
+    this.deleteRow.emit();
+    this.showDeleteMenu.set(false);
+  }
+
+  onDeleteColClick(): void {
+    this.deleteColumn.emit();
+    this.showDeleteMenu.set(false);
+  }
+
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
@@ -269,6 +342,8 @@ export class HomeTabComponent {
       this.showSortMenu.set(false);
       this.showBordersMenu.set(false);
       this.showAutoSumMenu.set(false);
+      this.showInsertMenu.set(false);
+      this.showDeleteMenu.set(false);
     }
   }
 }

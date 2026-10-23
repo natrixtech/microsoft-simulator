@@ -34,6 +34,7 @@ export interface CellFormat {
   bold?: boolean;
   italic?: boolean;
   underline?: boolean;
+  fontFamily?: string;
   fontSize?: number;
   numberFormat?: NumberFormatType;
   decimals?: number;
@@ -132,7 +133,16 @@ export type ExcelActionType =
   | 'cut'
   | 'paste'
   | 'selectRange'
-  | 'goToCell';
+  | 'goToCell'
+  | 'insertRow'
+  | 'insertColumn'
+  | 'deleteRow'
+  | 'deleteColumn'
+  | 'addSheet'
+  | 'switchSheet'
+  | 'renameSheet'
+  | 'moveSheet'
+  | 'deleteSheet';
 
 export interface LoggedAction {
   action: ExcelActionType;
@@ -150,6 +160,23 @@ export interface SheetSnapshot {
   filter: SheetFilter | null;
   conditionalFormats: ConditionalFormatRule[];
   dataValidations: DataValidationRule[];
+  sheets?: SheetTabInfo[];
+  activeSheetId?: string;
+  sheetStoreData?: Record<string, SheetSnapshot>;
+}
+
+export interface SheetTabInfo {
+  id: string;
+  name: string;
+}
+
+export interface WorkbookSnapshot {
+  sheets: Array<{
+    id: string;
+    name: string;
+    data: SheetSnapshot;
+  }>;
+  activeSheetId: string;
 }
 
 export interface ExcelLessonTaskState {

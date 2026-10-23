@@ -31,6 +31,7 @@ import {
   NumberFormatType,
   PivotTableItem,
   SheetSnapshot,
+  SheetTabInfo,
   SortOrder,
   TextAlign,
 } from './models/excel.types';
@@ -60,7 +61,6 @@ import { PivotTableDialogComponent } from './components/dialogs/pivot-table-dial
 import { CommentDialogComponent } from './components/dialogs/comment-dialog.component';
 import { FunctionPickerDialogComponent } from './components/dialogs/function-picker-dialog.component';
 import { ExcelDemoComponent } from './components/demo/excel-demo.component';
-import { EXCEL_LESSONS } from './excel-lessons.data';
 
 @Component({
   selector: 'app-excel-editor',
@@ -177,6 +177,47 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly showCommentDialog = signal<boolean>(false);
   readonly commentTargetCell = signal<string>('A1');
   readonly showFunctionPicker = signal<boolean>(false);
+  // Sheet Management
+  readonly editingSheetId = signal<string | null>(null);
+  readonly sheetRenameValue = signal<string>('');
+  readonly showSheetContextMenu = signal<boolean>(false);
+  readonly sheetContextMenuPos = signal<{ top: number; left: number }>({ top: 0, left: 0 });
+  readonly contextMenuSheetId = signal<string | null>(null);
+
+  get contextMenuSheet(): SheetTabInfo | undefined {
+    const id = this.contextMenuSheetId();
+    return this.state.sheets().find((s) => s.id === id);
+  }
+
+  get contextMenuSheetIndex(): number {
+    const id = this.contextMenuSheetId();
+    return this.state.sheets().findIndex((s) => s.id === id);
+  }
+
+  // Zoom Controls
+  readonly zoomLevel = signal<number>(100);
+
+  zoomIn(): void {
+    const current = this.zoomLevel();
+    if (current < 200) {
+      this.zoomLevel.set(Math.min(200, current + 10));
+    }
+  }
+
+  zoomOut(): void {
+    const current = this.zoomLevel();
+    if (current > 50) {
+      this.zoomLevel.set(Math.max(50, current - 10));
+    }
+  }
+
+  onZoomSliderChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const val = Number(input.value);
+    if (!isNaN(val) && val >= 50 && val <= 200) {
+      this.zoomLevel.set(val);
+    }
+  }
 
   // Subscriptions & Timers
   private bridgeUnsubscribes: Array<() => void> = [];
@@ -198,9 +239,6 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const act = this.bridge.activity();
     if (act && act.app === 'excel') {
       this.loadActivity(act);
-    } else {
-      // Fallback default lesson if none provided yet
-      this.loadActivity(EXCEL_LESSONS['cellValue']);
     }
 
     this.bridgeUnsubscribes.push(
@@ -284,6 +322,8 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.showPivotTableDialog.set(false);
     this.showCommentDialog.set(false);
     this.showFunctionPicker.set(false);
+    this.showSheetContextMenu.set(false);
+    this.editingSheetId.set(null);
     this.focusGrid();
   }
 
@@ -403,6 +443,7 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.closeAllDialogs();
     this.feedbackMsg.set('');
     this.isDemoOpen.set(false);
+    this.zoomLevel.set(100);
 
     if (act.tasks && act.tasks.length > 0) {
       this.setupTask(0, true);
@@ -659,6 +700,129 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.history.push(this.state.getSnapshot());
     this.clipboard.paste(this.state.activeCell());
     this.focusGrid();
+  }
+
+  // Row and Column Operations
+  onInsertRow(): void {
+    this.commitPendingEdit();
+    this.history.push(this.state.getSnapshot());
+    this.state.insertRow();
+    this.actionLogger.log('insertRow', this.state.activeCell());
+    this.focusGrid();
+    this.cdr.markForCheck();
+  }
+
+  onInsertColumn(): void {
+    this.commitPendingEdit();
+    this.history.push(this.state.getSnapshot());
+    this.state.insertColumn();
+    this.actionLogger.log('insertColumn', this.state.activeCell());
+    this.focusGrid();
+    this.cdr.markForCheck();
+  }
+
+  onDeleteRow(): void {
+    this.commitPendingEdit();
+    this.history.push(this.state.getSnapshot());
+    this.state.deleteRow();
+    this.actionLogger.log('deleteRow', this.state.activeCell());
+    this.focusGrid();
+    this.cdr.markForCheck();
+  }
+
+  onDeleteColumn(): void {
+    this.commitPendingEdit();
+    this.history.push(this.state.getSnapshot());
+    this.state.deleteColumn();
+    this.actionLogger.log('deleteColumn', this.state.activeCell());
+    this.focusGrid();
+    this.cdr.markForCheck();
+  }
+
+  // Worksheet Tab Actions
+  onAddSheet(): void {
+    this.commitPendingEdit();
+    this.history.push(this.state.getSnapshot());
+    const newId = this.state.addSheet();
+    this.actionLogger.log('addSheet', newId);
+    this.focusGrid();
+    this.cdr.markForCheck();
+  }
+
+  onSelectSheet(sheetId: string): void {
+    if (sheetId === this.state.activeSheetId()) return;
+    this.commitPendingEdit();
+    this.state.switchSheet(sheetId);
+    this.actionLogger.log('switchSheet', sheetId);
+    this.focusGrid();
+    this.cdr.markForCheck();
+  }
+
+  startRenameSheet(sheetId: string, currentName: string): void {
+    this.closeSheetContextMenu();
+    this.editingSheetId.set(sheetId);
+    this.sheetRenameValue.set(currentName);
+  }
+
+  commitRenameSheet(): void {
+    const id = this.editingSheetId();
+    if (id) {
+      const val = this.sheetRenameValue().trim();
+      if (val) {
+        this.history.push(this.state.getSnapshot());
+        this.state.renameSheet(id, val);
+        this.actionLogger.log('renameSheet', `${id}:${val}`);
+      }
+      this.editingSheetId.set(null);
+      this.cdr.markForCheck();
+    }
+  }
+
+  cancelRenameSheet(): void {
+    this.editingSheetId.set(null);
+    this.cdr.markForCheck();
+  }
+
+  moveSheetLeft(index: number): void {
+    if (index <= 0) return;
+    this.commitPendingEdit();
+    this.history.push(this.state.getSnapshot());
+    this.state.moveSheet(index, index - 1);
+    this.actionLogger.log('moveSheet', `${index}->${index - 1}`);
+    this.cdr.markForCheck();
+  }
+
+  moveSheetRight(index: number): void {
+    if (index >= this.state.sheets().length - 1) return;
+    this.commitPendingEdit();
+    this.history.push(this.state.getSnapshot());
+    this.state.moveSheet(index, index + 1);
+    this.actionLogger.log('moveSheet', `${index}->${index + 1}`);
+    this.cdr.markForCheck();
+  }
+
+  onDeleteSheet(sheetId: string): void {
+    this.closeSheetContextMenu();
+    if (this.state.sheets().length <= 1) return;
+    this.commitPendingEdit();
+    this.history.push(this.state.getSnapshot());
+    this.state.deleteSheet(sheetId);
+    this.actionLogger.log('deleteSheet', sheetId);
+    this.focusGrid();
+    this.cdr.markForCheck();
+  }
+
+  openSheetContextMenu(event: MouseEvent, sheetId: string): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.contextMenuSheetId.set(sheetId);
+    this.sheetContextMenuPos.set({ top: event.clientY - 120, left: event.clientX });
+    this.showSheetContextMenu.set(true);
+  }
+
+  closeSheetContextMenu(): void {
+    this.showSheetContextMenu.set(false);
+    this.contextMenuSheetId.set(null);
   }
 
   private isNumericCell(cell: CellData | undefined): boolean {
@@ -981,13 +1145,6 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const groupRect = groupEl?.getBoundingClientRect();
     const groupWidth = groupRect?.width || groupEl?.offsetWidth || 300;
     const groupHeight = groupRect?.height || groupEl?.offsetHeight || 480;
-
-    // Report if worksheet viewport is physically too short to fit the complete group
-    if (layoutRect.height > 0 && layoutRect.height < groupHeight + 16) {
-      console.warn(
-        `Excel worksheet viewport height (${Math.round(layoutRect.height)}px) is too short to fit the task-card and mascot group (${Math.round(groupHeight)}px).`
-      );
-    }
 
     // Top-right placement: ~8-12px spacing from top and right of the worksheet viewport
     const targetY = 10;

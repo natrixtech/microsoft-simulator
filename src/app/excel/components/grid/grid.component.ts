@@ -237,6 +237,7 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
     if (fmt?.italic) styles['font-style'] = 'italic';
     if (fmt?.underline) styles['text-decoration'] = 'underline';
     styles['font-size'] = `${fmt?.fontSize ?? 10}pt`;
+    if (fmt?.fontFamily) styles['font-family'] = fmt.fontFamily;
     if (fmt?.align) {
       styles['text-align'] = fmt.align;
     } else {

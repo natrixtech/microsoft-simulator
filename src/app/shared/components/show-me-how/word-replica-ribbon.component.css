@@ -83,16 +83,19 @@
   display: flex;
   align-items: stretch;
   gap: 2px;
-  overflow-x: auto;
+  overflow-x: hidden;
   overflow-y: hidden !important;
-  scrollbar-width: thin;
-  scrollbar-color: #c8c6c4 transparent;
+  scrollbar-width: none;
   flex-wrap: nowrap;
   position: relative;
   z-index: 100;
   height: 84px;
   flex-shrink: 0;
   box-sizing: border-box;
+}
+
+.ribbon-command-bar::-webkit-scrollbar {
+  display: none;
 }
 
 .ribbon-command-bar.has-popover {

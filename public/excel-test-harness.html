@@ -55,6 +55,7 @@
         <option value="noDuplicates">Lesson 11: Remove Duplicates (noDuplicates)</option>
         <option value="action">Lesson 12: Select Range (action)</option>
         <option value="assessment">Lesson 13: Multi-Task Assessment (3 tasks, state inheritance)</option>
+        <option value="fontFamily">Lesson 14: Font Family & Sheets (fontFamily)</option>
       </select>
 
       <button id="load-btn" class="primary">Load Activity</button>
@@ -465,6 +466,46 @@
               hint: 'Highlight B2:B5 and click $.',
               startingSheet: null,
               goals: [{ type: 'cellFormat', range: 'B2:B5', numberFormat: 'currency' }]
+            }
+          ],
+          assetBaseUrl: './assets/',
+          theme: 'LIGHT'
+        },
+        fontFamily: {
+          app: 'excel',
+          mode: 'lesson',
+          title: 'Lesson 14: Font Family & Worksheets',
+          instruction: 'Change the font family of cells and manage worksheet tabs.',
+          tasks: [
+            {
+              title: 'Change Font Family',
+              explanation: 'Change the font of the title cell to Arial.',
+              instructions: [
+                'Select cell A1.',
+                'Open the Font Family dropdown on the Home tab and choose Arial.',
+                'Try adding a new sheet with (+) or inserting a row using the Insert menu.',
+                'Click Check My Work.'
+              ],
+              hint: 'Select A1 and choose Arial from the font dropdown.',
+              startingSheet: {
+                cells: {
+                  'A1': 'Quarterly Report',
+                  'A2': 'Region', 'B2': 'Sales',
+                  'A3': 'North', 'B3': 1200,
+                  'A4': 'South', 'B4': 1500,
+                  'A5': 'Total', 'B5': '=SUM(B3:B4)'
+                },
+                formats: {
+                  'A1': { bold: true, fontSize: 14 }
+                }
+              },
+              goals: [
+                {
+                  type: 'cellFormat',
+                  range: 'A1',
+                  fontFamily: 'Arial'
+                }
+              ]
             }
           ],
           assetBaseUrl: './assets/',

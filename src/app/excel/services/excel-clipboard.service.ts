@@ -121,6 +121,7 @@ export class ExcelClipboardService {
     if (this.isCutMode) {
       this.isCutMode = false;
       this.cutRange = null;
+      this.clipboardData = [];
     }
 
     this.actionLogger.log('paste', targetAddr);
