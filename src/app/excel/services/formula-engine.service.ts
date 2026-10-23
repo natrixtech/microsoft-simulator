@@ -291,19 +291,28 @@ export class FormulaEngineService {
         continue;
       }
 
-      // Identifiers, Cell references, Ranges ($A$1:$B$5 or A1 or SUM), Errors (#REF!, etc.)
-      if (ch === '#' || /[A-Za-z_$]/.test(ch)) {
+      // Error literal starting with # (#REF!, #DIV/0!, #NAME?, #VALUE!, #N/A, etc.)
+      if (ch === '#') {
         let ident = '';
-        while (i < len && /[A-Za-z0-9_$:#/?!]/.test(formula[i])) {
+        while (i < len && /[A-Za-z0-9_$#/?!]/.test(formula[i])) {
+          ident += formula[i];
+          i++;
+        }
+        tokens.push({ type: 'ERROR', value: ident.toUpperCase() });
+        continue;
+      }
+
+      // Identifiers, Cell references, Ranges ($A$1:$B$5 or A1 or SUM)
+      if (/[A-Za-z_$]/.test(ch)) {
+        let ident = '';
+        while (i < len && /[A-Za-z0-9_$:]/.test(formula[i])) {
           ident += formula[i];
           i++;
         }
 
-        // Check if range or error or cell
+        // Check if range or cell
         if (ident.includes(':')) {
           tokens.push({ type: 'RANGE', value: ident.toUpperCase() });
-        } else if (ident.startsWith('#')) {
-          tokens.push({ type: 'ERROR', value: ident.toUpperCase() });
         } else if (/^\$?[A-Za-z]+\$?[0-9]+$/.test(ident)) {
           tokens.push({ type: 'CELL', value: ident.toUpperCase() });
         } else if (ident.toUpperCase() === 'TRUE' || ident.toUpperCase() === 'FALSE') {
@@ -519,6 +528,14 @@ export class FormulaEngineService {
   formatDisplayValue(val: any, format?: string, decimals?: number): string {
     if (val === undefined || val === null || val === '') {
       return '';
+    }
+
+    if (typeof val === 'boolean') {
+      return val ? 'TRUE' : 'FALSE';
+    }
+
+    if (typeof val === 'string' && (val.toLowerCase() === 'true' || val.toLowerCase() === 'false')) {
+      return val.toUpperCase();
     }
 
     if (typeof val === 'string' && ['#REF!', '#DIV/0!', '#NAME?', '#VALUE!', '#N/A'].includes(val)) {
@@ -948,9 +965,12 @@ class FormulaParser {
             if (typeof cell === 'string' && ['#REF!', '#DIV/0!', '#NAME?', '#VALUE!', '#N/A'].includes(cell)) {
               throw new Error(cell);
             }
+            if (cell === null || cell === undefined || cell === '') {
+              continue;
+            }
             if (typeof cell === 'number') {
               nums.push(cell);
-            } else if (cell !== null && cell !== '' && !isNaN(Number(cell))) {
+            } else if (typeof cell !== 'boolean' && !isNaN(Number(cell))) {
               nums.push(Number(cell));
             }
           }
@@ -959,9 +979,11 @@ class FormulaParser {
         nums.push(...this.flattenNumbers(arg));
       } else if (typeof arg === 'string' && ['#REF!', '#DIV/0!', '#NAME?', '#VALUE!', '#N/A'].includes(arg)) {
         throw new Error(arg);
+      } else if (arg === null || arg === undefined || arg === '') {
+        continue;
       } else if (typeof arg === 'number') {
         nums.push(arg);
-      } else if (arg !== null && arg !== '' && !isNaN(Number(arg))) {
+      } else if (typeof arg !== 'boolean' && !isNaN(Number(arg))) {
         nums.push(Number(arg));
       }
     }
@@ -1053,9 +1075,12 @@ class FormulaParser {
         let sum = 0;
         for (let i = 0; i < checkCells.length; i++) {
           if (this.matchesCriteria(checkCells[i], criteria)) {
-            const valToSum = i < sumCells.length ? Number(sumCells[i]) : 0;
-            if (!isNaN(valToSum)) {
-              sum += valToSum;
+            const raw = i < sumCells.length ? sumCells[i] : null;
+            if (raw !== null && raw !== undefined && raw !== '') {
+              const valToSum = Number(raw);
+              if (!isNaN(valToSum)) {
+                sum += valToSum;
+              }
             }
           }
         }
@@ -1090,10 +1115,13 @@ class FormulaParser {
         let count = 0;
         for (let i = 0; i < checkCells.length; i++) {
           if (this.matchesCriteria(checkCells[i], criteria)) {
-            const valToAvg = i < avgCells.length ? Number(avgCells[i]) : NaN;
-            if (!isNaN(valToAvg)) {
-              sum += valToAvg;
-              count++;
+            const raw = i < avgCells.length ? avgCells[i] : null;
+            if (raw !== null && raw !== undefined && raw !== '') {
+              const valToAvg = Number(raw);
+              if (!isNaN(valToAvg)) {
+                sum += valToAvg;
+                count++;
+              }
             }
           }
         }
@@ -1213,6 +1241,7 @@ class FormulaParser {
 
   private matchesCriteria(cellVal: any, criteria: any): boolean {
     if (criteria === undefined || criteria === null) return false;
+    const isBlank = cellVal === null || cellVal === undefined || cellVal === '';
     const critStr = String(criteria).trim();
 
     // Condition pattern e.g. ">50", "<=10", "<>Pencil", "=Apple"
@@ -1220,6 +1249,11 @@ class FormulaParser {
     if (m) {
       const op = m[1];
       const targetStr = m[2].trim();
+
+      if (isBlank) {
+        if (op === '=') return targetStr === '';
+        return false;
+      }
 
       const d1 = parseDateParts(cellVal);
       const d2 = parseDateParts(targetStr);
@@ -1254,6 +1288,10 @@ class FormulaParser {
       return false;
     }
 
+    if (isBlank) {
+      return critStr === '' || critStr === '=';
+    }
+
     const d1 = parseDateParts(cellVal);
     const d2 = parseDateParts(criteria);
     if (d1 && d2) {
@@ -1271,6 +1309,9 @@ class FormulaParser {
   }
 
   private equalsLookup(cellVal: any, lookupVal: any, exact: boolean): boolean {
+    if (cellVal === null || cellVal === undefined) {
+      return lookupVal === null || lookupVal === undefined || lookupVal === '';
+    }
     const s1 = String(cellVal ?? '').trim().toLowerCase();
     const s2 = String(lookupVal ?? '').trim().toLowerCase();
     if (s1 === s2) return true;

@@ -252,7 +252,18 @@ export class ExcelStateService {
         const rowVals: any[] = [];
         for (let c = parsed.startCol; c <= parsed.endCol; c++) {
           const addr = formatAddress({ row: r, col: c });
-          rowVals.push(getCellValue(addr));
+          const normAddr = addr.toUpperCase().replace(/\$/g, '');
+          const cell = curCells.get(normAddr);
+          if (!cell) {
+            rowVals.push(null);
+          } else if (cell.formula) {
+            const v = getCellValue(addr);
+            rowVals.push(v === '' || v === undefined || v === null ? null : v);
+          } else if (cell.value === '' || cell.value === undefined || cell.value === null) {
+            rowVals.push(null);
+          } else {
+            rowVals.push(cell.value);
+          }
         }
         result.push(rowVals);
       }

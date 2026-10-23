@@ -69,9 +69,6 @@
   font-weight: 600;
 }
 
-.nitro-tab {
-  color: #f7630c;
-}
 
 .ribbon-panel {
   height: 98px;
@@ -128,10 +125,6 @@
   color: #107c41;
 }
 
-:host-context([data-theme="dark"]) .nitro-tab,
-:host-context(.dark-theme) .nitro-tab {
-  color: #f7630c;
-}
 
 /* Search Box */
 .ribbon-search-box {
