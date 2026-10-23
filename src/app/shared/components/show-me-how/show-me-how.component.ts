@@ -15,6 +15,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { TaskGoal } from '../../models/activity.types';
 import { COLORS, findText, safeAsset } from '../../utils/editor.utils';
+import { WordReplicaRibbonComponent } from './word-replica-ribbon.component';
 
 export interface DemoStep {
   label: string;
@@ -24,7 +25,7 @@ export interface DemoStep {
 @Component({
   selector: 'lib-show-me-how',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, WordReplicaRibbonComponent],
   templateUrl: './show-me-how.component.html',
   styleUrls: ['./show-me-how.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -58,7 +59,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly replicaDialog = signal<string | null>(null);
 
   // Tab switching state
-  readonly replicaActiveTab = signal<'home' | 'insert' | 'layout' | 'references' | 'tools' | 'tableDesign' | 'tableLayout'>('home');
+  readonly replicaActiveTab = signal<string>('home');
   readonly hasReplicaTable = signal<boolean>(false);
   readonly replicaShadingOpen = signal<boolean>(false);
   readonly replicaInsertOpen = signal<boolean>(false);
@@ -117,7 +118,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
   private resizeObserver?: ResizeObserver;
 
   // Word replica UI state
-  readonly replicaFont = signal<string>('Calibri');
+  readonly replicaFont = signal<string>('Arial');
   readonly replicaFontSize = signal<string>('11');
   readonly replicaStyle = signal<string>('normal');
   readonly replicaOrientation = signal<'portrait' | 'landscape'>('portrait');
@@ -132,6 +133,16 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly replicaFooter = signal<string>('');
   readonly replicaPageNumbers = signal<boolean>(false);
   readonly replicaComments = signal<any[]>([]);
+
+  // Replica Popovers and Active formatting state
+  readonly replicaFontDropdownOpen = signal<boolean>(false);
+  readonly replicaSizeDropdownOpen = signal<boolean>(false);
+  readonly replicaFontColorOpen = signal<boolean>(false);
+  readonly replicaHighlightOpen = signal<boolean>(false);
+  readonly replicaLineSpacingOpen = signal<boolean>(false);
+  readonly replicaActiveFontColor = signal<string>('#000000');
+  readonly replicaActiveHighlightColor = signal<string>('#facc15');
+  readonly hasReplicaChart = signal<boolean>(false);
 
   // Find & replace typing simulation
   readonly findWhatInput = signal<string>('');
@@ -333,11 +344,18 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
       docEl.innerHTML = rawDoc;
     }
 
-    this.replicaFont.set('Calibri');
+    this.replicaFont.set('Arial');
     this.replicaFontSize.set('11');
     this.replicaStyle.set('normal');
 
     this.replicaActiveTab.set('home');
+    this.replicaFontDropdownOpen.set(false);
+    this.replicaSizeDropdownOpen.set(false);
+    this.replicaFontColorOpen.set(false);
+    this.replicaHighlightOpen.set(false);
+    this.replicaLineSpacingOpen.set(false);
+    this.replicaActiveFontColor.set('#000000');
+    this.replicaActiveHighlightColor.set('#facc15');
     this.replicaShadingOpen.set(false);
     this.replicaInsertOpen.set(false);
     this.replicaOrientationOpen.set(false);
@@ -349,6 +367,10 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
     this.replicaChartTitleInput.set('Chart Title');
     const hasTable = rawDoc.toLowerCase().includes('<table');
     this.hasReplicaTable.set(hasTable);
+    const hasChart =
+      rawDoc.toLowerCase().includes('data-chart-type') ||
+      rawDoc.toLowerCase().includes('chart-container');
+    this.hasReplicaChart.set(hasChart);
     this.updateScaling();
 
     // Restore page setup
@@ -383,7 +405,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
     this.replicaImageFile.set(defaultImg);
   }
 
-  setReplicaTab(tab: 'home' | 'insert' | 'layout' | 'references' | 'tools' | 'tableDesign' | 'tableLayout'): void {
+  setReplicaTab(tab: string): void {
     this.replicaActiveTab.set(tab);
     this.cdr.markForCheck();
   }
@@ -428,7 +450,6 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.isCancelled) return false;
 
     if (targetName === 'orientation') targetName = 'menu-layout-orientation';
-    if (targetName === 'size') targetName = 'page-size';
     if (targetName === 'margins') targetName = 'page-margins';
 
     // Switch ribbon tab automatically if targeting tab buttons or tab-specific controls
@@ -446,6 +467,8 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
       this.replicaActiveTab.set('tableDesign');
     } else if (targetName === 'table-layout-tab') {
       this.replicaActiveTab.set('tableLayout');
+    } else if (targetName === 'chart-design-tab') {
+      this.replicaActiveTab.set('chartDesign');
     } else if (
       targetName === 'cell-shading' ||
       targetName.startsWith('cell-shading-') ||
@@ -494,6 +517,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
         'ribbon-superscript',
         'font',
         'size',
+        'font-size',
         'color',
         'highlight',
         'bullets',
@@ -512,19 +536,26 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
         'styles-more-btn',
         'style-create',
       ].includes(targetName) ||
-      targetName.startsWith('style-')
+      targetName.startsWith('style-') ||
+      targetName.startsWith('font-item-') ||
+      targetName.startsWith('size-item-') ||
+      targetName.startsWith('swatch-') ||
+      targetName.startsWith('highlight-swatch-') ||
+      targetName.startsWith('line-spacing-')
     ) {
       this.replicaActiveTab.set('home');
     }
     this.cdr.markForCheck();
 
     const host = this.elRef.nativeElement;
-    let target = host.querySelector(`[data-demo-target="${targetName}"]`) as HTMLElement;
+    let target = (host.querySelector(`[data-demo-target="${targetName}"]`) ||
+      host.querySelector(`[data-demo-target-alt="${targetName}"]`)) as HTMLElement;
     if (!target) {
       for (let i = 0; i < 6; i++) {
         await this.delay(60);
         if (this.isCancelled) return false;
-        target = host.querySelector(`[data-demo-target="${targetName}"]`) as HTMLElement;
+        target = (host.querySelector(`[data-demo-target="${targetName}"]`) ||
+          host.querySelector(`[data-demo-target-alt="${targetName}"]`)) as HTMLElement;
         if (target) break;
       }
     }
@@ -684,17 +715,35 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
 
       // 5. Font
       if (g.font) {
-        this.replicaFont.set(g.font);
+        this.activeAction.set('font');
         await this.moveTo('font');
+        this.replicaFontDropdownOpen.set(true);
+        this.cdr.markForCheck();
+        await this.delay(250);
+
+        const fontSlug = 'font-item-' + g.font.toLowerCase().replace(/\s+/g, '-');
+        await this.moveTo(fontSlug);
+        this.replicaFont.set(g.font);
         selSpan.style.fontFamily = g.font;
+        this.replicaFontDropdownOpen.set(false);
+        this.cdr.markForCheck();
         await this.delay(250);
       }
 
       // 6. Size
       if (g.size) {
-        this.replicaFontSize.set(String(g.size));
+        this.activeAction.set('size');
         await this.moveTo('size');
+        this.replicaSizeDropdownOpen.set(true);
+        this.cdr.markForCheck();
+        await this.delay(250);
+
+        const sizeTarget = 'size-item-' + g.size;
+        await this.moveTo(sizeTarget);
+        this.replicaFontSize.set(String(g.size));
         selSpan.style.fontSize = g.size + 'pt';
+        this.replicaSizeDropdownOpen.set(false);
+        this.cdr.markForCheck();
         await this.delay(250);
       }
 
@@ -702,8 +751,17 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
       if (g.color) {
         this.activeAction.set('color');
         await this.moveTo('color');
+        this.replicaFontColorOpen.set(true);
+        this.cdr.markForCheck();
+        await this.delay(250);
+
+        const swatchTarget = 'swatch-' + g.color;
+        await this.moveTo(swatchTarget);
         const mappedColor = COLORS[g.color] || g.color;
+        this.replicaActiveFontColor.set(mappedColor);
         selSpan.style.color = mappedColor;
+        this.replicaFontColorOpen.set(false);
+        this.cdr.markForCheck();
         await this.delay(250);
       }
 
@@ -711,8 +769,17 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
       if (g.highlight) {
         this.activeAction.set('highlight');
         await this.moveTo('highlight');
+        this.replicaHighlightOpen.set(true);
+        this.cdr.markForCheck();
+        await this.delay(250);
+
+        const swatchTarget = 'highlight-swatch-' + g.highlight;
+        await this.moveTo(swatchTarget);
         const mappedHl = COLORS[g.highlight] || g.highlight;
+        this.replicaActiveHighlightColor.set(mappedHl);
         selSpan.style.backgroundColor = mappedHl;
+        this.replicaHighlightOpen.set(false);
+        this.cdr.markForCheck();
         await this.delay(250);
       }
 
@@ -754,8 +821,18 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
       if (g.lineSpacing !== undefined) {
         this.activeAction.set('line-spacing');
         await this.moveTo('line-spacing');
+        this.replicaLineSpacingOpen.set(true);
+        this.cdr.markForCheck();
+        await this.delay(250);
+
+        const spacingNum = Number(g.lineSpacing);
+        const spacingStr = spacingNum % 1 === 0 ? spacingNum.toFixed(1) : String(spacingNum);
+        const lsTarget = 'line-spacing-' + (spacingStr === '2' ? '2.0' : spacingStr);
+        await this.moveTo(lsTarget);
         block.style.lineHeight = String(g.lineSpacing);
         block.dataset['lineSpacing'] = String(g.lineSpacing);
+        this.replicaLineSpacingOpen.set(false);
+        this.cdr.markForCheck();
         await this.delay(250);
       }
 
@@ -1562,6 +1639,7 @@ export class ShowMeHowComponent implements OnInit, AfterViewInit, OnDestroy {
       fig.setAttribute('contenteditable', 'false');
       fig.innerHTML = this.renderReplicaChartSvg(chartType, targetTitle);
       docEl.append(fig);
+      this.hasReplicaChart.set(true);
       await this.delay(300);
 
       this.activeAction.set('');
