@@ -1638,6 +1638,8 @@
             type="button"
             class="table-style-tile-btn"
             data-demo-target="table-style-plain"
+            [class.active]="selectedTableStyle === 'Plain' || activeAction === 'table-style-plain'"
+            [class.highlight]="activeAction === 'table-style-plain'"
             title="Plain"
           >
             <table class="mini-table-preview style-plain">
@@ -1651,6 +1653,8 @@
             type="button"
             class="table-style-tile-btn"
             data-demo-target="table-style-banded-rows"
+            [class.active]="selectedTableStyle === 'Banded Rows' || activeAction === 'table-style-banded-rows'"
+            [class.highlight]="activeAction === 'table-style-banded-rows'"
             title="Banded Rows"
           >
             <table class="mini-table-preview style-banded">
@@ -1664,6 +1668,8 @@
             type="button"
             class="table-style-tile-btn"
             data-demo-target="table-style-grid"
+            [class.active]="selectedTableStyle === 'Grid' || activeAction === 'table-style-grid'"
+            [class.highlight]="activeAction === 'table-style-grid'"
             title="Grid"
           >
             <table class="mini-table-preview style-grid">
@@ -1677,6 +1683,8 @@
             type="button"
             class="table-style-tile-btn"
             data-demo-target="table-style-grid-blue"
+            [class.active]="selectedTableStyle === 'Grid Blue' || activeAction === 'table-style-grid-blue'"
+            [class.highlight]="activeAction === 'table-style-grid-blue'"
             title="Grid Blue"
           >
             <table class="mini-table-preview style-grid-blue">
@@ -1690,6 +1698,8 @@
             type="button"
             class="table-style-tile-btn"
             data-demo-target="table-style-grid-green"
+            [class.active]="selectedTableStyle === 'Grid Green' || activeAction === 'table-style-grid-green'"
+            [class.highlight]="activeAction === 'table-style-grid-green'"
             title="Grid Green"
           >
             <table class="mini-table-preview style-grid-green">
@@ -1703,6 +1713,8 @@
             type="button"
             class="table-style-tile-btn"
             data-demo-target="table-style-list-blue"
+            [class.active]="selectedTableStyle === 'List Blue' || activeAction === 'table-style-list-blue'"
+            [class.highlight]="activeAction === 'table-style-list-blue'"
             title="List Blue"
           >
             <table class="mini-table-preview style-list-blue">
@@ -1970,6 +1982,21 @@
       </div>
       <div class="group-footer">
         <span class="group-name">Data</span>
+      </div>
+    </div>
+
+    <div class="ribbon-divider"></div>
+
+    <!-- 6. Table Group -->
+    <div class="ribbon-group group-table-meta">
+      <div class="group-content">
+        <button type="button" class="ribbon-large-btn disabled" disabled title="Alt Text" style="opacity: 0.5;">
+          <span class="rl-icon">ℹ️</span>
+          <span class="rl-label">Alt<br>Text</span>
+        </button>
+      </div>
+      <div class="group-footer">
+        <span class="group-name">Table</span>
       </div>
     </div>
   </ng-container>

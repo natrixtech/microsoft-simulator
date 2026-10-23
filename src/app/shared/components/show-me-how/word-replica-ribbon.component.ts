@@ -26,6 +26,7 @@ export class WordReplicaRibbonComponent {
   @Input() fontColor: string = '#000000';
   @Input() highlightColor: string = '#facc15';
   @Input() selectedStyle: string = 'normal';
+  @Input() selectedTableStyle: string = '';
   @Input() customStyles: Array<{
     name: string;
     bold?: boolean;

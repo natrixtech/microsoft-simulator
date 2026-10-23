@@ -62,15 +62,15 @@
 
 .ribbon-tab-btn.contextual-table-tab {
   background: #f3f6fb;
-  border-top: 2px solid #185abd;
-  color: #185abd;
-  font-weight: 500;
+  border-top: 2px solid #0f6cbd;
+  color: #0f6cbd;
+  font-weight: 600;
 }
 
 .ribbon-tab-btn.contextual-table-tab.active {
   background: #ffffff;
   font-weight: 600;
-  border-bottom: 2px solid #185abd;
+  border-bottom: 2px solid #0f6cbd;
 }
 
 /* -------------------------------------------------------------
@@ -1009,6 +1009,306 @@
 }
 
 /* -------------------------------------------------------------
+   Ribbon Table Tabs (Table Design & Table Layout)
+   ------------------------------------------------------------- */
+.table-styles-gallery-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.table-style-tile-btn {
+  width: 44px;
+  height: 44px;
+  padding: 2px;
+  border: 1px solid #d2d0ce;
+  background: #ffffff;
+  border-radius: 3px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+
+.table-style-tile-btn:hover {
+  border-color: #0f6cbd;
+  box-shadow: 0 0 0 1px #0f6cbd;
+}
+
+.table-style-tile-btn.active,
+.table-style-tile-btn.highlight {
+  border-color: #0f6cbd;
+  background: #eff6fc;
+  outline: 2px solid #0f6cbd;
+}
+
+.mini-table-preview {
+  width: 100%;
+  height: 100%;
+  border-collapse: collapse;
+  pointer-events: none;
+}
+
+.mini-table-preview td {
+  padding: 0;
+  border: 1px solid #d2d0ce;
+  font-size: 0;
+}
+
+.mini-table-preview.style-plain td {
+  border: 1px solid #d2d0ce;
+  background: #ffffff;
+}
+
+.mini-table-preview.style-banded tr:nth-child(even) td {
+  background: #f3f2f1;
+}
+
+.mini-table-preview.style-grid td {
+  border: 1px solid #605e5c;
+}
+
+.mini-table-preview.style-grid-blue tr:first-child td {
+  background: #0f6cbd;
+  border-color: #0f6cbd;
+}
+
+.mini-table-preview.style-grid-blue tr:not(:first-child):nth-child(even) td {
+  background: #eff6fc;
+}
+
+.mini-table-preview.style-grid-blue td {
+  border-color: #b4d6fa;
+}
+
+.mini-table-preview.style-grid-green tr:first-child td {
+  background: #107c41;
+  border-color: #107c41;
+}
+
+.mini-table-preview.style-grid-green tr:not(:first-child):nth-child(even) td {
+  background: #f1f8f3;
+}
+
+.mini-table-preview.style-grid-green td {
+  border-color: #a2d6b3;
+}
+
+.mini-table-preview.style-list-blue tr:first-child td {
+  background: #0f6cbd;
+}
+
+.mini-table-preview.style-list-blue tr:not(:first-child):nth-child(even) td {
+  background: #eff6fc;
+}
+
+.mini-table-preview.style-list-blue td {
+  border-left: none;
+  border-right: none;
+  border-color: #b4d6fa;
+}
+
+.table-styles-more-btn {
+  width: 18px;
+  height: 44px;
+  background: #ffffff;
+  border: 1px solid #d2d0ce;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 11px;
+  color: #605e5c;
+  padding: 0;
+}
+
+.table-styles-more-btn:hover {
+  background: #eff6fc;
+  border-color: #0f6cbd;
+  color: #0f6cbd;
+}
+
+/* Table Style Options */
+.table-options-grid {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 2px 8px;
+  font-size: 11px;
+  color: #797775;
+}
+
+.table-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: not-allowed;
+  user-select: none;
+  font-size: 11px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.table-checkbox-label input {
+  margin: 0;
+  cursor: not-allowed;
+}
+
+/* Table Layout Alignment & Size */
+.align-grid-3x3 {
+  display: grid;
+  grid-template-columns: repeat(3, 18px);
+  gap: 2px;
+}
+
+.align-cell-btn {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  background: #ffffff;
+  border: 1px solid #d2d0ce;
+  border-radius: 2px;
+  cursor: not-allowed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: #a19f9d;
+}
+
+.cell-size-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11px;
+}
+
+.size-input-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #605e5c;
+  font-size: 11px;
+}
+
+.size-input-field {
+  width: 50px;
+  height: 20px;
+  font-size: 11px;
+  padding: 1px 4px;
+  border: 1px solid #d2d0ce;
+  background: #f3f2f1;
+  border-radius: 2px;
+  color: #797775;
+  cursor: not-allowed;
+  box-sizing: border-box;
+}
+
+/* -------------------------------------------------------------
+   Ribbon Chart Tabs (Chart Design)
+   ------------------------------------------------------------- */
+.chart-styles-strip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px;
+  border: 1px solid #e1dfdd;
+  border-radius: 2px;
+  background: #faf9f8;
+}
+
+.chart-style-tile {
+  width: 38px;
+  height: 38px;
+  border: 1px solid #d1d1d1;
+  border-radius: 2px;
+  background: #ffffff;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 4px;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.chart-style-tile.active {
+  border: 2px solid #0f6cbd;
+}
+
+.chart-style-tile .cst-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  width: 100%;
+  height: 100%;
+}
+
+.chart-style-tile .cst-bars span {
+  flex: 1;
+  height: 100%;
+  border-radius: 1px 1px 0 0;
+}
+
+.chart-style-tile .cst-bars span:nth-child(1) { height: 60%; }
+.chart-style-tile .cst-bars span:nth-child(2) { height: 90%; }
+.chart-style-tile .cst-bars span:nth-child(3) { height: 40%; }
+
+/* -------------------------------------------------------------
+   Layout Tab Paragraph Inputs
+   ------------------------------------------------------------- */
+.group-layout-paragraph .group-content {
+  gap: 12px;
+}
+
+.layout-paragraph-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11px;
+  min-width: 95px;
+}
+
+.layout-col-header {
+  font-size: 11px;
+  font-weight: 600;
+  color: #323130;
+  margin-bottom: 1px;
+}
+
+.layout-param-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.layout-param-label-wrap {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.layout-param-label {
+  font-size: 10.5px;
+  color: #605e5c;
+}
+
+.layout-param-input {
+  width: 54px;
+  height: 18px;
+  padding: 0 4px;
+  border: 1px solid #d2d0ce;
+  border-radius: 2px;
+  font-size: 10.5px;
+  font-family: inherit;
+  text-align: right;
+  background: #f8fafc;
+  color: #334155;
+  box-sizing: border-box;
+}
+
+/* -------------------------------------------------------------
    Dark Mode Support (Without :is() in selectors)
    ------------------------------------------------------------- */
 :host-context(.dark-theme) .ribbon-tabs-strip,
@@ -1265,4 +1565,202 @@
 :host-context([data-theme='DARK']) .tile-name,
 :host-context([data-theme='dark']) .tile-name {
   color: #a19f9d;
+}
+
+/* Dark Mode: Table Design & Table Layout */
+:host-context(.dark-theme) .table-style-tile-btn,
+:host-context([data-theme='DARK']) .table-style-tile-btn,
+:host-context([data-theme='dark']) .table-style-tile-btn,
+:host-context(.dark-theme) .table-styles-more-btn,
+:host-context([data-theme='DARK']) .table-styles-more-btn,
+:host-context([data-theme='dark']) .table-styles-more-btn {
+  background: #2b2b2b;
+  border-color: #484644;
+  color: #f3f2f1;
+}
+
+:host-context(.dark-theme) .table-style-tile-btn:hover,
+:host-context([data-theme='DARK']) .table-style-tile-btn:hover,
+:host-context([data-theme='dark']) .table-style-tile-btn:hover,
+:host-context(.dark-theme) .table-styles-more-btn:hover,
+:host-context([data-theme='DARK']) .table-styles-more-btn:hover,
+:host-context([data-theme='dark']) .table-styles-more-btn:hover {
+  border-color: #2886de;
+  background: #383838;
+  color: #ffffff;
+}
+
+:host-context(.dark-theme) .table-style-tile-btn.active,
+:host-context([data-theme='DARK']) .table-style-tile-btn.active,
+:host-context([data-theme='dark']) .table-style-tile-btn.active,
+:host-context(.dark-theme) .table-style-tile-btn.highlight,
+:host-context([data-theme='DARK']) .table-style-tile-btn.highlight,
+:host-context([data-theme='dark']) .table-style-tile-btn.highlight {
+  border-color: #4da3ff;
+  background: #1b3a5b;
+  outline: 2px solid #4da3ff;
+}
+
+:host-context(.dark-theme) .mini-table-preview td,
+:host-context([data-theme='DARK']) .mini-table-preview td,
+:host-context([data-theme='dark']) .mini-table-preview td {
+  border-color: #484644;
+}
+
+:host-context(.dark-theme) .mini-table-preview.style-plain td,
+:host-context([data-theme='DARK']) .mini-table-preview.style-plain td,
+:host-context([data-theme='dark']) .mini-table-preview.style-plain td {
+  border-color: #484644;
+  background: #2b2b2b;
+}
+
+:host-context(.dark-theme) .mini-table-preview.style-banded td,
+:host-context([data-theme='DARK']) .mini-table-preview.style-banded td,
+:host-context([data-theme='dark']) .mini-table-preview.style-banded td {
+  border-color: #484644;
+  background: #201f1e;
+}
+
+:host-context(.dark-theme) .mini-table-preview.style-banded tr:nth-child(even) td,
+:host-context([data-theme='DARK']) .mini-table-preview.style-banded tr:nth-child(even) td,
+:host-context([data-theme='dark']) .mini-table-preview.style-banded tr:nth-child(even) td {
+  background: #2e2d2c;
+}
+
+:host-context(.dark-theme) .mini-table-preview.style-grid td,
+:host-context([data-theme='DARK']) .mini-table-preview.style-grid td,
+:host-context([data-theme='dark']) .mini-table-preview.style-grid td {
+  border-color: #605e5c;
+  background: #201f1e;
+}
+
+:host-context(.dark-theme) .mini-table-preview.style-grid-blue td,
+:host-context([data-theme='DARK']) .mini-table-preview.style-grid-blue td,
+:host-context([data-theme='dark']) .mini-table-preview.style-grid-blue td {
+  border-color: #2b496e;
+  background: #201f1e;
+}
+
+:host-context(.dark-theme) .mini-table-preview.style-grid-blue tr:first-child td,
+:host-context([data-theme='DARK']) .mini-table-preview.style-grid-blue tr:first-child td,
+:host-context([data-theme='dark']) .mini-table-preview.style-grid-blue tr:first-child td {
+  background: #1a4f8b;
+  border-color: #1a4f8b;
+}
+
+:host-context(.dark-theme) .mini-table-preview.style-grid-blue tr:not(:first-child):nth-child(even) td,
+:host-context([data-theme='DARK']) .mini-table-preview.style-grid-blue tr:not(:first-child):nth-child(even) td,
+:host-context([data-theme='dark']) .mini-table-preview.style-grid-blue tr:not(:first-child):nth-child(even) td {
+  background: #1a2d42;
+}
+
+:host-context(.dark-theme) .mini-table-preview.style-grid-green td,
+:host-context([data-theme='DARK']) .mini-table-preview.style-grid-green td,
+:host-context([data-theme='dark']) .mini-table-preview.style-grid-green td {
+  border-color: #1f472e;
+  background: #201f1e;
+}
+
+:host-context(.dark-theme) .mini-table-preview.style-grid-green tr:first-child td,
+:host-context([data-theme='DARK']) .mini-table-preview.style-grid-green tr:first-child td,
+:host-context([data-theme='dark']) .mini-table-preview.style-grid-green tr:first-child td {
+  background: #0e5e32;
+  border-color: #0e5e32;
+}
+
+:host-context(.dark-theme) .mini-table-preview.style-grid-green tr:not(:first-child):nth-child(even) td,
+:host-context([data-theme='DARK']) .mini-table-preview.style-grid-green tr:not(:first-child):nth-child(even) td,
+:host-context([data-theme='dark']) .mini-table-preview.style-grid-green tr:not(:first-child):nth-child(even) td {
+  background: #162f20;
+}
+
+:host-context(.dark-theme) .mini-table-preview.style-list-blue td,
+:host-context([data-theme='DARK']) .mini-table-preview.style-list-blue td,
+:host-context([data-theme='dark']) .mini-table-preview.style-list-blue td {
+  border-color: #2b496e;
+  background: #201f1e;
+}
+
+:host-context(.dark-theme) .mini-table-preview.style-list-blue tr:first-child td,
+:host-context([data-theme='DARK']) .mini-table-preview.style-list-blue tr:first-child td,
+:host-context([data-theme='dark']) .mini-table-preview.style-list-blue tr:first-child td {
+  background: #1a4f8b;
+  border-color: #1a4f8b;
+}
+
+:host-context(.dark-theme) .mini-table-preview.style-list-blue tr:not(:first-child):nth-child(even) td,
+:host-context([data-theme='DARK']) .mini-table-preview.style-list-blue tr:not(:first-child):nth-child(even) td,
+:host-context([data-theme='dark']) .mini-table-preview.style-list-blue tr:not(:first-child):nth-child(even) td {
+  background: #1a2d42;
+}
+
+:host-context(.dark-theme) .table-options-grid,
+:host-context([data-theme='DARK']) .table-options-grid,
+:host-context([data-theme='dark']) .table-options-grid,
+:host-context(.dark-theme) .table-checkbox-label,
+:host-context([data-theme='DARK']) .table-checkbox-label,
+:host-context([data-theme='dark']) .table-checkbox-label {
+  color: #a19f9d;
+}
+
+:host-context(.dark-theme) .align-cell-btn,
+:host-context([data-theme='DARK']) .align-cell-btn,
+:host-context([data-theme='dark']) .align-cell-btn,
+:host-context(.dark-theme) .size-input-field,
+:host-context([data-theme='DARK']) .size-input-field,
+:host-context([data-theme='dark']) .size-input-field {
+  background: #1b1b1b;
+  border-color: #484644;
+  color: #797775;
+}
+
+:host-context(.dark-theme) .size-input-row,
+:host-context([data-theme='DARK']) .size-input-row,
+:host-context([data-theme='dark']) .size-input-row {
+  color: #a19f9d;
+}
+
+/* Dark Mode: Chart Tabs */
+:host-context(.dark-theme) .chart-styles-strip,
+:host-context([data-theme='DARK']) .chart-styles-strip,
+:host-context([data-theme='dark']) .chart-styles-strip {
+  background: #252423;
+  border-color: #3b3a39;
+}
+
+:host-context(.dark-theme) .chart-style-tile,
+:host-context([data-theme='DARK']) .chart-style-tile,
+:host-context([data-theme='dark']) .chart-style-tile {
+  background: #2b2b2b;
+  border-color: #484644;
+}
+
+:host-context(.dark-theme) .chart-style-tile.active,
+:host-context([data-theme='DARK']) .chart-style-tile.active,
+:host-context([data-theme='dark']) .chart-style-tile.active {
+  border-color: #4da3ff;
+}
+
+/* Dark Mode: Layout Paragraph */
+:host-context(.dark-theme) .layout-paragraph-col,
+:host-context([data-theme='DARK']) .layout-paragraph-col,
+:host-context([data-theme='dark']) .layout-paragraph-col,
+:host-context(.dark-theme) .layout-col-header,
+:host-context([data-theme='DARK']) .layout-col-header,
+:host-context([data-theme='dark']) .layout-col-header {
+  color: #f3f2f1;
+}
+
+:host-context(.dark-theme) .layout-param-label,
+:host-context([data-theme='DARK']) .layout-param-label,
+:host-context([data-theme='dark']) .layout-param-label {
+  color: #c8c6c4;
+}
+
+:host-context(.dark-theme) .layout-param-input,
+:host-context([data-theme='DARK']) .layout-param-input,
+:host-context([data-theme='dark']) .layout-param-input {
+  background: #1e1e1e;
+  border-color: #3e3e42;
+  color: #ffffff;
 }
