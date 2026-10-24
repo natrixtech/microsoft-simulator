@@ -1,4 +1,4 @@
-<div class="excel-grid-container" #gridScroll tabindex="0" role="grid" aria-label="Worksheet Grid">
+<div class="excel-grid-container" #gridScroll (scroll)="onGridScroll()" tabindex="0" role="grid" aria-label="Worksheet Grid">
   <table class="excel-table">
     <!-- Column headers row -->
     <thead>
@@ -38,6 +38,7 @@
           <div
             class="col-resize-handle"
             (mousedown)="onResizeHandleMouseDown(col.index, $event)"
+            (dblclick)="onResizeHandleDblClick(col.index, $event)"
             title="Resize Column"
           ></div>
         </th>
@@ -47,10 +48,22 @@
     <!-- Table body with data rows -->
     <tbody>
       <ng-container *ngFor="let row of rows">
-        <tr class="grid-row" [class.hidden-row]="isRowHidden(row.index)" [style.height.px]="rowHeight">
+        <tr class="grid-row" [class.hidden-row]="isRowHidden(row.index)" [style.height.px]="getRowHeight(row.index)">
           <!-- Row Number Header -->
-          <th class="row-header" (click)="state.selectRow(row.index)">
+          <th
+            class="row-header"
+            [style.height.px]="getRowHeight(row.index)"
+            (click)="state.selectRow(row.index)"
+          >
             {{ row.num }}
+
+            <!-- Row resize handle -->
+            <div
+              class="row-resize-handle"
+              (mousedown)="onRowResizeHandleMouseDown(row.index, $event)"
+              (dblclick)="onRowResizeHandleDblClick(row.index, $event)"
+              title="Resize Row"
+            ></div>
           </th>
 
           <!-- Cells -->
@@ -62,7 +75,8 @@
             [ngStyle]="getCellStyle(row.index, col.index)"
             [attr.data-cell-address]="col.letter + row.num"
             (mousedown)="onCellMouseDown(row.index, col.index, $event)"
-            (mouseenter)="onCellMouseEnter(row.index, col.index)"
+            (mouseenter)="onCellMouseEnter(row.index, col.index, $event)"
+            (mouseleave)="onCellMouseLeave(row.index, col.index)"
             (dblclick)="onCellDblClick(row.index, col.index)"
           >
             <!-- Cell content or Inline editor -->
@@ -87,8 +101,7 @@
             <div
               class="comment-marker"
               *ngIf="hasComment(row.index, col.index)"
-              (click)="openCommentPopup.emit(col.letter + row.num); $event.stopPropagation()"
-              title="View Comment"
+              (click)="onCommentMarkerClick(col.letter + row.num, $event)"
             ></div>
 
             <!-- Data validation dropdown arrow button -->
@@ -360,4 +373,37 @@
       {{ opt }}
     </button>
   </div>
+
+  <!-- Cell Comment Hover Note -->
+  <ng-container *ngIf="hoveredComment() && !state.isEditing() && !isSelectingRange">
+    <svg
+      class="comment-note-connector"
+      [style.left.px]="hoveredComment()!.svgLeft"
+      [style.top.px]="hoveredComment()!.svgTop"
+      [style.width.px]="hoveredComment()!.svgWidth"
+      [style.height.px]="hoveredComment()!.svgHeight"
+    >
+      <line
+        [attr.x1]="hoveredComment()!.lineFromX"
+        [attr.y1]="hoveredComment()!.lineFromY"
+        [attr.x2]="hoveredComment()!.lineToX"
+        [attr.y2]="hoveredComment()!.lineToY"
+        stroke="#000000"
+        stroke-width="1"
+      />
+      <polygon
+        [attr.points]="hoveredComment()!.arrowPoints"
+        fill="#000000"
+      />
+    </svg>
+
+    <div
+      class="comment-note-box"
+      [style.left.px]="hoveredComment()!.boxLeft"
+      [style.top.px]="hoveredComment()!.boxTop"
+    >
+      <div class="comment-note-header">Note:</div>
+      <div class="comment-note-text">{{ hoveredComment()!.text }}</div>
+    </div>
+  </ng-container>
 </div>

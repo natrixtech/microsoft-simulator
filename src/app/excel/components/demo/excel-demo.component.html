@@ -2,7 +2,7 @@
   <div class="demo-dialog-window" (click)="$event.stopPropagation()" role="dialog" aria-labelledby="demoTitle">
     <!-- Header -->
     <header class="demo-header">
-      <div>
+      <div class="header-titles">
         <h2 id="demoTitle" class="demo-task-title">{{ title }}</h2>
         <span class="demo-subtitle">{{ description || 'Watch how to solve this task step by step.' }}</span>
       </div>
@@ -40,69 +40,338 @@
           ✨ That's how you {{ getToastTitle() }}!
         </div>
 
-        <div class="replica-excel-window">
-          <!-- Mini Ribbon Tabs -->
-          <div class="replica-ribbon-tabs">
-            <span class="mini-tab" [class.active]="replicaActiveTab() === 'home'" data-demo-target="tab-home">Home</span>
-            <span class="mini-tab" [class.active]="replicaActiveTab() === 'insert'" data-demo-target="tab-insert">Insert</span>
-            <span class="mini-tab" [class.active]="replicaActiveTab() === 'formulas'" data-demo-target="tab-formulas">Formulas</span>
-            <span class="mini-tab" [class.active]="replicaActiveTab() === 'data'" data-demo-target="tab-data">Data</span>
-          </div>
-
-          <!-- Mini Ribbon Toolbar Controls for targets -->
-          <div class="replica-toolbar">
-            <button type="button" class="mini-tool" data-demo-target="paste-btn">📋 Paste</button>
-            <button type="button" class="mini-tool" data-demo-target="copy-btn">📑 Copy</button>
-            <button type="button" class="mini-tool" data-demo-target="bold-btn"><b>B</b></button>
-            <button type="button" class="mini-tool" data-demo-target="italic-btn"><i>I</i></button>
-            <button type="button" class="mini-tool" data-demo-target="underline-btn"><u>U</u></button>
-            <button type="button" class="mini-tool" data-demo-target="currency-btn">$</button>
-            <button type="button" class="mini-tool" data-demo-target="percent-btn">%</button>
-            <button type="button" class="mini-tool" data-demo-target="fill-color-btn">🪣</button>
-            <button type="button" class="mini-tool" data-demo-target="conditional-formatting-btn">📊 Rules</button>
-            <button type="button" class="mini-tool" data-demo-target="insert-chart-column-btn">📊 Chart</button>
-            <button type="button" class="mini-tool" data-demo-target="insert-pivottable-btn">🗂️ Pivot</button>
-            <button type="button" class="mini-tool" data-demo-target="insert-comment-btn">💬 Comment</button>
-            <button type="button" class="mini-tool" data-demo-target="data-sort-asc-btn">⬆ A-Z</button>
-            <button type="button" class="mini-tool" data-demo-target="data-filter-btn">🌪️ Filter</button>
-            <button type="button" class="mini-tool" data-demo-target="data-validation-btn">☑️ Valid</button>
-            <button type="button" class="mini-tool" data-demo-target="data-remove-duplicates-btn">🗑️ Dups</button>
-          </div>
-
-          <!-- Mini Formula Bar -->
-          <div class="replica-formula-bar">
-            <span class="mini-namebox" data-demo-target="name-box">{{ replicaActiveCell() }}</span>
-            <span class="mini-fx">fx</span>
-            <span class="mini-formulainput">{{ replicaFormulaText() }}</span>
-          </div>
-
-          <!-- Mini Grid with Cells -->
-          <div class="replica-grid">
-            <div class="mini-row mini-header">
-              <span class="mini-corner"></span>
-              <span class="mini-colhead">A</span>
-              <span class="mini-colhead">B</span>
-              <span class="mini-colhead">C</span>
-              <span class="mini-colhead">D</span>
+        <!-- Scaler container for responsive, coherent scaling -->
+        <div
+          class="replica-scaler"
+          [class.replica-hidden]="!replicaReady()"
+          inert
+          [style.transform]="scaleTransform()"
+          [style.width]="scalerWidth()"
+          [style.height]="scalerHeight()"
+        >
+          <div class="replica-excel-window">
+            <!-- Excel Titlebar -->
+            <div class="replica-excel-titlebar">
+              <div class="re-titlebar-left">
+                <span class="re-app-icon" aria-hidden="true" title="Microsoft Excel">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                    <path d="M19.5 3h-15C3.67 3 3 3.67 3 4.5v15c0 .83.67 1.5 1.5 1.5h15c.83 0 1.5-.67 1.5-1.5v-15c0-.83-.67-1.5-1.5-1.5zm-5.75 14h-1.63l-2.06-4.22-2.06 4.22H6.38L9.5 12l-2.9-5h1.63l1.87 3.93L11.97 7h1.63l-2.9 5 3.05 5z"/>
+                  </svg>
+                </span>
+                <span class="re-qa-btn" data-demo-target="home-undo-btn" title="Undo">↶</span>
+                <span class="re-doc-name">{{ title }} - Excel</span>
+              </div>
             </div>
 
-            <div class="mini-row" *ngFor="let r of [1, 2, 3, 4, 5, 6, 7]">
-              <span class="mini-rowhead">{{ r }}</span>
-              <span
-                *ngFor="let c of ['A', 'B', 'C', 'D']"
-                class="mini-cell"
-                [attr.data-demo-target]="'replica-cell-' + c + r"
-                [class.active-cell]="replicaActiveCell() === (c + r)"
-              >
-                {{ replicaCells().get(c + r)?.display || '' }}
-              </span>
+            <!-- Replica Ribbon Component matching the real Excel ribbon -->
+            <app-excel-replica-ribbon
+              [activeTab]="replicaActiveTab()"
+              [isBold]="replicaIsBold()"
+              [isItalic]="replicaIsItalic()"
+              [isUnderline]="replicaIsUnderline()"
+              [currentAlign]="replicaAlign()"
+              [fontFamily]="replicaFontFamily()"
+              [fontSize]="replicaFontSize()"
+              [currentNumberFormat]="replicaNumberFormat()"
+              [hasFilterActive]="replicaHasFilter()"
+              [isFillColorOpen]="replicaFillColorOpen()"
+              [isTextColorOpen]="replicaTextColorOpen()"
+              (tabChange)="replicaActiveTab.set($event)"
+            ></app-excel-replica-ribbon>
+
+            <!-- Formula Bar matching real Excel -->
+            <div class="replica-formula-bar" role="toolbar">
+              <div class="replica-namebox-container" data-demo-target="name-box">
+                <span class="replica-namebox-val">{{ replicaActiveCell() }}</span>
+                <span class="namebox-arrow" aria-hidden="true">▾</span>
+              </div>
+
+              <div class="bar-separator" aria-hidden="true"></div>
+
+              <div class="replica-formula-actions">
+                <span class="r-action-btn" data-demo-target="formula-cancel-btn" title="Cancel">✕</span>
+                <span class="r-action-btn" data-demo-target="formula-enter-btn" title="Enter">✓</span>
+                <span class="r-action-btn fx-btn" data-demo-target="formula-fx-btn" title="Insert Function">fx</span>
+              </div>
+
+              <div class="bar-separator" aria-hidden="true"></div>
+
+              <div class="replica-formula-input-container">
+                <div class="replica-formulainput" data-demo-target="formula-input">
+                  {{ formulaBarText() }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Grid Workspace -->
+            <div class="replica-grid-workspace">
+              <div class="replica-grid">
+                <!-- Column Header Row -->
+                <div class="mini-row mini-header">
+                  <span class="mini-corner"></span>
+                  <div
+                    *ngFor="let c of columns"
+                    class="mini-colhead"
+                  >
+                    <span>{{ c }}</span>
+                    <!-- Filter Dropdown Arrow in Header -->
+                    <button
+                      type="button"
+                      *ngIf="replicaHasFilter()"
+                      class="mini-filter-arrow-btn"
+                      [attr.data-demo-target]="'col-filter-btn-' + c"
+                      title="Filter"
+                    >
+                      ▾
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Grid Data Rows -->
+                <ng-container *ngFor="let r of rows">
+                  <div class="mini-row" *ngIf="!hiddenRows().has(r)">
+                    <span class="mini-rowhead">{{ r }}</span>
+                    <div
+                      *ngFor="let c of columns"
+                      class="mini-cell"
+                      [attr.data-demo-target]="'replica-cell-' + c + r"
+                      [class.active-cell]="replicaActiveCell() === (c + r)"
+                      [class.in-selection]="isCellInRange(c + r, replicaSelectedRange())"
+                      [style.font-weight]="replicaFormats().get(c + r)?.bold ? 'bold' : 'normal'"
+                      [style.font-style]="replicaFormats().get(c + r)?.italic ? 'italic' : 'normal'"
+                      [style.text-decoration]="replicaFormats().get(c + r)?.underline ? 'underline' : 'none'"
+                      [style.text-align]="replicaFormats().get(c + r)?.align || 'left'"
+                      [style.font-family]="replicaFormats().get(c + r)?.fontFamily || 'inherit'"
+                      [style.background-color]="replicaFormats().get(c + r)?.fillColor === 'lightGreen' ? '#bbf7d0' : (replicaFormats().get(c + r)?.fillColor || '')"
+                      [style.color]="replicaFormats().get(c + r)?.color || 'inherit'"
+                    >
+                      <span class="cell-display-text">{{ replicaCells().get(c + r)?.display || '' }}</span>
+
+                      <!-- Comment Triangle Indicator -->
+                      <span
+                        class="cell-comment-triangle"
+                        *ngIf="hasCommentOnCell() === (c + r)"
+                        title="Comment"
+                      ></span>
+
+                      <!-- Data Validation Dropdown Arrow -->
+                      <span
+                        class="cell-dv-arrow"
+                        *ngIf="replicaFormats().get(c + r)?.hasDataValidation"
+                        title="Validation Dropdown"
+                      >▾</span>
+                    </div>
+                  </div>
+                </ng-container>
+              </div>
+
+              <!-- Floating Chart Object -->
+              <div class="replica-chart-card" *ngIf="hasChartObject() as ch">
+                <div class="chart-card-header">{{ ch.title }}</div>
+                <div class="chart-card-bars">
+                  <div class="chart-bar-rect" style="height: 55%; background: #4472c4;"></div>
+                  <div class="chart-bar-rect" style="height: 75%; background: #4472c4;"></div>
+                  <div class="chart-bar-rect" style="height: 90%; background: #4472c4;"></div>
+                  <div class="chart-bar-rect" style="height: 65%; background: #4472c4;"></div>
+                </div>
+              </div>
+
+              <!-- Floating Pivot Table Object -->
+              <div class="replica-pivot-card" *ngIf="hasPivotTableObject()">
+                <div class="pivot-card-title">PivotTable1</div>
+                <div class="pivot-card-table">
+                  <div class="pv-row pv-header"><span>Row Labels</span><span>Sum of Amount</span></div>
+                  <div class="pv-row"><span>Hardware</span><span>900</span></div>
+                  <div class="pv-row"><span>Office</span><span>350</span></div>
+                  <div class="pv-row"><span>Supplies</span><span>35</span></div>
+                  <div class="pv-row pv-total"><span>Grand Total</span><span>1285</span></div>
+                </div>
+              </div>
+
+              <!-- Floating Comment Balloon -->
+              <div class="replica-comment-balloon" *ngIf="hasCommentOnCell() as cAddr">
+                <div class="cb-header">Note</div>
+                <div class="cb-body">{{ commentText() }}</div>
+              </div>
+            </div>
+
+            <!-- In-Replica Dialog Overlays (Driven Step-by-Step) -->
+            <div class="replica-dialog-backdrop" *ngIf="replicaDialog()">
+              <!-- 1. Sort Dialog -->
+              <div class="replica-modal-box" *ngIf="replicaDialog() === 'sort'">
+                <div class="rmb-header">
+                  <span>Sort</span>
+                  <span class="rmb-close">✕</span>
+                </div>
+                <div class="rmb-body">
+                  <div class="rmb-field">
+                    <label>Column:</label>
+                    <div class="rmb-fake-select">{{ sortColumn() }}</div>
+                  </div>
+                  <div class="rmb-field">
+                    <label>Sort On:</label>
+                    <div class="rmb-fake-select">Cell Values</div>
+                  </div>
+                  <div class="rmb-field">
+                    <label>Order:</label>
+                    <div class="rmb-fake-select">{{ sortOrder() }}</div>
+                  </div>
+                </div>
+                <div class="rmb-footer">
+                  <button type="button" class="rmb-btn primary" data-demo-target="sort-dialog-ok-btn">OK</button>
+                  <button type="button" class="rmb-btn">Cancel</button>
+                </div>
+              </div>
+
+              <!-- 2. Filter Dropdown Popover -->
+              <div class="replica-filter-popover" *ngIf="replicaDialog() === 'filter'">
+                <div class="rfp-title">Filter by condition</div>
+                <div class="rfp-select">Greater than</div>
+                <div class="rfp-input-box">
+                  <input type="text" class="rfp-input" [value]="filterValue()" data-demo-target="filter-condition-value" readonly />
+                </div>
+                <div class="rfp-actions">
+                  <button type="button" class="rfp-btn primary" data-demo-target="filter-dialog-ok-btn" data-demo-target-alt="filter-ok-btn">OK</button>
+                  <button type="button" class="rfp-btn">Cancel</button>
+                </div>
+              </div>
+
+              <!-- 3. Chart Dialog -->
+              <div class="replica-modal-box" *ngIf="replicaDialog() === 'chart'">
+                <div class="rmb-header">
+                  <span>Insert Chart</span>
+                  <span class="rmb-close">✕</span>
+                </div>
+                <div class="rmb-body">
+                  <div class="rmb-field">
+                    <label>Chart Type:</label>
+                    <div class="rmb-fake-select">{{ chartType() | titlecase }}</div>
+                  </div>
+                  <div class="rmb-field">
+                    <label>Chart Title:</label>
+                    <input type="text" class="rmb-input" [value]="chartTitle()" data-demo-target="chart-title-input" readonly />
+                  </div>
+                </div>
+                <div class="rmb-footer">
+                  <button type="button" class="rmb-btn primary" data-demo-target="chart-dialog-insert-btn">Insert</button>
+                  <button type="button" class="rmb-btn">Cancel</button>
+                </div>
+              </div>
+
+              <!-- 4. PivotTable Dialog -->
+              <div class="replica-modal-box" *ngIf="replicaDialog() === 'pivotTable'">
+                <div class="rmb-header">
+                  <span>Create PivotTable</span>
+                  <span class="rmb-close">✕</span>
+                </div>
+                <div class="rmb-body">
+                  <div class="rmb-field">
+                    <label>Rows:</label>
+                    <div class="rmb-fake-select">{{ pivotRows() }}</div>
+                  </div>
+                  <div class="rmb-field">
+                    <label>Values:</label>
+                    <div class="rmb-fake-select">{{ pivotValues() }}</div>
+                  </div>
+                  <div class="rmb-field">
+                    <label>Summarize by:</label>
+                    <div class="rmb-fake-select">{{ pivotSummarize() }}</div>
+                  </div>
+                </div>
+                <div class="rmb-footer">
+                  <button type="button" class="rmb-btn primary" data-demo-target="pivottable-dialog-ok-btn">OK</button>
+                  <button type="button" class="rmb-btn">Cancel</button>
+                </div>
+              </div>
+
+              <!-- 5. Comment Dialog -->
+              <div class="replica-modal-box comment-box" *ngIf="replicaDialog() === 'comment'">
+                <div class="rmb-header">
+                  <span>New Comment</span>
+                  <span class="rmb-close">✕</span>
+                </div>
+                <div class="rmb-body">
+                  <textarea class="rmb-textarea" [value]="commentText()" data-demo-target="comment-input" readonly></textarea>
+                </div>
+                <div class="rmb-footer">
+                  <button type="button" class="rmb-btn primary" data-demo-target="comment-post-btn">Post</button>
+                </div>
+              </div>
+
+              <!-- 6. Conditional Format Dialog -->
+              <div class="replica-modal-box" *ngIf="replicaDialog() === 'conditionalFormat'">
+                <div class="rmb-header">
+                  <span>Conditional Formatting</span>
+                  <span class="rmb-close">✕</span>
+                </div>
+                <div class="rmb-body">
+                  <div class="rmb-field">
+                    <label>Format cells if:</label>
+                    <div class="rmb-fake-select">Greater than</div>
+                  </div>
+                  <div class="rmb-field">
+                    <label>Value:</label>
+                    <input type="text" class="rmb-input" [value]="cfValue()" data-demo-target="cf-value-input" readonly />
+                  </div>
+                  <div class="rmb-field">
+                    <label>Fill Color:</label>
+                    <div class="rmb-color-sample" [style.background]="cfColor() === 'lightGreen' ? '#bbf7d0' : cfColor()"></div>
+                  </div>
+                </div>
+                <div class="rmb-footer">
+                  <button type="button" class="rmb-btn primary" data-demo-target="cf-dialog-done-btn">Done</button>
+                  <button type="button" class="rmb-btn">Cancel</button>
+                </div>
+              </div>
+
+              <!-- 7. Data Validation Dialog -->
+              <div class="replica-modal-box" *ngIf="replicaDialog() === 'dataValidation'">
+                <div class="rmb-header">
+                  <span>Data Validation</span>
+                  <span class="rmb-close">✕</span>
+                </div>
+                <div class="rmb-body">
+                  <div class="rmb-field">
+                    <label>Allow:</label>
+                    <div class="rmb-fake-select">List</div>
+                  </div>
+                  <div class="rmb-field">
+                    <label>Source:</label>
+                    <input type="text" class="rmb-input" [value]="dvSource()" data-demo-target="dv-source-input" readonly />
+                  </div>
+                </div>
+                <div class="rmb-footer">
+                  <button type="button" class="rmb-btn primary" data-demo-target="dv-dialog-done-btn">Done</button>
+                  <button type="button" class="rmb-btn">Cancel</button>
+                </div>
+              </div>
+
+              <!-- 8. Remove Duplicates Dialog -->
+              <div class="replica-modal-box" *ngIf="replicaDialog() === 'removeDuplicates'">
+                <div class="rmb-header">
+                  <span>Remove Duplicates</span>
+                  <span class="rmb-close">✕</span>
+                </div>
+                <div class="rmb-body">
+                  <div class="rmb-checkbox-row">
+                    <input type="checkbox" checked data-demo-target="rd-headers-checkbox" />
+                    <label>My data has headers</label>
+                  </div>
+                  <div class="rmb-info-text">Columns: Column A, Column B, Column C</div>
+                </div>
+                <div class="rmb-footer">
+                  <button type="button" class="rmb-btn primary" data-demo-target="rd-dialog-remove-btn">Remove Duplicates</button>
+                  <button type="button" class="rmb-btn">Cancel</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Animated Floating Cursor -->
+        <!-- Animated Floating Cursor (Smooth glide, ~2x slower, visible click) -->
         <div
           class="demo-cursor"
+          *ngIf="replicaReady()"
           [class.clicking]="isClicking()"
           [style.left.px]="cursorPixelX()"
           [style.top.px]="cursorPixelY()"

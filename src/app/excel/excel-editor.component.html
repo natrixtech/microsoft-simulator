@@ -70,6 +70,7 @@
       [isCompleted]="isCompleted()"
       (openFilterDropdown)="onOpenFilterDropdown($event)"
       (openCommentPopup)="onOpenCommentPopup($event)"
+      (validationError)="onValidationError($event)"
     ></app-excel-grid>
 
     <!-- Floating Movable Task Card & Mascot Group -->
@@ -193,20 +194,22 @@
       <span class="view-icon active" title="Normal">田</span>
       <span class="view-icon" title="Page Layout">📄</span>
       <span class="view-icon" title="Page Break Preview">▦</span>
-      <div class="zoom-controls">
-        <button type="button" class="zoom-btn" title="Zoom Out" (click)="zoomOut()">−</button>
+      <div class="zoom-controls disabled" aria-disabled="true">
+        <button type="button" class="zoom-btn" title="Zoom Out" disabled aria-disabled="true" tabindex="-1">−</button>
         <input
           type="range"
           min="50"
           max="200"
           step="10"
-          [value]="zoomLevel()"
-          (input)="onZoomSliderChange($event)"
+          [value]="100"
+          disabled
+          aria-disabled="true"
+          tabindex="-1"
           class="zoom-slider"
-          aria-label="Zoom"
+          aria-label="Zoom (disabled)"
         />
-        <button type="button" class="zoom-btn" title="Zoom In" (click)="zoomIn()">+</button>
-        <span class="zoom-level">{{ zoomLevel() }}%</span>
+        <button type="button" class="zoom-btn" title="Zoom In" disabled aria-disabled="true" tabindex="-1">+</button>
+        <span class="zoom-level">100%</span>
       </div>
     </div>
   </footer>
@@ -345,4 +348,60 @@
     [isPaused]="bridge.isPaused()"
     (close)="isDemoOpen.set(false); focusGrid()"
   ></app-excel-demo>
+
+  <!-- Data Validation In-App Alert Dialog -->
+  <div
+    class="modal-backdrop validation-alert-backdrop"
+    *ngIf="validationAlert()"
+    (click)="closeValidationAlert()"
+    role="presentation"
+  >
+    <div
+      class="excel-dialog validation-alert-dialog"
+      (click)="$event.stopPropagation()"
+      role="alertdialog"
+      aria-labelledby="dvAlertTitle"
+      aria-describedby="dvAlertMsg"
+    >
+      <div class="dialog-header">
+        <span id="dvAlertTitle" class="dialog-title">Microsoft Excel</span>
+        <button
+          type="button"
+          class="close-btn"
+          (click)="closeValidationAlert()"
+          aria-label="Close"
+        >✕</button>
+      </div>
+
+      <div class="dialog-body alert-body">
+        <div class="alert-icon-warning" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none">
+            <path d="M12 2L1 21h22L12 2z" fill="#f59e0b" stroke="#d97706" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M12 9v5" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="12" cy="17" r="1.25" fill="#ffffff"/>
+          </svg>
+        </div>
+        <div class="alert-message-content">
+          <p id="dvAlertMsg" class="alert-message">
+            This value doesn’t match the data validation restrictions defined for this cell.
+          </p>
+          <p class="alert-allowed-values" *ngIf="validationAlert()?.allowed?.length">
+            Allowed: <strong>{{ validationAlert()!.allowed.join(', ') }}</strong>
+          </p>
+        </div>
+      </div>
+
+      <div class="dialog-footer alert-footer">
+        <button
+          #validationOkBtn
+          type="button"
+          class="btn alert-ok-btn"
+          (click)="closeValidationAlert()"
+          data-demo-target="dv-alert-ok-btn"
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
 </div>

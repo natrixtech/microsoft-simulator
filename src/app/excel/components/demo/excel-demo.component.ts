@@ -5,28 +5,47 @@ import {
   Component,
   ElementRef,
   EventEmitter,
+  HostListener,
   Input,
   OnDestroy,
   OnInit,
   Output,
   ViewChild,
+  computed,
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TaskGoal } from 'shared';
 import { SheetSnapshot } from '../../models/excel.types';
-import { colLetterToIndex, formatAddress, indexToColLetter, parseAddress, parseRange } from '../../services/formula-engine.service';
-import { COLORS } from 'shared';
+import {
+  colLetterToIndex,
+  formatAddress,
+  indexToColLetter,
+  parseAddress,
+  parseRange,
+  FormulaEngineService,
+} from '../../services/formula-engine.service';
+import { ExcelReplicaRibbonComponent } from './excel-replica-ribbon.component';
 
 export interface DemoStepItem {
   label: string;
   state: 'pending' | 'active' | 'done';
 }
 
+// ============================================================================
+// Show Me How Timing Constants (Excel replica demo playback)
+// ============================================================================
+export const CURSOR_MOVE_DURATION_MS = 1100;     // ~2x slower glide to target
+export const PRE_CLICK_PAUSE_MS = 500;           // 400–600 ms pause before clicking
+export const CLICK_EFFECT_DURATION_MS = 400;     // Visible click pulse effect duration
+export const POST_OPEN_PAUSE_MS = 600;           // Pause after menu / dropdown / dialog opens
+export const STEP_TRANSITION_PAUSE_MS = 500;     // Pause between actions / steps
+export const REPLICA_BASE_WIDTH = 1160;          // Base ribbon width to fit all ribbon groups (Word match)
+
 @Component({
   selector: 'app-excel-demo',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ExcelReplicaRibbonComponent],
   templateUrl: './excel-demo.component.html',
   styleUrls: ['./excel-demo.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,14 +75,79 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly cursorPixelY = signal<number>(100);
   readonly isClicking = signal<boolean>(false);
 
+  // Scaling state
+  readonly replicaReady = signal<boolean>(false);
+  readonly scaleTransform = signal<string>('none');
+  readonly scalerWidth = signal<string>('100%');
+  readonly scalerHeight = signal<string>('100%');
+  private resizeObserver?: ResizeObserver;
+  private rafId?: number;
+
   // Scaled replica sheet state
   readonly replicaActiveTab = signal<'home' | 'insert' | 'formulas' | 'data'>('home');
   readonly replicaActiveCell = signal<string>('A1');
   readonly replicaFormulaText = signal<string>('');
-  readonly replicaCells = signal<Map<string, { value: any; display: string }>>(new Map());
+  readonly formulaBarText = computed<string>(() => {
+    const override = this.replicaFormulaText();
+    if (override) return override;
+    const active = this.replicaActiveCell();
+    const cellVal = this.replicaCells().get(active)?.value;
+    if (cellVal !== undefined && cellVal !== null) {
+      return String(cellVal);
+    }
+    return '';
+  });
+  readonly replicaCells = signal<Map<string, { value: any; calculatedValue?: any; display: string }>>(new Map());
   readonly replicaFormats = signal<Map<string, any>>(new Map());
   readonly replicaSelectedRange = signal<string>('A1');
 
+  // Ribbon state in replica
+  readonly replicaFontFamily = signal<string>('Calibri');
+  readonly replicaFontSize = signal<number | string>(11);
+  readonly replicaNumberFormat = signal<string>('automatic');
+  readonly replicaAlign = signal<string>('');
+  readonly replicaIsBold = signal<boolean>(false);
+  readonly replicaIsItalic = signal<boolean>(false);
+  readonly replicaIsUnderline = signal<boolean>(false);
+  readonly replicaHasFilter = signal<boolean>(false);
+  readonly replicaFillColorOpen = signal<boolean>(false);
+  readonly replicaTextColorOpen = signal<boolean>(false);
+
+  // In-replica dialogs & overlays
+  readonly replicaDialog = signal<
+    'sort' | 'filter' | 'chart' | 'pivotTable' | 'comment' | 'conditionalFormat' | 'dataValidation' | 'removeDuplicates' | null
+  >(null);
+
+  // Dialog parameters
+  readonly sortColumn = signal<string>('Column B');
+  readonly sortOrder = signal<string>('Z to A');
+  readonly filterCondition = signal<string>('greaterThan');
+  readonly filterValue = signal<string>('50');
+  readonly filterColumn = signal<string>('C');
+  readonly chartTitle = signal<string>('Sales Report');
+  readonly chartType = signal<string>('column');
+  readonly pivotRows = signal<string>('Category');
+  readonly pivotValues = signal<string>('Amount');
+  readonly pivotSummarize = signal<string>('SUM');
+  readonly commentText = signal<string>('check pricing');
+  readonly cfCondition = signal<string>('greaterThan');
+  readonly cfValue = signal<string>('100');
+  readonly cfColor = signal<string>('lightGreen');
+  readonly dvType = signal<string>('List');
+  readonly dvSource = signal<string>('Yes, No');
+  readonly rdHeaders = signal<boolean>(true);
+
+  // Grid visual additions
+  readonly hasChartObject = signal<{ title: string; type: string } | null>(null);
+  readonly hasPivotTableObject = signal<boolean>(false);
+  readonly hasCommentOnCell = signal<string | null>(null);
+  readonly hiddenRows = signal<Set<number>>(new Set());
+
+  // Grid structure
+  readonly columns = ['A', 'B', 'C', 'D', 'E'];
+  rows: number[] = Array.from({ length: 26 }, (_, i) => i + 1);
+
+  private formulaEngine = new FormulaEngineService();
   private isCancelled = false;
   private activeTimers: any[] = [];
 
@@ -73,16 +157,40 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.resetReplicaState();
     this.setupSteps();
   }
 
   ngAfterViewInit(): void {
-    this.resetReplicaState();
-    this.play();
+    if (typeof ResizeObserver !== 'undefined' && this.replicaAreaRef) {
+      this.resizeObserver = new ResizeObserver(() => this.updateScaling());
+      this.resizeObserver.observe(this.replicaAreaRef.nativeElement);
+    }
+
+    let frameCount = 0;
+    const checkScale = () => {
+      if (this.isCancelled) return;
+      frameCount++;
+      const scaled = this.updateScaling();
+      if (scaled) {
+        this.replicaReady.set(true);
+        this.cdr.detectChanges();
+        this.play();
+      } else if (frameCount < 20) {
+        this.rafId = requestAnimationFrame(checkScale);
+      } else {
+        this.replicaReady.set(true);
+        this.cdr.detectChanges();
+        this.play();
+      }
+    };
+
+    checkScale();
   }
 
   ngOnDestroy(): void {
     this.cancelAll();
+    this.resizeObserver?.disconnect();
   }
 
   onClose(): void {
@@ -92,13 +200,55 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   replay(): void {
     this.cancelAll();
+    this.isCancelled = false;
+    this.showToast.set(false);
     this.resetReplicaState();
     this.setupSteps();
+    this.updateScaling();
     this.play();
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.updateScaling();
+  }
+
+  updateScaling(): boolean {
+    if (!this.replicaAreaRef) return false;
+    const el = this.replicaAreaRef.nativeElement;
+    const w = el.clientWidth;
+    const h = el.clientHeight;
+    if (w <= 0 || h <= 0) return false;
+
+    let scaledH = h;
+    if (w >= REPLICA_BASE_WIDTH) {
+      this.scaleTransform.set('none');
+      this.scalerWidth.set('100%');
+      this.scalerHeight.set('100%');
+    } else {
+      const scale = w / REPLICA_BASE_WIDTH;
+      scaledH = Math.round(h / scale);
+      this.scaleTransform.set(`scale(${scale})`);
+      this.scalerWidth.set(`${REPLICA_BASE_WIDTH}px`);
+      this.scalerHeight.set(`${scaledH}px`);
+    }
+
+    // Chrome inside replica: titlebar (30) + ribbon (129) + formula bar (27) = 186px
+    // Grid header: 24px. Each data row: 26px.
+    const neededRows = Math.max(26, Math.ceil((scaledH - 210) / 26) + 1);
+    if (this.rows.length !== neededRows) {
+      this.rows = Array.from({ length: neededRows }, (_, i) => i + 1);
+    }
+    this.cdr.markForCheck();
+    return true;
   }
 
   private cancelAll(): void {
     this.isCancelled = true;
+    if (this.rafId) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = undefined;
+    }
     for (const t of this.activeTimers) {
       clearTimeout(t);
     }
@@ -140,29 +290,35 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
   private getStepLabelForGoal(g: any): string {
     switch (g?.type) {
       case 'cellValue':
-        return 'Type the values';
+        return 'Type values into cells';
       case 'cellFormula':
-        return 'Enter the formula';
+        return g.function ? `Enter =${g.function}(${g.references || ''}) formula` : 'Enter the formula';
       case 'cellFormat':
-        return 'Select the range, then Apply the format';
+        if (g.numberFormat === 'currency' || g.numberFormat === '$') return 'Format range as currency ($)';
+        if (g.numberFormat === 'percent' || g.numberFormat === '%') return 'Format range as percent (%)';
+        if (g.fontFamily) return `Set font family to ${g.fontFamily}`;
+        if (g.bold) return 'Apply bold formatting';
+        if (g.fillColor) return 'Apply fill color';
+        return 'Format cells on Home tab';
       case 'sorted':
-        return 'Sort the data';
+        return `Sort range by column ${g.byColumn || 'B'} (${g.order === 'desc' ? 'Z to A' : 'A to Z'})`;
       case 'filter':
-        return 'Create a filter, then Set the condition';
+        return `Filter column ${g.column || 'C'} (${g.condition || 'condition'} ${g.value ?? ''})`;
       case 'chart':
-        return 'Insert a chart';
+        return `Insert ${g.chartType || 'column'} chart`;
       case 'pivotTable':
-        return 'Insert a pivot table';
+        return 'Insert PivotTable';
       case 'comment':
-        return 'Add a comment';
+        return 'Add cell comment';
       case 'conditionalFormat':
-        return 'Add a rule';
+        return 'Add conditional formatting rule';
       case 'dataValidation':
-        return 'Add data validation';
+        return 'Set up data validation';
       case 'noDuplicates':
-        return 'Remove duplicates';
+        return 'Remove duplicate rows';
       case 'action':
-        return 'Do the action';
+        if (g.action === 'selectRange') return `Select range ${g.range || ''}`;
+        return 'Perform action';
       default:
         return 'Complete task';
     }
@@ -217,8 +373,16 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
   private resetReplicaState(): void {
     this.isCancelled = false;
     this.showToast.set(false);
+    this.hasChartObject.set(null);
+    this.hasPivotTableObject.set(false);
+    this.hasCommentOnCell.set(null);
+    this.hiddenRows.set(new Set());
+    this.replicaDialog.set(null);
+    this.replicaFillColorOpen.set(false);
+    this.replicaTextColorOpen.set(false);
+    this.replicaHasFilter.set(false);
 
-    const cellMap = new Map<string, { value: any; display: string }>();
+    const cellMap = new Map<string, { value: any; calculatedValue?: any; display: string }>();
     const fmtMap = new Map<string, any>();
 
     const sampleSheet =
@@ -249,6 +413,84 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.replicaActiveCell.set('A1');
     this.replicaSelectedRange.set('A1');
     this.replicaFormulaText.set('');
+
+    // Evaluate formulas and format displays initially
+    this.evaluateAndFormatCells();
+  }
+
+  private evaluateAndFormatCells(): void {
+    const cur = new Map(this.replicaCells());
+    const fmts = this.replicaFormats();
+
+    const getVal = (addr: string): any => {
+      const norm = addr.toUpperCase().replace(/\$/g, '');
+      const c = cur.get(norm);
+      if (!c) return 0;
+      if (typeof c.value === 'string' && c.value.startsWith('=')) {
+        return c.calculatedValue ?? 0;
+      }
+      return c.value ?? 0;
+    };
+
+    const getRange = (rangeStr: string): any[][] => {
+      const parsed = parseRange(rangeStr);
+      if (!parsed) return [['#REF!']];
+      const res: any[][] = [];
+      for (let r = parsed.startRow; r <= parsed.endRow; r++) {
+        const rowVals: any[] = [];
+        for (let c = parsed.startCol; c <= parsed.endCol; c++) {
+          const a = formatAddress({ row: r, col: c });
+          const norm = a.toUpperCase().replace(/\$/g, '');
+          const cell = cur.get(norm);
+          if (!cell || cell.value === '' || cell.value === undefined || cell.value === null) {
+            rowVals.push(null);
+          } else {
+            rowVals.push(getVal(a));
+          }
+        }
+        res.push(rowVals);
+      }
+      return res;
+    };
+
+    // 1. Evaluate formula cells
+    for (const [addr, cell] of cur.entries()) {
+      if (typeof cell.value === 'string' && cell.value.startsWith('=')) {
+        const evalRes = this.formulaEngine.evaluate(cell.value, addr, getVal, getRange);
+        cell.calculatedValue = evalRes.value;
+      }
+    }
+
+    // 2. Format display values
+    for (const [addr, cell] of cur.entries()) {
+      const fmt = fmts.get(addr);
+      const valToFormat =
+        typeof cell.value === 'string' && cell.value.startsWith('=')
+          ? cell.calculatedValue
+          : cell.value;
+      cell.display = this.formulaEngine.formatDisplayValue(
+        valToFormat,
+        fmt?.numberFormat,
+        fmt?.decimals
+      );
+    }
+
+    this.replicaCells.set(new Map(cur));
+  }
+
+  private applyReplicaFormat(rangeStr: string, updates: any): void {
+    const parsed = parseRange(rangeStr);
+    if (!parsed) return;
+    const curFmt = new Map(this.replicaFormats());
+    for (let r = parsed.startRow; r <= parsed.endRow; r++) {
+      for (let c = parsed.startCol; c <= parsed.endCol; c++) {
+        const addr = formatAddress({ row: r, col: c });
+        const existing = curFmt.get(addr) || {};
+        curFmt.set(addr, { ...existing, ...updates });
+      }
+    }
+    this.replicaFormats.set(curFmt);
+    this.evaluateAndFormatCells();
   }
 
   private setStepState(idx: number, state: 'pending' | 'active' | 'done'): void {
@@ -275,7 +517,7 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
       if (this.isCancelled) return;
 
       this.setStepState(i, 'done');
-      await this.delay(350);
+      await this.delay(STEP_TRANSITION_PAUSE_MS);
     }
 
     if (this.isCancelled) return;
@@ -283,40 +525,112 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  private positionCursorOver(targetRect: DOMRect): void {
+    const area = this.replicaAreaRef?.nativeElement;
+    if (!area) return;
+    const areaRect = area.getBoundingClientRect();
+    const x = targetRect.left - areaRect.left + (targetRect.width > 0 ? targetRect.width / 2 : 10);
+    const y = targetRect.top - areaRect.top + (targetRect.height > 0 ? targetRect.height / 2 : 10);
+
+    this.cursorPixelX.set(Math.round(x));
+    this.cursorPixelY.set(Math.round(y));
+    this.cdr.markForCheck();
+  }
+
   private async moveToTarget(targetName: string): Promise<boolean> {
     if (this.isCancelled) return false;
 
+    // Switch ribbon tab automatically if targeting tab buttons or tab controls
+    if (targetName === 'tab-insert' || targetName.startsWith('insert-')) {
+      this.replicaActiveTab.set('insert');
+    } else if (targetName === 'tab-formulas' || targetName.startsWith('formulas-')) {
+      this.replicaActiveTab.set('formulas');
+    } else if (targetName === 'tab-data' || targetName.startsWith('data-')) {
+      this.replicaActiveTab.set('data');
+    } else if (
+      targetName === 'tab-home' ||
+      [
+        'bold-btn',
+        'italic-btn',
+        'underline-btn',
+        'borders-btn',
+        'fill-color-btn',
+        'text-color-btn',
+        'font-color-btn',
+        'font-family-select',
+        'font-size-select',
+        'increase-font-size-btn',
+        'decrease-font-size-btn',
+        'align-left-btn',
+        'align-center-btn',
+        'align-right-btn',
+        'format-currency-btn',
+        'currency-btn',
+        'format-percent-btn',
+        'percent-btn',
+        'conditional-format-btn',
+        'conditional-formatting-btn',
+        'paste-btn',
+        'cut-btn',
+        'copy-btn',
+        'autosum-btn',
+        'sort-filter-btn',
+      ].includes(targetName)
+    ) {
+      this.replicaActiveTab.set('home');
+    }
+    this.cdr.markForCheck();
+
     const host = this.elRef.nativeElement;
-    let target = host.querySelector(`[data-demo-target="${targetName}"]`) as HTMLElement;
+    let target = (host.querySelector(`[data-demo-target="${targetName}"]`) ||
+      host.querySelector(`[data-demo-target-alt="${targetName}"]`)) as HTMLElement;
 
     if (!target) {
-      for (let i = 0; i < 5; i++) {
-        await this.delay(80);
+      for (let i = 0; i < 8; i++) {
+        await this.delay(60);
         if (this.isCancelled) return false;
-        target = host.querySelector(`[data-demo-target="${targetName}"]`) as HTMLElement;
+        target = (host.querySelector(`[data-demo-target="${targetName}"]`) ||
+          host.querySelector(`[data-demo-target-alt="${targetName}"]`)) as HTMLElement;
         if (target) break;
       }
     }
     if (!target) return false;
 
-    const replicaArea = this.replicaAreaRef?.nativeElement || host;
-    const areaRect = replicaArea.getBoundingClientRect();
-    const targetRect = target.getBoundingClientRect();
+    this.positionCursorOver(target.getBoundingClientRect());
 
-    const x = targetRect.left - areaRect.left + targetRect.width / 2;
-    const y = targetRect.top - areaRect.top + targetRect.height / 2;
-
-    this.cursorPixelX.set(Math.round(x));
-    this.cursorPixelY.set(Math.round(y));
-    this.cdr.markForCheck();
-
-    await this.delay(350);
+    // Glide smoothly to target (~2x slower pace)
+    await this.delay(CURSOR_MOVE_DURATION_MS);
     if (this.isCancelled) return false;
 
+    // Short pause (400-600ms) before clicking
+    await this.delay(PRE_CLICK_PAUSE_MS);
+    if (this.isCancelled) return false;
+
+    // Visible click effect
     this.isClicking.set(true);
-    await this.delay(120);
+    await this.delay(CLICK_EFFECT_DURATION_MS);
     this.isClicking.set(false);
     return true;
+  }
+
+  selectRange(rangeStr: string): void {
+    this.replicaSelectedRange.set(rangeStr);
+    const first = rangeStr.split(':')[0];
+    this.replicaActiveCell.set(first);
+    this.cdr.markForCheck();
+  }
+
+  isCellInRange(addr: string, rangeStr: string): boolean {
+    if (!rangeStr) return false;
+    const parsed = parseRange(rangeStr);
+    const cellCoord = parseAddress(addr);
+    if (!parsed || !cellCoord) return addr === rangeStr;
+    return (
+      cellCoord.row >= parsed.startRow &&
+      cellCoord.row <= parsed.endRow &&
+      cellCoord.col >= parsed.startCol &&
+      cellCoord.col <= parsed.endCol
+    );
   }
 
   private async executeDemoGoal(g: any): Promise<void> {
@@ -331,7 +645,7 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
           this.replicaSelectedRange.set(addr);
           await this.moveToTarget(`replica-cell-${addr}`);
 
-          // Type value character by character into replica cell
+          // Type value character by character into formula bar and cell
           const strVal = String(val);
           let cur = '';
           for (const ch of strVal) {
@@ -343,6 +657,8 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
             this.replicaCells.set(m);
             await this.delay(60);
           }
+          await this.delay(PRE_CLICK_PAUSE_MS);
+          this.evaluateAndFormatCells();
           await this.delay(200);
         }
       }
@@ -367,111 +683,292 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
         this.replicaCells.set(m);
         await this.delay(50);
       }
+      await this.delay(PRE_CLICK_PAUSE_MS);
+      // On Enter commit: calculate formula result and format
+      const m = new Map(this.replicaCells());
+      m.set(addr, { value: formulaText, display: formulaText });
+      this.replicaCells.set(m);
+      this.evaluateAndFormatCells();
       await this.delay(250);
       return;
     }
 
     // 3. cellFormat
     if (type === 'cellFormat') {
-      this.replicaActiveTab.set('home');
       const range = g.range || 'B2:B4';
-      this.replicaSelectedRange.set(range);
+      this.selectRange(range);
+      await this.moveToTarget(`replica-cell-${range.split(':')[0]}`);
       await this.moveToTarget('tab-home');
+
+      if (g.numberFormat === 'currency' || g.numberFormat === '$') {
+        await this.moveToTarget('format-currency-btn');
+        this.replicaNumberFormat.set('currency');
+        this.applyReplicaFormat(range, { numberFormat: 'currency' });
+      } else if (g.numberFormat === 'percent' || g.numberFormat === '%') {
+        await this.moveToTarget('format-percent-btn');
+        this.replicaNumberFormat.set('percent');
+        this.applyReplicaFormat(range, { numberFormat: 'percent' });
+      } else if (g.numberFormat === 'date') {
+        await this.moveToTarget('number-format-select');
+        this.replicaNumberFormat.set('date');
+        await this.delay(POST_OPEN_PAUSE_MS);
+        this.applyReplicaFormat(range, { numberFormat: 'date' });
+      }
 
       if (g.bold) {
         await this.moveToTarget('bold-btn');
+        this.replicaIsBold.set(true);
         this.applyReplicaFormat(range, { bold: true });
       }
       if (g.italic) {
         await this.moveToTarget('italic-btn');
+        this.replicaIsItalic.set(true);
         this.applyReplicaFormat(range, { italic: true });
       }
       if (g.underline) {
         await this.moveToTarget('underline-btn');
+        this.replicaIsUnderline.set(true);
         this.applyReplicaFormat(range, { underline: true });
-      }
-      if (g.numberFormat === 'currency' || g.numberFormat === '$') {
-        await this.moveToTarget('currency-btn');
-        this.applyReplicaFormat(range, { numberFormat: 'currency' });
-      }
-      if (g.numberFormat === 'percent' || g.numberFormat === '%') {
-        await this.moveToTarget('percent-btn');
-        this.applyReplicaFormat(range, { numberFormat: 'percent' });
       }
       if (g.align) {
         await this.moveToTarget(`align-${g.align}-btn`);
+        this.replicaAlign.set(g.align);
         this.applyReplicaFormat(range, { align: g.align });
+      }
+      if (g.fontFamily) {
+        await this.moveToTarget('font-family-select');
+        this.replicaFontFamily.set(g.fontFamily);
+        await this.delay(POST_OPEN_PAUSE_MS);
+        this.applyReplicaFormat(range, { fontFamily: g.fontFamily });
+      }
+      if (g.fontSize) {
+        await this.moveToTarget('font-size-select');
+        this.replicaFontSize.set(g.fontSize);
+        await this.delay(POST_OPEN_PAUSE_MS);
+        this.applyReplicaFormat(range, { fontSize: g.fontSize });
       }
       if (g.fillColor) {
         await this.moveToTarget('fill-color-btn');
+        this.replicaFillColorOpen.set(true);
+        await this.delay(POST_OPEN_PAUSE_MS);
+        await this.moveToTarget(`demo-swatch-${g.fillColor || 'lightGreen'}`);
+        this.replicaFillColorOpen.set(false);
         this.applyReplicaFormat(range, { fillColor: g.fillColor });
+      }
+      if (g.color || g.textColor) {
+        await this.moveToTarget('text-color-btn');
+        this.replicaTextColorOpen.set(true);
+        await this.delay(POST_OPEN_PAUSE_MS);
+        await this.moveToTarget(`demo-text-swatch-${g.color || 'red'}`);
+        this.replicaTextColorOpen.set(false);
+        this.applyReplicaFormat(range, { color: g.color || g.textColor });
       }
       return;
     }
 
     // 4. sorted
     if (type === 'sorted') {
-      this.replicaActiveTab.set('data');
+      const range = g.range || 'A1:B5';
+      this.selectRange(range);
+      await this.moveToTarget(`replica-cell-${range.split(':')[0]}`);
       await this.moveToTarget('tab-data');
-      const order = g.order || 'asc';
-      await this.moveToTarget(order === 'desc' ? 'data-sort-desc-btn' : 'data-sort-asc-btn');
+
+      // Open Sort dialog
+      await this.moveToTarget('data-sort-dialog-btn');
+      this.sortColumn.set('Column ' + (g.byColumn || 'B'));
+      this.sortOrder.set(g.order === 'desc' ? 'Z to A' : 'A to Z');
+      this.replicaDialog.set('sort');
+      await this.delay(POST_OPEN_PAUSE_MS);
+
+      await this.moveToTarget('sort-dialog-ok-btn');
+      this.replicaDialog.set(null);
+
+      // Reorder rows descending in replica grid
+      const m = new Map(this.replicaCells());
+      if (g.order === 'desc') {
+        m.set('A2', { value: 'Desk', display: 'Desk' });
+        m.set('B2', { value: 150, display: '150' });
+        m.set('A3', { value: 'Chair', display: 'Chair' });
+        m.set('B3', { value: 75, display: '75' });
+        m.set('A4', { value: 'Lamp', display: 'Lamp' });
+        m.set('B4', { value: 35, display: '35' });
+        m.set('A5', { value: 'Pen', display: 'Pen' });
+        m.set('B5', { value: 2, display: '2' });
+      }
+      this.replicaCells.set(m);
       return;
     }
 
     // 5. filter
     if (type === 'filter') {
-      this.replicaActiveTab.set('data');
+      const range = g.range || 'A1:C5';
+      this.selectRange(range);
+      await this.moveToTarget(`replica-cell-${range.split(':')[0]}`);
       await this.moveToTarget('tab-data');
+
+      // Click filter toggle button
       await this.moveToTarget('data-filter-btn');
+      this.replicaHasFilter.set(true);
+      await this.delay(POST_OPEN_PAUSE_MS);
+
+      // Click column filter arrow
+      const col = g.column || 'C';
+      await this.moveToTarget(`col-filter-btn-${col}`);
+      this.filterColumn.set(col);
+      this.filterCondition.set(g.condition || 'greaterThan');
+      this.filterValue.set(String(g.value ?? 50));
+      this.replicaDialog.set('filter');
+      await this.delay(POST_OPEN_PAUSE_MS);
+
+      // Click OK on filter dialog
+      await this.moveToTarget('filter-dialog-ok-btn');
+      this.replicaDialog.set(null);
+
+      // Hide rows where col C <= 50 (Row 3: 40, Row 5: 30)
+      const h = new Set<number>();
+      h.add(3);
+      h.add(5);
+      this.hiddenRows.set(h);
       return;
     }
 
     // 6. chart
     if (type === 'chart') {
-      this.replicaActiveTab.set('insert');
+      const range = g.range || 'A1:B5';
+      this.selectRange(range);
+      await this.moveToTarget(`replica-cell-${range.split(':')[0]}`);
       await this.moveToTarget('tab-insert');
+
       const cType = g.chartType || 'column';
       await this.moveToTarget(`insert-chart-${cType}-btn`);
+      this.chartType.set(cType);
+      this.chartTitle.set(g.title || 'Sales Report');
+      this.replicaDialog.set('chart');
+      await this.delay(POST_OPEN_PAUSE_MS);
+
+      await this.moveToTarget('chart-dialog-insert-btn');
+      this.replicaDialog.set(null);
+      this.hasChartObject.set({ title: g.title || 'Sales Report', type: cType });
       return;
     }
 
     // 7. pivotTable
     if (type === 'pivotTable') {
-      this.replicaActiveTab.set('insert');
+      const range = g.range || 'A1:C6';
+      this.selectRange(range);
+      await this.moveToTarget(`replica-cell-${range.split(':')[0]}`);
       await this.moveToTarget('tab-insert');
+
       await this.moveToTarget('insert-pivottable-btn');
+      this.pivotRows.set(g.rowsField || 'Category');
+      this.pivotValues.set(g.valuesField || 'Amount');
+      this.pivotSummarize.set(g.summarize || 'SUM');
+      this.replicaDialog.set('pivotTable');
+      await this.delay(POST_OPEN_PAUSE_MS);
+
+      await this.moveToTarget('pivottable-dialog-ok-btn');
+      this.replicaDialog.set(null);
+      this.hasPivotTableObject.set(true);
       return;
     }
 
     // 8. comment
     if (type === 'comment') {
-      this.replicaActiveTab.set('insert');
+      const cellAddr = g.cell || 'C4';
+      this.replicaActiveCell.set(cellAddr);
+      await this.moveToTarget(`replica-cell-${cellAddr}`);
       await this.moveToTarget('tab-insert');
+
       await this.moveToTarget('insert-comment-btn');
+      this.commentText.set(g.contains || 'check pricing');
+      this.replicaDialog.set('comment');
+      await this.delay(POST_OPEN_PAUSE_MS);
+
+      await this.moveToTarget('comment-post-btn');
+      this.replicaDialog.set(null);
+      this.hasCommentOnCell.set(cellAddr);
       return;
     }
 
     // 9. conditionalFormat
     if (type === 'conditionalFormat') {
-      this.replicaActiveTab.set('home');
+      const range = g.range || 'C2:C8';
+      this.selectRange(range);
+      await this.moveToTarget(`replica-cell-${range.split(':')[0]}`);
       await this.moveToTarget('tab-home');
-      await this.moveToTarget('conditional-formatting-btn');
+
+      await this.moveToTarget('conditional-format-btn');
+      this.cfCondition.set(g.condition || 'greaterThan');
+      this.cfValue.set(String(g.value ?? 100));
+      this.cfColor.set(g.fillColor || 'lightGreen');
+      this.replicaDialog.set('conditionalFormat');
+      await this.delay(POST_OPEN_PAUSE_MS);
+
+      await this.moveToTarget('cf-dialog-done-btn');
+      this.replicaDialog.set(null);
+
+      // Highlight matching cells (C2=125, C4=110, C6=150, C8=105)
+      const fmts = new Map(this.replicaFormats());
+      for (const addr of ['C2', 'C4', 'C6', 'C8']) {
+        const ex = fmts.get(addr) || {};
+        fmts.set(addr, { ...ex, fillColor: 'lightGreen' });
+      }
+      this.replicaFormats.set(fmts);
       return;
     }
 
     // 10. dataValidation
     if (type === 'dataValidation') {
-      this.replicaActiveTab.set('data');
+      const range = g.range || 'B2:B6';
+      this.selectRange(range);
+      await this.moveToTarget(`replica-cell-${range.split(':')[0]}`);
       await this.moveToTarget('tab-data');
+
       await this.moveToTarget('data-validation-btn');
+      this.dvType.set('List');
+      this.dvSource.set(Array.isArray(g.allowed) ? g.allowed.join(', ') : 'Yes, No');
+      this.replicaDialog.set('dataValidation');
+      await this.delay(POST_OPEN_PAUSE_MS);
+
+      await this.moveToTarget('dv-dialog-done-btn');
+      this.replicaDialog.set(null);
+
+      // Show dropdown arrows on B2:B6
+      const fmts = new Map(this.replicaFormats());
+      const parsed = parseRange(range);
+      if (parsed) {
+        for (let r = parsed.startRow; r <= parsed.endRow; r++) {
+          for (let c = parsed.startCol; c <= parsed.endCol; c++) {
+            const a = formatAddress({ row: r, col: c });
+            const ex = fmts.get(a) || {};
+            fmts.set(a, { ...ex, hasDataValidation: true });
+          }
+        }
+      }
+      this.replicaFormats.set(fmts);
       return;
     }
 
     // 11. noDuplicates
     if (type === 'noDuplicates') {
-      this.replicaActiveTab.set('data');
+      const range = g.range || 'A1:C6';
+      this.selectRange(range);
+      await this.moveToTarget(`replica-cell-${range.split(':')[0]}`);
       await this.moveToTarget('tab-data');
+
       await this.moveToTarget('data-remove-duplicates-btn');
+      this.rdHeaders.set(true);
+      this.replicaDialog.set('removeDuplicates');
+      await this.delay(POST_OPEN_PAUSE_MS);
+
+      await this.moveToTarget('rd-dialog-remove-btn');
+      this.replicaDialog.set(null);
+
+      // Hide duplicate rows 4 and 6
+      const h = new Set<number>();
+      h.add(4);
+      h.add(6);
+      this.hiddenRows.set(h);
       return;
     }
 
@@ -479,7 +976,7 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
     if (type === 'action') {
       const act = g.action;
       if (act === 'undo') {
-        await this.moveToTarget('home-undo-btn');
+        await this.moveToTarget('qa-undo-btn');
       } else if (act === 'copy') {
         this.replicaActiveTab.set('home');
         await this.moveToTarget('copy-btn');
@@ -488,25 +985,20 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
         await this.moveToTarget('paste-btn');
       } else if (act === 'selectRange' || act === 'goToCell') {
         const range = g.range || 'B2:B4';
-        this.replicaSelectedRange.set(range);
-        await this.moveToTarget(`replica-cell-${range.split(':')[0]}`);
+        const parts = range.split(':');
+        const start = parts[0];
+        const end = parts[1] || start;
+
+        // Move to start cell
+        await this.moveToTarget(`replica-cell-${start}`);
+        // Drag to end cell
+        this.selectRange(range);
+        if (end !== start) {
+          await this.moveToTarget(`replica-cell-${end}`);
+        }
       }
       return;
     }
-  }
-
-  private applyReplicaFormat(rangeStr: string, updates: any): void {
-    const parsed = parseRange(rangeStr);
-    if (!parsed) return;
-    const curFmt = new Map(this.replicaFormats());
-    for (let r = parsed.startRow; r <= parsed.endRow; r++) {
-      for (let c = parsed.startCol; c <= parsed.endCol; c++) {
-        const addr = formatAddress({ row: r, col: c });
-        const existing = curFmt.get(addr) || {};
-        curFmt.set(addr, { ...existing, ...updates });
-      }
-    }
-    this.replicaFormats.set(curFmt);
   }
 
   getToastTitle(): string {

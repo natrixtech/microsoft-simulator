@@ -140,6 +140,7 @@
           class="ribbon-btn btn-square btn-neutral-toggle"
           [class.active]="isBold"
           [attr.aria-pressed]="isBold"
+          (mousedown)="$event.preventDefault()"
           (click)="toggleBold()"
           title="Bold (Ctrl+B)"
           data-demo-target="bold-btn"
@@ -148,9 +149,10 @@
         </button>
         <button
           type="button"
-          class="ribbon-btn btn-square"
+          class="ribbon-btn btn-square btn-neutral-toggle"
           [class.active]="isItalic"
           [attr.aria-pressed]="isItalic"
+          (mousedown)="$event.preventDefault()"
           (click)="toggleItalic()"
           title="Italic (Ctrl+I)"
           data-demo-target="italic-btn"
@@ -159,9 +161,10 @@
         </button>
         <button
           type="button"
-          class="ribbon-btn btn-square btn-square-dropdown"
+          class="ribbon-btn btn-square btn-square-dropdown btn-neutral-toggle"
           [class.active]="isUnderline"
           [attr.aria-pressed]="isUnderline"
+          (mousedown)="$event.preventDefault()"
           (click)="toggleUnderline()"
           title="Underline (Ctrl+U)"
           data-demo-target="underline-btn"
@@ -246,6 +249,7 @@
           class="ribbon-btn btn-square btn-neutral-toggle"
           [class.active]="currentAlign === 'left'"
           [attr.aria-pressed]="currentAlign === 'left'"
+          (mousedown)="$event.preventDefault()"
           (click)="setAlign('left')"
           title="Align Left"
           data-demo-target="align-left-btn"
@@ -254,9 +258,10 @@
         </button>
         <button
           type="button"
-          class="ribbon-btn btn-square"
+          class="ribbon-btn btn-square btn-neutral-toggle"
           [class.active]="currentAlign === 'center'"
           [attr.aria-pressed]="currentAlign === 'center'"
+          (mousedown)="$event.preventDefault()"
           (click)="setAlign('center')"
           title="Center"
           data-demo-target="align-center-btn"
@@ -265,9 +270,10 @@
         </button>
         <button
           type="button"
-          class="ribbon-btn btn-square"
+          class="ribbon-btn btn-square btn-neutral-toggle"
           [class.active]="currentAlign === 'right'"
           [attr.aria-pressed]="currentAlign === 'right'"
+          (mousedown)="$event.preventDefault()"
           (click)="setAlign('right')"
           title="Align Right"
           data-demo-target="align-right-btn"
@@ -493,8 +499,9 @@
       <div class="subgroup-2cols">
         <button
           type="button"
-          class="ribbon-btn btn-medium"
-          (click)="toggleSortMenu($event)"
+          class="ribbon-btn btn-medium disabled"
+          disabled
+          tabindex="-1"
           title="Sort & Filter"
           data-demo-target="sort-filter-btn"
         >

@@ -291,6 +291,12 @@
   gap: 6px;
 }
 
+.zoom-controls.disabled {
+  pointer-events: none;
+  user-select: none;
+  cursor: default;
+}
+
 .zoom-btn {
   background: transparent;
   border: none;
@@ -307,6 +313,14 @@
 
 .zoom-btn:hover {
   color: var(--text, #242424);
+}
+
+.zoom-btn:disabled,
+.zoom-btn[disabled] {
+  cursor: default;
+  pointer-events: none;
+  color: #a19f9d;
+  opacity: 0.5;
 }
 
 .zoom-slider {
@@ -341,12 +355,34 @@
   border: none;
 }
 
+.zoom-slider:disabled,
+.zoom-slider[disabled] {
+  cursor: default;
+  pointer-events: none;
+  background: #e1dfdd;
+  opacity: 0.5;
+}
+
+.zoom-slider:disabled::-webkit-slider-thumb,
+.zoom-slider[disabled]::-webkit-slider-thumb,
+.zoom-slider:disabled::-moz-range-thumb,
+.zoom-slider[disabled]::-moz-range-thumb {
+  cursor: default;
+  pointer-events: none;
+  background: #a19f9d;
+}
+
 .zoom-level {
   font-size: 11px;
   min-width: 36px;
   text-align: right;
   color: var(--text, #242424);
   user-select: none;
+}
+
+.zoom-controls.disabled .zoom-level {
+  color: #797775;
+  cursor: default;
 }
 
 /* Dark Theme Overrides */
@@ -496,9 +532,41 @@
   color: #ffffff;
 }
 
+:host-context([data-theme="dark"]) .zoom-btn:disabled,
+:host-context(.dark-theme) .zoom-btn:disabled,
+:host-context([data-theme="dark"]) .zoom-btn[disabled],
+:host-context(.dark-theme) .zoom-btn[disabled] {
+  color: #605e5c;
+  opacity: 0.45;
+}
+
+:host-context([data-theme="dark"]) .zoom-slider:disabled,
+:host-context(.dark-theme) .zoom-slider:disabled,
+:host-context([data-theme="dark"]) .zoom-slider[disabled],
+:host-context(.dark-theme) .zoom-slider[disabled] {
+  background: #3b3a39;
+  opacity: 0.45;
+}
+
+:host-context([data-theme="dark"]) .zoom-slider:disabled::-webkit-slider-thumb,
+:host-context(.dark-theme) .zoom-slider:disabled::-webkit-slider-thumb,
+:host-context([data-theme="dark"]) .zoom-slider:disabled::-moz-range-thumb,
+:host-context(.dark-theme) .zoom-slider:disabled::-moz-range-thumb,
+:host-context([data-theme="dark"]) .zoom-slider[disabled]::-webkit-slider-thumb,
+:host-context(.dark-theme) .zoom-slider[disabled]::-webkit-slider-thumb,
+:host-context([data-theme="dark"]) .zoom-slider[disabled]::-moz-range-thumb,
+:host-context(.dark-theme) .zoom-slider[disabled]::-moz-range-thumb {
+  background: #605e5c;
+}
+
 :host-context([data-theme="dark"]) .zoom-level,
 :host-context(.dark-theme) .zoom-level {
   color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .zoom-controls.disabled .zoom-level,
+:host-context(.dark-theme) .zoom-controls.disabled .zoom-level {
+  color: #8a8886;
 }
 
 /* Pause Overlay */
@@ -515,4 +583,241 @@
   user-select: none;
   pointer-events: auto;
 }
+
+/* Data Validation In-App Alert Dialog */
+.validation-alert-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.validation-alert-dialog {
+  background: var(--surface, #ffffff);
+  color: var(--text, #242424);
+  width: 440px;
+  max-width: calc(100vw - 32px);
+  border-radius: 4px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--line, #d1d1d1);
+  display: flex;
+  flex-direction: column;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  font-size: 13px;
+  overflow: hidden;
+  animation: dvPopIn 0.15s ease-out;
+}
+
+@keyframes dvPopIn {
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.validation-alert-dialog .dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line, #e0e0e0);
+  background: var(--surface, #ffffff);
+}
+
+.validation-alert-dialog .dialog-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text, #242424);
+}
+
+.validation-alert-dialog .close-btn {
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--muted, #616161);
+  padding: 4px 8px;
+  border-radius: 3px;
+  line-height: 1;
+}
+
+.validation-alert-dialog .close-btn:hover {
+  background: var(--soft, #f3f3f3);
+  color: var(--text, #242424);
+}
+
+.validation-alert-dialog .alert-body {
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.validation-alert-dialog .alert-icon-warning {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 2px;
+}
+
+.validation-alert-dialog .alert-message-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.validation-alert-dialog .alert-message {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text, #242424);
+}
+
+.validation-alert-dialog .alert-allowed-values {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted, #616161);
+}
+
+.validation-alert-dialog .alert-allowed-values strong {
+  color: var(--text, #242424);
+}
+
+.validation-alert-dialog .alert-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 16px;
+  background: var(--soft, #f8f9fa);
+  border-top: 1px solid var(--line, #e0e0e0);
+}
+
+.validation-alert-dialog .alert-ok-btn {
+  min-width: 84px;
+  padding: 6px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #107c41;
+  color: #ffffff;
+  border: 1px solid #0b6a37;
+  transition: background 0.1s ease, border-color 0.1s ease;
+  outline: none;
+}
+
+.validation-alert-dialog .alert-ok-btn:hover {
+  background: #0f703b;
+  border-color: #0a5b2f;
+}
+
+.validation-alert-dialog .alert-ok-btn:focus-visible {
+  outline: 2px solid #107c41;
+  outline-offset: 2px;
+}
+
+/* Dark Theme Overrides for Data Validation Alert */
+:host-context([data-theme="dark"]) .validation-alert-backdrop,
+:host-context(.dark-theme) .validation-alert-backdrop {
+  background: rgba(0, 0, 0, 0.68);
+}
+
+:host-context([data-theme="dark"]) .validation-alert-dialog,
+:host-context(.dark-theme) .validation-alert-dialog {
+  background: #242424;
+  color: #f3f2f1;
+  border-color: #3b3a39;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
+}
+
+:host-context([data-theme="dark"]) .validation-alert-dialog .dialog-header,
+:host-context(.dark-theme) .validation-alert-dialog .dialog-header {
+  background: #242424;
+  border-bottom-color: #3b3a39;
+}
+
+:host-context([data-theme="dark"]) .validation-alert-dialog .dialog-title,
+:host-context(.dark-theme) .validation-alert-dialog .dialog-title {
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .validation-alert-dialog .close-btn,
+:host-context(.dark-theme) .validation-alert-dialog .close-btn {
+  color: #c8c6c4;
+}
+
+:host-context([data-theme="dark"]) .validation-alert-dialog .close-btn:hover,
+:host-context(.dark-theme) .validation-alert-dialog .close-btn:hover {
+  background: #323130;
+  color: #ffffff;
+}
+
+:host-context([data-theme="dark"]) .validation-alert-dialog .alert-message,
+:host-context(.dark-theme) .validation-alert-dialog .alert-message {
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .validation-alert-dialog .alert-allowed-values,
+:host-context(.dark-theme) .validation-alert-dialog .alert-allowed-values {
+  color: #a19f9d;
+}
+
+:host-context([data-theme="dark"]) .validation-alert-dialog .alert-allowed-values strong,
+:host-context(.dark-theme) .validation-alert-dialog .alert-allowed-values strong {
+  color: #ffffff;
+}
+
+:host-context([data-theme="dark"]) .validation-alert-dialog .alert-footer,
+:host-context(.dark-theme) .validation-alert-dialog .alert-footer {
+  background: #1f1f1f;
+  border-top-color: #3b3a39;
+}
+
+:host-context([data-theme="dark"]) .validation-alert-dialog .alert-ok-btn,
+:host-context(.dark-theme) .validation-alert-dialog .alert-ok-btn {
+  background: #107c41;
+  color: #ffffff;
+  border-color: #107c41;
+}
+
+:host-context([data-theme="dark"]) .validation-alert-dialog .alert-ok-btn:hover,
+:host-context(.dark-theme) .validation-alert-dialog .alert-ok-btn:hover {
+  background: #0f703b;
+  border-color: #0f703b;
+}
+
+/* Instruction chips: in the Excel task card, show text between backticks as a chip (the same style as cell-reference chips), not bold */
+.excel-floating-card-group ::ng-deep .steps .t b {
+  background: #e8f0fe;
+  border: 1px solid #c6dafc;
+  color: #1a73e8;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 12px;
+  display: inline-block;
+  margin: 0 2px;
+  font-family: inherit;
+  line-height: normal;
+  vertical-align: baseline;
+}
+
+:host-context([data-theme='DARK']) .excel-floating-card-group ::ng-deep .steps .t b,
+:host-context([data-theme='dark']) .excel-floating-card-group ::ng-deep .steps .t b,
+:host-context(.dark-theme) .excel-floating-card-group ::ng-deep .steps .t b {
+  background: #1a365d !important;
+  border-color: #2886de !important;
+  color: #4da3ff !important;
+}
+
 

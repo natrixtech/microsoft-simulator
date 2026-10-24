@@ -25,6 +25,7 @@ import {
   DataValidationRule,
   PivotTableItem,
   SheetFilter,
+  SheetSnapshot,
 } from '../../models/excel.types';
 import { ExcelStateService } from '../../services/excel-state.service';
 import { ExcelClipboardService } from '../../services/excel-clipboard.service';
@@ -56,10 +57,12 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @Output() readonly openFilterDropdown = new EventEmitter<{ colIndex: number; anchorX: number; anchorY: number }>();
   @Output() readonly openCommentPopup = new EventEmitter<string>();
+  @Output() readonly validationError = new EventEmitter<{ allowed: string[] }>();
 
   readonly numCols = 26; // A to Z
   readonly numRows = 50; // 1 to 50
   readonly defaultColWidth = 84;
+  readonly defaultRowHeight = 24;
   readonly rowHeight = 24;
 
   readonly cols = Array.from({ length: 26 }, (_, i) => ({
@@ -77,9 +80,17 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
   private resizeColIndex = -1;
   private resizeStartX = 0;
   private resizeStartWidth = 0;
+  private colResizeSnapshot: SheetSnapshot | null = null;
+
+  // Row resizing state
+  private isResizingRow = false;
+  private resizeRowIndex = -1;
+  private resizeStartY = 0;
+  private resizeStartHeight = 0;
+  private rowResizeSnapshot: SheetSnapshot | null = null;
 
   // Selection state
-  private isSelectingRange = false;
+  isSelectingRange = false;
   private rangeAnchorCoord: CellCoord = { row: 0, col: 0 };
   private selectionAnchor: CellCoord = { row: 0, col: 0 };
   private selectionLead: CellCoord = { row: 0, col: 0 };
@@ -97,6 +108,10 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // Active validation dropdown menu
   readonly activeValidationMenu = signal<{ cell: string; allowed: string[]; x: number; y: number } | null>(null);
+
+  // Cell comment hover note state
+  readonly hoveredCommentAddr = signal<string | null>(null);
+  readonly hoveredComment = signal<HoveredCommentNote | null>(null);
 
   private wheelListener = (event: WheelEvent) => this.onGridWheel(event);
 
@@ -125,6 +140,23 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
 
   focus(): void {
     this.gridScrollRef?.nativeElement.focus({ preventScroll: true });
+  }
+
+  syncSelection(rangeOrCell: string): void {
+    const clean = rangeOrCell.trim().toUpperCase();
+    if (clean.includes(':')) {
+      const parts = clean.split(':');
+      const pStart = parseAddress(parts[0]);
+      const pEnd = parseAddress(parts[1]);
+      if (pStart) this.selectionAnchor = { row: pStart.row, col: pStart.col };
+      if (pEnd) this.selectionLead = { row: pEnd.row, col: pEnd.col };
+    } else {
+      const p = parseAddress(clean);
+      if (p) {
+        this.selectionAnchor = { row: p.row, col: p.col };
+        this.selectionLead = { row: p.row, col: p.col };
+      }
+    }
   }
 
   scrollToActiveCell(): void {
@@ -199,6 +231,10 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
 
   getColWidth(letter: string): number {
     return this.state.columnWidths().get(letter) || this.defaultColWidth;
+  }
+
+  getRowHeight(rowIdx: number): number {
+    return this.state.rowHeights().get(rowIdx) || this.defaultRowHeight;
   }
 
   isRowHidden(rowIdx: number): boolean {
@@ -323,21 +359,88 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
     this.activeValidationMenu.set(null);
   }
 
-  onCellMouseEnter(row: number, col: number): void {
+  onCellMouseEnter(row: number, col: number, event?: MouseEvent): void {
     if (this.isSelectingRange) {
       this.selectionLead = { row, col };
       const range = this.formatBoundingRange(this.rangeAnchorCoord, { row, col });
       this.state.selectRange(range);
       this.actionLogger.log('selectRange', range);
+      this.hoveredCommentAddr.set(null);
+      this.hoveredComment.set(null);
+      return;
+    }
+
+    if (this.state.isEditing()) {
+      this.hoveredCommentAddr.set(null);
+      this.hoveredComment.set(null);
+      return;
+    }
+
+    const addr = formatAddress({ row, col });
+    if (this.state.comments().has(addr)) {
+      this.hoveredCommentAddr.set(addr);
+      const targetEl = event?.currentTarget as HTMLElement | undefined;
+      this.updateCommentNotePosition(addr, targetEl);
+    } else {
+      this.hoveredCommentAddr.set(null);
+      this.hoveredComment.set(null);
+    }
+  }
+
+  onCellMouseLeave(row: number, col: number): void {
+    const addr = formatAddress({ row, col });
+    if (this.hoveredCommentAddr() === addr) {
+      this.hoveredCommentAddr.set(null);
+      this.hoveredComment.set(null);
+    }
+  }
+
+  onCommentMarkerClick(addr: string, event: MouseEvent): void {
+    event.stopPropagation();
+    this.hoveredCommentAddr.set(null);
+    this.hoveredComment.set(null);
+    this.openCommentPopup.emit(addr);
+  }
+
+  onGridScroll(): void {
+    if (this.hoveredCommentAddr()) {
+      this.updateCommentNotePosition(this.hoveredCommentAddr()!);
     }
   }
 
   @HostListener('document:mouseup')
   onDocumentMouseUp(): void {
+    if (this.isResizingCol) {
+      this.isResizingCol = false;
+      if (this.resizeColIndex >= 0) {
+        const letter = indexToColLetter(this.resizeColIndex);
+        const curWidth = this.getColWidth(letter);
+        if (curWidth !== this.resizeStartWidth && this.colResizeSnapshot) {
+          this.history.push(this.colResizeSnapshot);
+        }
+      }
+      this.resizeColIndex = -1;
+      this.colResizeSnapshot = null;
+    }
+
+    if (this.isResizingRow) {
+      this.isResizingRow = false;
+      if (this.resizeRowIndex >= 0) {
+        const curHeight = this.getRowHeight(this.resizeRowIndex);
+        if (curHeight !== this.resizeStartHeight && this.rowResizeSnapshot) {
+          this.history.push(this.rowResizeSnapshot);
+        }
+      }
+      this.resizeRowIndex = -1;
+      this.rowResizeSnapshot = null;
+    }
+
     this.isSelectingRange = false;
-    this.isResizingCol = false;
     this.isDraggingChart = false;
     this.draggedChartId = null;
+    if (this.hoveredCommentAddr()) {
+      this.updateCommentNotePosition(this.hoveredCommentAddr()!);
+    }
   }
 
   private formatBoundingRange(p1: CellCoord, p2: CellCoord): string {
@@ -367,6 +470,8 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   startEditing(addr: string, initialChar?: string, mode: 'type' | 'full' = 'type'): void {
+    this.hoveredCommentAddr.set(null);
+    this.hoveredComment.set(null);
     this.editMode.set(mode);
     const cell = this.state.getCell(addr);
     const rawVal = initialChar !== undefined ? initialChar : (cell?.formula || (cell?.raw !== undefined ? String(cell.raw) : ''));
@@ -399,8 +504,8 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
     if (dv && dv.rejectInvalid && val !== '') {
       const isAllowed = dv.allowed.some((a) => a.trim().toLowerCase() === val.trim().toLowerCase());
       if (!isAllowed) {
-        alert(`The value you entered doesn't match the data validation restrictions defined for this cell. Allowed: ${dv.allowed.join(', ')}`);
         this.cancelEdit();
+        this.validationError.emit({ allowed: dv.allowed });
         return;
       }
     }
@@ -884,17 +989,132 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
     this.resizeStartX = event.clientX;
     const letter = indexToColLetter(colIndex);
     this.resizeStartWidth = this.getColWidth(letter);
+    this.colResizeSnapshot = this.state.getSnapshot();
+  }
+
+  onResizeHandleDblClick(colIndex: number, event: MouseEvent): void {
+    event.stopPropagation();
+    event.preventDefault();
+    this.autoFitColumn(colIndex);
+  }
+
+  autoFitColumn(colIndex: number): void {
+    const letter = indexToColLetter(colIndex);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let maxContentWidth = 40; // baseline minimum width
+
+    // Check header width
+    if (ctx) {
+      ctx.font = '500 11px "Segoe UI", Arial, sans-serif';
+      let headerWidth = ctx.measureText(letter).width + 16;
+      if (this.isHeaderCellWithFilter(0, colIndex)) {
+        headerWidth += 26; // filter button width + spacing
+      }
+      maxContentWidth = Math.max(maxContentWidth, headerWidth);
+    }
+
+    // Check all data rows in this column
+    for (let r = 0; r < this.numRows; r++) {
+      const cell = this.getCellData(r, colIndex);
+      const text = cell?.displayValue !== undefined && cell?.displayValue !== null
+        ? String(cell.displayValue)
+        : (cell?.value !== undefined && cell?.value !== null && cell?.value !== '' ? String(cell.value) : '');
+      if (!text) continue;
+
+      const addr = formatAddress({ row: r, col: colIndex });
+      const fmt = this.state.cellFormats().get(addr);
+      const isBold = fmt?.bold ? 'bold ' : '';
+      const isItalic = fmt?.italic ? 'italic ' : '';
+      const fontSize = fmt?.fontSize ? `${fmt.fontSize}pt` : '10pt';
+      const fontFamily = fmt?.fontFamily || '"Segoe UI", Arial, sans-serif';
+
+      if (ctx) {
+        ctx.font = `${isItalic}${isBold}${fontSize} ${fontFamily}`;
+        let cellWidth = ctx.measureText(text).width + 18;
+        if (cell?.comment) cellWidth += 6;
+        if (this.hasValidation(r, colIndex)) cellWidth += 18;
+        maxContentWidth = Math.max(maxContentWidth, cellWidth);
+      }
+    }
+
+    // Also check DOM scrollWidth if elements are rendered
+    const tableEl = this.gridScrollRef?.nativeElement;
+    if (tableEl) {
+      for (let r = 0; r < this.numRows; r++) {
+        const addr = `${letter}${r + 1}`;
+        const span = tableEl.querySelector<HTMLElement>(`td[data-cell-address="${addr}"] .cell-text`);
+        if (span && span.scrollWidth > 0) {
+          let cellWidth = span.scrollWidth + 16;
+          if (this.hasValidation(r, colIndex)) cellWidth += 18;
+          maxContentWidth = Math.max(maxContentWidth, cellWidth);
+        }
+      }
+    }
+
+    const newWidth = Math.max(20, Math.ceil(maxContentWidth));
+    const oldWidth = this.getColWidth(letter);
+    if (newWidth !== oldWidth) {
+      this.history.push(this.state.getSnapshot());
+      const map = new Map(this.state.columnWidths());
+      map.set(letter, newWidth);
+      this.state.columnWidths.set(map);
+      if (this.hoveredCommentAddr()) {
+        this.updateCommentNotePosition(this.hoveredCommentAddr()!);
+      }
+      this.cdr.markForCheck();
+    }
+  }
+
+  // Row header resize
+  onRowResizeHandleMouseDown(rowIndex: number, event: MouseEvent): void {
+    event.stopPropagation();
+    event.preventDefault();
+    this.isResizingRow = true;
+    this.resizeRowIndex = rowIndex;
+    this.resizeStartY = event.clientY;
+    this.resizeStartHeight = this.getRowHeight(rowIndex);
+    this.rowResizeSnapshot = this.state.getSnapshot();
+  }
+
+  onRowResizeHandleDblClick(rowIndex: number, event: MouseEvent): void {
+    event.stopPropagation();
+    event.preventDefault();
+    const curHeight = this.getRowHeight(rowIndex);
+    if (curHeight !== this.defaultRowHeight) {
+      this.history.push(this.state.getSnapshot());
+      const map = new Map(this.state.rowHeights());
+      map.delete(rowIndex);
+      this.state.rowHeights.set(map);
+      this.cdr.markForCheck();
+    }
   }
 
   @HostListener('document:mousemove', ['$event'])
   onDocumentMouseMove(event: MouseEvent): void {
     if (this.isResizingCol && this.resizeColIndex >= 0) {
+      event.preventDefault();
       const deltaX = event.clientX - this.resizeStartX;
-      const newWidth = Math.max(40, this.resizeStartWidth + deltaX);
+      const newWidth = Math.max(20, this.resizeStartWidth + deltaX);
       const letter = indexToColLetter(this.resizeColIndex);
       const map = new Map(this.state.columnWidths());
       map.set(letter, newWidth);
       this.state.columnWidths.set(map);
+      if (this.hoveredCommentAddr()) {
+        this.updateCommentNotePosition(this.hoveredCommentAddr()!);
+      }
+      this.cdr.markForCheck();
+    }
+
+    if (this.isResizingRow && this.resizeRowIndex >= 0) {
+      event.preventDefault();
+      const deltaY = event.clientY - this.resizeStartY;
+      const newHeight = Math.max(12, this.resizeStartHeight + deltaY);
+      const map = new Map(this.state.rowHeights());
+      map.set(this.resizeRowIndex, newHeight);
+      this.state.rowHeights.set(map);
+      this.cdr.markForCheck();
     }
 
     if (this.isDraggingChart && this.draggedChartId) {
@@ -1518,6 +1738,134 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
       isPieEmpty: chartType === 'pie',
     };
   }
+
+  updateCommentNotePosition(addr: string, targetCellEl?: HTMLElement): void {
+    const text = this.state.comments().get(addr);
+    if (!text) {
+      this.hoveredComment.set(null);
+      return;
+    }
+
+    const container = this.gridScrollRef?.nativeElement;
+    if (!container) return;
+
+    let cellEl = targetCellEl;
+    if (!cellEl) {
+      cellEl = container.querySelector<HTMLElement>(`[data-cell-address="${addr}"]`) ?? undefined;
+    }
+    if (!cellEl) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const cellRect = cellEl.getBoundingClientRect();
+
+    const headerTop = 24;
+    const headerLeft = 44;
+
+    // Hide if cell is scrolled completely out of view or under sticky headers
+    if (
+      cellRect.bottom < containerRect.top + headerTop ||
+      cellRect.right < containerRect.left + headerLeft ||
+      cellRect.top > containerRect.bottom ||
+      cellRect.left > containerRect.right
+    ) {
+      this.hoveredComment.set(null);
+      return;
+    }
+
+    const cellTop = (cellRect.top - containerRect.top) + container.scrollTop;
+    const cellLeft = (cellRect.left - containerRect.left) + container.scrollLeft;
+    const cellWidth = cellRect.width;
+    const cellRight = cellLeft + cellWidth;
+
+    const noteWidth = 180;
+    const gap = 14;
+
+    const wouldOverflowRight = (cellRect.right + gap + noteWidth) > (containerRect.right - 4);
+
+    let boxLeft: number;
+    let fromX: number;
+    let fromY: number;
+    const boxTop = Math.max(container.scrollTop + headerTop + 2, cellTop - 4);
+    const toX = cellRight;
+    const toY = cellTop;
+
+    if (wouldOverflowRight) {
+      boxLeft = Math.max(container.scrollLeft + headerLeft + 4, cellLeft - gap - noteWidth);
+      fromX = boxLeft + noteWidth;
+      fromY = boxTop;
+    } else {
+      boxLeft = cellRight + gap;
+      fromX = boxLeft;
+      fromY = boxTop;
+    }
+
+    const minX = Math.min(fromX, toX) - 4;
+    const minY = Math.min(fromY, toY) - 4;
+    const maxX = Math.max(fromX, toX) + 4;
+    const maxY = Math.max(fromY, toY) + 4;
+
+    const svgLeft = minX;
+    const svgTop = minY;
+    const svgWidth = Math.max(maxX - minX, 10);
+    const svgHeight = Math.max(maxY - minY, 10);
+
+    const relFromX = fromX - svgLeft;
+    const relFromY = fromY - svgTop;
+    const relToX = toX - svgLeft;
+    const relToY = toY - svgTop;
+
+    const arrowPoints = this.calculateArrowheadPoints(relFromX, relFromY, relToX, relToY);
+
+    this.hoveredComment.set({
+      address: addr,
+      text,
+      boxLeft,
+      boxTop,
+      svgLeft,
+      svgTop,
+      svgWidth,
+      svgHeight,
+      lineFromX: relFromX,
+      lineFromY: relFromY,
+      lineToX: relToX,
+      lineToY: relToY,
+      arrowPoints,
+    });
+    this.cdr.markForCheck();
+  }
+
+  private calculateArrowheadPoints(fromX: number, fromY: number, toX: number, toY: number): string {
+    const angle = Math.atan2(toY - fromY, toX - fromX);
+    const length = 5;
+    const width = 2.5;
+
+    const baseX = toX - length * Math.cos(angle);
+    const baseY = toY - length * Math.sin(angle);
+
+    const p1X = baseX + width * Math.sin(angle);
+    const p1Y = baseY - width * Math.cos(angle);
+
+    const p2X = baseX - width * Math.sin(angle);
+    const p2Y = baseY + width * Math.cos(angle);
+
+    return `${toX.toFixed(1)},${toY.toFixed(1)} ${p1X.toFixed(1)},${p1Y.toFixed(1)} ${p2X.toFixed(1)},${p2Y.toFixed(1)}`;
+  }
+}
+
+export interface HoveredCommentNote {
+  address: string;
+  text: string;
+  boxLeft: number;
+  boxTop: number;
+  svgLeft: number;
+  svgTop: number;
+  svgWidth: number;
+  svgHeight: number;
+  lineFromX: number;
+  lineFromY: number;
+  lineToX: number;
+  lineToY: number;
+  arrowPoints: string;
 }
 
 export interface ChartSeriesData {

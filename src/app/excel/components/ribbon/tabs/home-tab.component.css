@@ -112,23 +112,47 @@
   color: #107c41;
 }
 
-/* For ONLY Bold and Align Left: plain icons with NO persistent box, background, or border in ANY state */
+/* Neutral toggle buttons (Bold, Italic, Underline, Align) */
 .ribbon-btn.btn-neutral-toggle,
-.ribbon-btn.btn-neutral-toggle:hover,
-.ribbon-btn.btn-neutral-toggle:active,
-.ribbon-btn.btn-neutral-toggle.active,
-.ribbon-btn.btn-neutral-toggle.active:hover,
 .ribbon-btn[data-demo-target="bold-btn"],
-.ribbon-btn[data-demo-target="bold-btn"]:hover,
-.ribbon-btn[data-demo-target="bold-btn"]:active,
-.ribbon-btn[data-demo-target="bold-btn"].active,
-.ribbon-btn[data-demo-target="bold-btn"].active:hover,
 .ribbon-btn[data-demo-target="align-left-btn"],
-.ribbon-btn[data-demo-target="align-left-btn"]:hover,
-.ribbon-btn[data-demo-target="align-left-btn"]:active,
-.ribbon-btn[data-demo-target="align-left-btn"].active,
-.ribbon-btn[data-demo-target="align-left-btn"].active:hover {
+.ribbon-btn[data-demo-target="align-center-btn"],
+.ribbon-btn[data-demo-target="align-right-btn"] {
   background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  color: var(--text, #242424) !important;
+}
+
+.ribbon-btn.btn-neutral-toggle:hover,
+.ribbon-btn[data-demo-target="bold-btn"]:hover,
+.ribbon-btn[data-demo-target="align-left-btn"]:hover,
+.ribbon-btn[data-demo-target="align-center-btn"]:hover,
+.ribbon-btn[data-demo-target="align-right-btn"]:hover {
+  background: #f3f2f1 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  color: var(--text, #242424) !important;
+}
+
+.ribbon-btn.btn-neutral-toggle.active,
+.ribbon-btn[data-demo-target="bold-btn"].active,
+.ribbon-btn[data-demo-target="align-left-btn"].active,
+.ribbon-btn[data-demo-target="align-center-btn"].active,
+.ribbon-btn[data-demo-target="align-right-btn"].active {
+  background: #d6d6d6 !important;
+  border-color: transparent !important;
+  border-radius: 3px;
+  box-shadow: none !important;
+  color: var(--text, #242424) !important;
+}
+
+.ribbon-btn.btn-neutral-toggle.active:hover,
+.ribbon-btn[data-demo-target="bold-btn"].active:hover,
+.ribbon-btn[data-demo-target="align-left-btn"].active:hover,
+.ribbon-btn[data-demo-target="align-center-btn"].active:hover,
+.ribbon-btn[data-demo-target="align-right-btn"].active:hover {
+  background: #c8c8c8 !important;
   border-color: transparent !important;
   box-shadow: none !important;
   color: var(--text, #242424) !important;
@@ -609,36 +633,65 @@
 
 
 :host-context([data-theme="dark"]) .ribbon-btn.btn-neutral-toggle,
-:host-context([data-theme="dark"]) .ribbon-btn.btn-neutral-toggle:hover,
-:host-context([data-theme="dark"]) .ribbon-btn.btn-neutral-toggle:active,
-:host-context([data-theme="dark"]) .ribbon-btn.btn-neutral-toggle.active,
-:host-context([data-theme="dark"]) .ribbon-btn.btn-neutral-toggle.active:hover,
 :host-context([data-theme="dark"]) .ribbon-btn[data-demo-target="bold-btn"],
-:host-context([data-theme="dark"]) .ribbon-btn[data-demo-target="bold-btn"]:hover,
-:host-context([data-theme="dark"]) .ribbon-btn[data-demo-target="bold-btn"]:active,
-:host-context([data-theme="dark"]) .ribbon-btn[data-demo-target="bold-btn"].active,
-:host-context([data-theme="dark"]) .ribbon-btn[data-demo-target="bold-btn"].active:hover,
 :host-context([data-theme="dark"]) .ribbon-btn[data-demo-target="align-left-btn"],
-:host-context([data-theme="dark"]) .ribbon-btn[data-demo-target="align-left-btn"]:hover,
-:host-context([data-theme="dark"]) .ribbon-btn[data-demo-target="align-left-btn"]:active,
-:host-context([data-theme="dark"]) .ribbon-btn[data-demo-target="align-left-btn"].active,
-:host-context([data-theme="dark"]) .ribbon-btn[data-demo-target="align-left-btn"].active:hover,
+:host-context([data-theme="dark"]) .ribbon-btn[data-demo-target="align-center-btn"],
+:host-context([data-theme="dark"]) .ribbon-btn[data-demo-target="align-right-btn"],
 :host-context(.dark-theme) .ribbon-btn.btn-neutral-toggle,
-:host-context(.dark-theme) .ribbon-btn.btn-neutral-toggle:hover,
-:host-context(.dark-theme) .ribbon-btn.btn-neutral-toggle:active,
-:host-context(.dark-theme) .ribbon-btn.btn-neutral-toggle.active,
-:host-context(.dark-theme) .ribbon-btn.btn-neutral-toggle.active:hover,
 :host-context(.dark-theme) .ribbon-btn[data-demo-target="bold-btn"],
-:host-context(.dark-theme) .ribbon-btn[data-demo-target="bold-btn"]:hover,
-:host-context(.dark-theme) .ribbon-btn[data-demo-target="bold-btn"]:active,
-:host-context(.dark-theme) .ribbon-btn[data-demo-target="bold-btn"].active,
-:host-context(.dark-theme) .ribbon-btn[data-demo-target="bold-btn"].active:hover,
 :host-context(.dark-theme) .ribbon-btn[data-demo-target="align-left-btn"],
-:host-context(.dark-theme) .ribbon-btn[data-demo-target="align-left-btn"]:hover,
-:host-context(.dark-theme) .ribbon-btn[data-demo-target="align-left-btn"]:active,
-:host-context(.dark-theme) .ribbon-btn[data-demo-target="align-left-btn"].active,
-:host-context(.dark-theme) .ribbon-btn[data-demo-target="align-left-btn"].active:hover {
+:host-context(.dark-theme) .ribbon-btn[data-demo-target="align-center-btn"],
+:host-context(.dark-theme) .ribbon-btn[data-demo-target="align-right-btn"] {
   background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  color: #f3f2f1 !important;
+}
+
+:host-context([data-theme="dark"]) .ribbon-btn.btn-neutral-toggle:hover,
+:host-context([data-theme="dark"]) .ribbon-btn[data-demo-target="bold-btn"]:hover,
+:host-context([data-theme="dark"]) .ribbon-btn[data-demo-target="align-left-btn"]:hover,
+:host-context([data-theme="dark"]) .ribbon-btn[data-demo-target="align-center-btn"]:hover,
+:host-context([data-theme="dark"]) .ribbon-btn[data-demo-target="align-right-btn"]:hover,
+:host-context(.dark-theme) .ribbon-btn.btn-neutral-toggle:hover,
+:host-context(.dark-theme) .ribbon-btn[data-demo-target="bold-btn"]:hover,
+:host-context(.dark-theme) .ribbon-btn[data-demo-target="align-left-btn"]:hover,
+:host-context(.dark-theme) .ribbon-btn[data-demo-target="align-center-btn"]:hover,
+:host-context(.dark-theme) .ribbon-btn[data-demo-target="align-right-btn"]:hover {
+  background: #3b3a39 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  color: #f3f2f1 !important;
+}
+
+:host-context([data-theme="dark"]) .ribbon-btn.btn-neutral-toggle.active,
+:host-context([data-theme="dark"]) .ribbon-btn[data-demo-target="bold-btn"].active,
+:host-context([data-theme="dark"]) .ribbon-btn[data-demo-target="align-left-btn"].active,
+:host-context([data-theme="dark"]) .ribbon-btn[data-demo-target="align-center-btn"].active,
+:host-context([data-theme="dark"]) .ribbon-btn[data-demo-target="align-right-btn"].active,
+:host-context(.dark-theme) .ribbon-btn.btn-neutral-toggle.active,
+:host-context(.dark-theme) .ribbon-btn[data-demo-target="bold-btn"].active,
+:host-context(.dark-theme) .ribbon-btn[data-demo-target="align-left-btn"].active,
+:host-context(.dark-theme) .ribbon-btn[data-demo-target="align-center-btn"].active,
+:host-context(.dark-theme) .ribbon-btn[data-demo-target="align-right-btn"].active {
+  background: #575553 !important;
+  border-color: transparent !important;
+  border-radius: 3px;
+  box-shadow: none !important;
+  color: #f3f2f1 !important;
+}
+
+:host-context([data-theme="dark"]) .ribbon-btn.btn-neutral-toggle.active:hover,
+:host-context([data-theme="dark"]) .ribbon-btn[data-demo-target="bold-btn"].active:hover,
+:host-context([data-theme="dark"]) .ribbon-btn[data-demo-target="align-left-btn"].active:hover,
+:host-context([data-theme="dark"]) .ribbon-btn[data-demo-target="align-center-btn"].active:hover,
+:host-context([data-theme="dark"]) .ribbon-btn[data-demo-target="align-right-btn"].active:hover,
+:host-context(.dark-theme) .ribbon-btn.btn-neutral-toggle.active:hover,
+:host-context(.dark-theme) .ribbon-btn[data-demo-target="bold-btn"].active:hover,
+:host-context(.dark-theme) .ribbon-btn[data-demo-target="align-left-btn"].active:hover,
+:host-context(.dark-theme) .ribbon-btn[data-demo-target="align-center-btn"].active:hover,
+:host-context(.dark-theme) .ribbon-btn[data-demo-target="align-right-btn"].active:hover {
+  background: #64625f !important;
   border-color: transparent !important;
   box-shadow: none !important;
   color: #f3f2f1 !important;

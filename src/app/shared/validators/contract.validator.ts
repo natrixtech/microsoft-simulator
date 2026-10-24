@@ -1,4 +1,5 @@
 import { ActivityPayload, AppKind } from '../models/activity.types';
+import { COLORS } from '../utils/editor.utils';
 
 export const GOAL_TYPES: Record<AppKind, string[]> = {
   word: [
@@ -272,6 +273,41 @@ export function validateActivity(kind: AppKind, data: unknown): ActivityPayload 
           }
           Object.keys(cells).forEach(parseCellAddress);
         }
+
+        if (g['numberFormat'] !== undefined) {
+          const allowedNumberFormats = ['automatic', 'percent', 'currency', 'date'];
+          if (!allowedNumberFormats.includes(g['numberFormat'])) {
+            throw new Error(`numberFormat must be one of: ${allowedNumberFormats.join(', ')}.`);
+          }
+        }
+
+        const allowedColors = Object.keys(COLORS);
+        for (const colorKey of ['textColor', 'fillColor', 'color']) {
+          if (g[colorKey] !== undefined && !allowedColors.includes(g[colorKey])) {
+            throw new Error(`${colorKey} must be one of the 20 named colors.`);
+          }
+        }
+
+        if (goalType === 'chart' && g['chartType'] !== undefined) {
+          const allowedChartTypes = ['column', 'bar', 'line', 'pie'];
+          if (!allowedChartTypes.includes(g['chartType'])) {
+            throw new Error(`chart.chartType must be one of: ${allowedChartTypes.join(', ')}.`);
+          }
+        }
+
+        if (goalType === 'pivotTable' && g['summarize'] !== undefined) {
+          const allowedSummarize = ['SUM', 'COUNT', 'AVERAGE'];
+          if (!allowedSummarize.includes(g['summarize'])) {
+            throw new Error(`pivotTable.summarize must be one of: ${allowedSummarize.join(', ')}.`);
+          }
+        }
+
+        if ((goalType === 'filter' || goalType === 'conditionalFormat') && g['condition'] !== undefined) {
+          const allowedConditions = ['equals', 'greaterThan', 'lessThan', 'between', 'contains', 'isEmpty'];
+          if (!allowedConditions.includes(g['condition'])) {
+            throw new Error(`${goalType}.condition must be one of: ${allowedConditions.join(', ')}.`);
+          }
+        }
       }
     }
   };
@@ -341,6 +377,24 @@ export function validateActivity(kind: AppKind, data: unknown): ActivityPayload 
           (!s.cells || typeof s.cells !== 'object' || Array.isArray(s.cells))
         ) {
           throw new Error('startingSheet.cells must be an object.');
+        }
+
+        if (kind === 'excel' && s.formats && typeof s.formats === 'object') {
+          const allowedNumberFormats = ['automatic', 'percent', 'currency', 'date'];
+          const allowedColors = Object.keys(COLORS);
+          for (const fmt of Object.values(s.formats)) {
+            if (fmt && typeof fmt === 'object') {
+              const f = fmt as Record<string, any>;
+              if (f['numberFormat'] !== undefined && !allowedNumberFormats.includes(f['numberFormat'])) {
+                throw new Error(`numberFormat must be one of: ${allowedNumberFormats.join(', ')}.`);
+              }
+              for (const colorKey of ['textColor', 'fillColor', 'color']) {
+                if (f[colorKey] !== undefined && !allowedColors.includes(f[colorKey])) {
+                  throw new Error(`${colorKey} must be one of the 20 named colors.`);
+                }
+              }
+            }
+          }
         }
 
         if (

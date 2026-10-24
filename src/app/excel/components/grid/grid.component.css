@@ -133,7 +133,8 @@
   justify-content: center;
   cursor: pointer;
   position: absolute;
-  right: 4px;
+  right: 6px;
+  z-index: 5;
 }
 
 .col-filter-btn:hover {
@@ -148,6 +149,10 @@
   width: 6px;
   cursor: col-resize;
   z-index: 25;
+}
+
+.col-resize-handle:hover {
+  background: rgba(16, 124, 65, 0.25);
 }
 
 /* Row Headers */
@@ -166,6 +171,21 @@
   text-align: center;
   padding: 0;
   user-select: none;
+  vertical-align: middle;
+}
+
+.row-resize-handle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -3px;
+  height: 6px;
+  cursor: row-resize;
+  z-index: 15;
+}
+
+.row-resize-handle:hover {
+  background: rgba(16, 124, 65, 0.25);
 }
 
 /* Cells */
@@ -198,6 +218,7 @@
   display: inline-block;
   width: 100%;
   pointer-events: none;
+  text-decoration: inherit;
 }
 
 /* Inline cell editor */
@@ -503,6 +524,15 @@
   border-bottom-color: #3b3a39;
 }
 
+:host-context([data-theme="dark"]) .col-resize-handle:hover,
+:host-context([data-theme="DARK"]) .col-resize-handle:hover,
+:host-context(.dark-theme) .col-resize-handle:hover,
+:host-context([data-theme="dark"]) .row-resize-handle:hover,
+:host-context([data-theme="DARK"]) .row-resize-handle:hover,
+:host-context(.dark-theme) .row-resize-handle:hover {
+  background: rgba(56, 193, 114, 0.35);
+}
+
 :host-context([data-theme="dark"]) .excel-cell,
 :host-context(.dark-theme) .excel-cell {
   background-color: #1f1f1f;
@@ -650,3 +680,59 @@
   background: #2b2b2b;
   color: #52b99d;
 }
+
+/* Comment Note Box (Excel-style hover note) */
+.comment-note-box {
+  position: absolute;
+  width: 180px;
+  min-height: 70px;
+  background: #ffffe1 !important;
+  color: #000000 !important;
+  border: 1px solid #000000 !important;
+  box-shadow: 1px 2px 5px rgba(0, 0, 0, 0.25);
+  border-radius: 0;
+  padding: 6px 8px;
+  font-family: "Segoe UI", Calibri, Tahoma, sans-serif;
+  font-size: 12px;
+  line-height: 1.35;
+  pointer-events: none !important;
+  z-index: 45;
+  box-sizing: border-box;
+}
+
+.comment-note-header {
+  font-weight: bold;
+  color: #000000 !important;
+  margin-bottom: 2px;
+}
+
+.comment-note-text {
+  color: #000000 !important;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.comment-note-connector {
+  position: absolute;
+  pointer-events: none !important;
+  z-index: 45;
+  overflow: visible;
+}
+
+:host-context([data-theme="dark"]) .comment-note-box,
+:host-context([data-theme="DARK"]) .comment-note-box,
+:host-context(.dark-theme) .comment-note-box {
+  background: #ffffe1 !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+}
+
+:host-context([data-theme="dark"]) .comment-note-header,
+:host-context([data-theme="DARK"]) .comment-note-header,
+:host-context(.dark-theme) .comment-note-header,
+:host-context([data-theme="dark"]) .comment-note-text,
+:host-context([data-theme="DARK"]) .comment-note-text,
+:host-context(.dark-theme) .comment-note-text {
+  color: #000000 !important;
+}
+

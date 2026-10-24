@@ -154,6 +154,7 @@ export interface SheetSnapshot {
   cells: Record<string, string | number>;
   formats: Record<string, CellFormat>;
   columnWidths: Record<string, number>;
+  rowHeights?: Record<number, number>;
   charts: ChartItem[];
   comments: Record<string, string>;
   pivotTables: PivotTableItem[];

@@ -93,6 +93,27 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('movableGroup') movableGroupRef?: ElementRef<HTMLElement>;
   @ViewChild(GridComponent) gridComponent?: GridComponent;
   @ViewChild(FormulaBarComponent) formulaBarComponent?: FormulaBarComponent;
+  @ViewChild('validationOkBtn') validationOkBtn?: ElementRef<HTMLButtonElement>;
+
+  readonly validationAlert = signal<{ allowed: string[] } | null>(null);
+
+  showValidationAlert(allowed: string[]): void {
+    this.validationAlert.set({ allowed });
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      this.validationOkBtn?.nativeElement?.focus();
+    }, 0);
+  }
+
+  closeValidationAlert(): void {
+    this.validationAlert.set(null);
+    this.cdr.detectChanges();
+    this.focusGrid();
+  }
+
+  onValidationError(event: { allowed: string[] }): void {
+    this.showValidationAlert(event.allowed);
+  }
 
   commitPendingEdit(): void {
     const gridInput = this.gridComponent?.cellEditorInputRef?.nativeElement;
@@ -116,10 +137,8 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (dv && dv.rejectInvalid && val !== '') {
       const isAllowed = dv.allowed.some((a) => a.trim().toLowerCase() === val.trim().toLowerCase());
       if (!isAllowed) {
-        alert(
-          `The value you entered doesn't match the data validation restrictions defined for this cell. Allowed: ${dv.allowed.join(', ')}`
-        );
         this.state.isEditing.set(false);
+        this.showValidationAlert(dv.allowed);
         this.cdr.detectChanges();
         return;
       }
@@ -194,29 +213,19 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     return this.state.sheets().findIndex((s) => s.id === id);
   }
 
-  // Zoom Controls
+  // Zoom Controls (disabled per specification)
   readonly zoomLevel = signal<number>(100);
 
   zoomIn(): void {
-    const current = this.zoomLevel();
-    if (current < 200) {
-      this.zoomLevel.set(Math.min(200, current + 10));
-    }
+    // Disabled per specification
   }
 
   zoomOut(): void {
-    const current = this.zoomLevel();
-    if (current > 50) {
-      this.zoomLevel.set(Math.max(50, current - 10));
-    }
+    // Disabled per specification
   }
 
-  onZoomSliderChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const val = Number(input.value);
-    if (!isNaN(val) && val >= 50 && val <= 200) {
-      this.zoomLevel.set(val);
-    }
+  onZoomSliderChange(_event: Event): void {
+    // Disabled per specification
   }
 
   // Subscriptions & Timers
@@ -602,6 +611,12 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       this.state.selectCell(clean);
       this.actionLogger.log('goToCell', clean);
     }
+    this.gridComponent?.syncSelection(clean);
+    this.gridComponent?.scrollToActiveCell();
+    this.focusGrid();
+    setTimeout(() => {
+      this.focusGrid();
+    }, 10);
   }
 
   // Formula bar and cell editing
@@ -1280,6 +1295,14 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @HostListener('window:keydown', ['$event'])
   onWindowKeyDown(event: KeyboardEvent): void {
+    if (this.validationAlert()) {
+      if (event.key === 'Enter' || event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        this.closeValidationAlert();
+        return;
+      }
+    }
     if (this.bridge.isPaused() || this.isCompleted()) return;
     if ((event.ctrlKey || event.metaKey) && !this.state.isEditing()) {
       const target = event.target as HTMLElement | null;

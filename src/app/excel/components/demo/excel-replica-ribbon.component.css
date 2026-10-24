@@ -1,0 +1,471 @@
+.excel-ribbon-container {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface, #ffffff);
+  border-bottom: 1px solid var(--line, #e1dfdd);
+  user-select: none;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ribbon-tab-strip {
+  display: flex;
+  align-items: center;
+  height: 31px;
+  background: var(--surface, #ffffff);
+  padding: 0 8px;
+  gap: 2px;
+  border-bottom: 1px solid var(--line, #e1dfdd);
+  flex-shrink: 0;
+  position: relative;
+  overflow: visible;
+  z-index: 50;
+  box-sizing: border-box;
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--text, #242424);
+  cursor: pointer;
+  position: relative;
+  white-space: nowrap;
+  border-radius: 3px 3px 0 0;
+  transition: color 0.1s, background 0.1s;
+}
+
+.tab-btn:hover:not(:disabled) {
+  background: var(--soft, #f3f2f1);
+}
+
+.tab-btn.active {
+  font-weight: 600;
+  color: #107c41;
+}
+
+.tab-btn.active::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 6px;
+  right: 6px;
+  height: 3px;
+  background: #107c41;
+  border-radius: 2px 2px 0 0;
+}
+
+.tab-btn:disabled,
+.tab-btn.disabled {
+  color: var(--muted, #8a8886);
+  cursor: default;
+  opacity: 0.7;
+}
+
+.file-tab {
+  color: #107c41;
+  font-weight: 600;
+}
+
+.ribbon-search-box {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  background: var(--soft, #f3f2f1);
+  border: 1px solid var(--line, #e1dfdd);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--muted, #616161);
+  height: 22px;
+  box-sizing: border-box;
+  flex-shrink: 1;
+  min-width: 24px;
+}
+
+.menu-search-input-fake {
+  font-size: 12px;
+  color: var(--muted, #616161);
+}
+
+@media (max-width: 768px) {
+  .ribbon-search-box {
+    padding: 3px 6px;
+  }
+  .menu-search-input-fake {
+    display: none;
+  }
+}
+
+/* Ribbon Panel */
+.ribbon-panel {
+  height: 98px;
+  min-height: 98px;
+  max-height: 98px;
+  background: var(--surface, #ffffff);
+  flex-shrink: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
+}
+
+.ribbon-tab-content {
+  display: flex;
+  align-items: stretch;
+  height: 98px;
+  max-height: 98px;
+  box-sizing: border-box;
+  background: var(--surface, #ffffff);
+  padding: 2px 4px;
+  gap: 0;
+  overflow-x: hidden;
+  overflow-y: hidden !important;
+  scrollbar-width: none;
+  flex-wrap: nowrap;
+  user-select: none;
+}
+
+.ribbon-tab-content::-webkit-scrollbar {
+  display: none;
+}
+
+.ribbon-group {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0 2px;
+  height: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.group-controls {
+  display: flex;
+  align-items: center;
+  height: 72px;
+  flex-shrink: 0;
+  gap: 2px;
+}
+
+.group-footer {
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  margin-top: auto;
+}
+
+.group-label {
+  font-size: 9.5px;
+  color: var(--muted, #616161);
+  letter-spacing: 0.1px;
+  white-space: nowrap;
+}
+
+.ribbon-separator {
+  width: 1px;
+  height: 68px;
+  background: var(--line, #e1dfdd);
+  margin: 0 3px;
+  align-self: center;
+  flex-shrink: 0;
+}
+
+/* Buttons */
+.ribbon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text, #242424);
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  padding: 1px 3px;
+  transition: background 0.1s, border-color 0.1s;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.ribbon-btn:hover:not(:disabled) {
+  background: var(--soft, #f3f2f1);
+  border-color: var(--line, #d1d1d1);
+}
+
+.ribbon-btn.active {
+  background: #c8e6d1;
+  border-color: #107c41;
+  color: #107c41;
+}
+
+.ribbon-btn:disabled,
+.ribbon-btn.disabled {
+  opacity: 0.45;
+  cursor: default;
+  pointer-events: none;
+}
+
+.btn-large {
+  flex-direction: column;
+  gap: 2px;
+  min-width: 44px;
+  height: 68px;
+  padding: 2px 3px;
+}
+
+.btn-medium {
+  flex-direction: column;
+  gap: 2px;
+  min-width: 36px;
+  height: 68px;
+  padding: 2px 2px;
+}
+
+.btn-square {
+  width: 25px;
+  height: 23px;
+  padding: 0;
+}
+
+.btn-square-dropdown {
+  width: 30px;
+  gap: 1px;
+}
+
+.btn-row {
+  height: 22px;
+  padding: 1px 4px;
+  gap: 3px;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.btn-text {
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+
+.btn-text-sub {
+  font-size: 9.5px;
+  color: var(--text, #242424);
+  white-space: nowrap;
+}
+
+.btn-label-with-arrow {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+
+.btn-label-multi {
+  font-size: 9.5px;
+  line-height: 1.15;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.subgroup-3rows {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  height: 68px;
+  justify-content: space-around;
+}
+
+.subgroup-2rows-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.undo-column {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.undo-btn {
+  width: 24px;
+  height: 22px;
+  padding: 0;
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 24px;
+}
+
+.font-controls-box,
+.alignment-controls-box,
+.number-controls-box {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  justify-content: center;
+  height: 68px;
+}
+
+.replica-select {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 22px;
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--line, #e1dfdd);
+  border-radius: 3px;
+  padding: 0 4px;
+  font-size: 11px;
+  color: var(--text, #242424);
+  box-sizing: border-box;
+}
+
+.font-family-select {
+  width: 88px;
+}
+
+.font-size-select {
+  width: 40px;
+}
+
+.number-format-select {
+  width: 88px;
+}
+
+.select-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.charts-categories-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 24px);
+  grid-template-rows: repeat(2, 24px);
+  gap: 2px;
+}
+
+.btn-chart-tile {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  gap: 1px;
+}
+
+/* Color Popovers */
+.picker-anchor {
+  position: relative;
+}
+
+.replica-color-popover {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--line, #e1dfdd);
+  border-radius: 4px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  padding: 8px;
+  z-index: 100;
+  width: 140px;
+  box-sizing: border-box;
+}
+
+.palette-title {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted, #616161);
+  margin-bottom: 4px;
+  margin-top: 4px;
+}
+
+.palette-title:first-child {
+  margin-top: 0;
+}
+
+.swatches-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 18px);
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.color-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 2px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+/* Dark Mode Support (no :is() inside selectors) */
+:host-context([data-theme="dark"]) .excel-ribbon-container,
+:host-context([data-theme="DARK"]) .excel-ribbon-container,
+:host-context([data-theme="dark"]) .ribbon-tab-strip,
+:host-context([data-theme="DARK"]) .ribbon-tab-strip,
+:host-context([data-theme="dark"]) .ribbon-panel,
+:host-context([data-theme="DARK"]) .ribbon-panel,
+:host-context([data-theme="dark"]) .ribbon-tab-content,
+:host-context([data-theme="DARK"]) .ribbon-tab-content,
+:host-context(.dark-theme) .excel-ribbon-container,
+:host-context(.dark-theme) .ribbon-tab-strip,
+:host-context(.dark-theme) .ribbon-panel,
+:host-context(.dark-theme) .ribbon-tab-content {
+  background: #1f1f1f;
+  border-color: #3b3a39;
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .tab-btn,
+:host-context([data-theme="DARK"]) .tab-btn,
+:host-context(.dark-theme) .tab-btn {
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .ribbon-btn,
+:host-context([data-theme="DARK"]) .ribbon-btn,
+:host-context(.dark-theme) .ribbon-btn {
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .btn-text-sub,
+:host-context([data-theme="DARK"]) .btn-text-sub,
+:host-context(.dark-theme) .btn-text-sub {
+  color: #d1d1d1;
+}
+
+:host-context([data-theme="dark"]) .replica-select,
+:host-context([data-theme="DARK"]) .replica-select,
+:host-context(.dark-theme) .replica-select {
+  background: #2b2b2b;
+  border-color: #3b3a39;
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .ribbon-separator,
+:host-context([data-theme="DARK"]) .ribbon-separator,
+:host-context(.dark-theme) .ribbon-separator {
+  background: #3b3a39;
+}
+
+:host-context([data-theme="dark"]) .replica-color-popover,
+:host-context([data-theme="DARK"]) .replica-color-popover,
+:host-context(.dark-theme) .replica-color-popover {
+  background: #2b2b2b;
+  border-color: #3b3a39;
+  color: #f3f2f1;
+}

@@ -136,8 +136,8 @@ export class HomeTabComponent {
     return f;
   }
 
-  get currentAlign(): TextAlign {
-    return this.currentFormat.align || 'left';
+  get currentAlign(): TextAlign | undefined {
+    return this.currentFormat.align;
   }
 
   toggleBold(): void {
@@ -169,7 +169,11 @@ export class HomeTabComponent {
   }
 
   setAlign(align: TextAlign): void {
-    this.formatChange.emit({ align });
+    if (this.currentFormat.align === align) {
+      this.formatChange.emit({ align: undefined });
+    } else {
+      this.formatChange.emit({ align });
+    }
   }
 
   setNumberFormat(numFmt: NumberFormatType): void {

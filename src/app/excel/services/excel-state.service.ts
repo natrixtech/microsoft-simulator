@@ -44,6 +44,9 @@ export class ExcelStateService {
   // Column widths: map of "A" -> width in px
   readonly columnWidths = signal<Map<string, number>>(new Map());
 
+  // Row heights: map of row index (0-indexed) -> height in px
+  readonly rowHeights = signal<Map<number, number>>(new Map());
+
   // Selection state
   readonly activeCell = signal<string>('A1');
   readonly selectedRange = signal<string>('A1');
@@ -93,6 +96,17 @@ export class ExcelStateService {
       }
     }
     this.columnWidths.set(newWidths);
+
+    const newHeights = new Map<number, number>();
+    if (sheet?.rowHeights && typeof sheet.rowHeights === 'object') {
+      for (const [r, h] of Object.entries(sheet.rowHeights)) {
+        const rowIdx = Number(r);
+        if (!isNaN(rowIdx)) {
+          newHeights.set(rowIdx, Number(h));
+        }
+      }
+    }
+    this.rowHeights.set(newHeights);
 
     // Load initial formats
     if (sheet?.formats && typeof sheet.formats === 'object') {
@@ -1085,6 +1099,11 @@ export class ExcelStateService {
       widthsObj[col] = w;
     }
 
+    const heightsObj: Record<number, number> = {};
+    for (const [row, h] of this.rowHeights().entries()) {
+      heightsObj[row] = h;
+    }
+
     const commentsObj: Record<string, string> = {};
     for (const [addr, comm] of this.comments().entries()) {
       commentsObj[addr] = comm;
@@ -1094,6 +1113,7 @@ export class ExcelStateService {
       cells: cellsObj,
       formats: formatsObj,
       columnWidths: widthsObj,
+      rowHeights: heightsObj,
       charts: this.charts().map((c) => ({ ...c })),
       comments: commentsObj,
       pivotTables: this.pivotTables().map((pt) => ({ ...pt, rows: [...pt.rows] })),
@@ -1111,6 +1131,7 @@ export class ExcelStateService {
       cells: snap.cells,
       formats: snap.formats,
       columnWidths: snap.columnWidths,
+      rowHeights: snap.rowHeights,
     });
 
     const commMap = new Map<string, string>();
@@ -1141,6 +1162,7 @@ export class ExcelStateService {
         cells: {},
         formats: {},
         columnWidths: {},
+        rowHeights: {},
         charts: [],
         comments: {},
         pivotTables: [],
@@ -1225,10 +1247,24 @@ export class ExcelStateService {
     const oldCells = this.cells();
     const oldFormats = this.cellFormats();
     const oldComments = this.comments();
+    const oldHeights = this.rowHeights();
 
     const newCells = new Map<string, CellData>();
     const newFormats = new Map<string, CellFormat>();
     const newComments = new Map<string, string>();
+    const newHeights = new Map<number, number>();
+
+    for (let r = 0; r < this.maxRows; r++) {
+      const h = oldHeights.get(r);
+      if (h !== undefined) {
+        if (r < targetRow) {
+          newHeights.set(r, h);
+        } else if (r + 1 < this.maxRows) {
+          newHeights.set(r + 1, h);
+        }
+      }
+    }
+    this.rowHeights.set(newHeights);
 
     for (const [addr, cell] of oldCells.entries()) {
       const p = parseAddress(addr);
@@ -1320,10 +1356,24 @@ export class ExcelStateService {
     const oldCells = this.cells();
     const oldFormats = this.cellFormats();
     const oldComments = this.comments();
+    const oldHeights = this.rowHeights();
 
     const newCells = new Map<string, CellData>();
     const newFormats = new Map<string, CellFormat>();
     const newComments = new Map<string, string>();
+    const newHeights = new Map<number, number>();
+
+    for (let r = 0; r < this.maxRows; r++) {
+      const h = oldHeights.get(r);
+      if (h !== undefined) {
+        if (r < targetRow) {
+          newHeights.set(r, h);
+        } else if (r > targetRow) {
+          newHeights.set(r - 1, h);
+        }
+      }
+    }
+    this.rowHeights.set(newHeights);
 
     for (const [addr, cell] of oldCells.entries()) {
       const p = parseAddress(addr);

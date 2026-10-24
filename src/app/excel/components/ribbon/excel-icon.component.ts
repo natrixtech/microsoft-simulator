@@ -73,10 +73,12 @@ import { CommonModule } from '@angular/common';
 
         <g *ngIf="name === 'bold'">
           <path
-            fill-rule="evenodd"
-            clip-rule="evenodd"
-            d="M5 2.5h8a4.5 4.5 0 0 1 3.2 7.7A5 5 0 0 1 13.5 21.5H5V2.5zm3.5 3.5h4a2 2 0 0 1 0 4h-4V6zm0 6h4.5a2.2 2.2 0 0 1 0 4.4H8.5V12z"
-            fill="currentColor"
+            d="M7 3.5h5.5a4 4 0 0 1 0 8H7z M7 11.5h6.5a4.5 4.5 0 0 1 0 9H7z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.8"
+            stroke-linejoin="round"
+            stroke-linecap="round"
           />
         </g>
 
@@ -154,12 +156,12 @@ import { CommonModule } from '@angular/common';
 
         <g *ngIf="name === 'increaseFont'">
           <path d="M3 19L9 3l6 16M5.5 14h7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M16 9l3.5-5 3.5 5M19.5 5v10" stroke="#16a34a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M16 9l3.5-5 3.5 5M19.5 5v10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
         </g>
 
         <g *ngIf="name === 'decreaseFont'">
           <path d="M3 19L8 6l5 13M5 15h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M16 10l3.5 5 3.5-5M19.5 14V4" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M16 10l3.5 5 3.5-5M19.5 14V4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
         </g>
 
         <!-- ALIGNMENT -->
