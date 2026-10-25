@@ -12,6 +12,7 @@
         <th
           *ngFor="let col of cols"
           class="col-header"
+          [class.header-selected]="isColHeaderSelected(col.index)"
           [style.width.px]="getColWidth(col.letter)"
           [style.min-width.px]="getColWidth(col.letter)"
           [style.max-width.px]="getColWidth(col.letter)"
@@ -52,6 +53,7 @@
           <!-- Row Number Header -->
           <th
             class="row-header"
+            [class.header-selected]="isRowHeaderSelected(row.index)"
             [style.height.px]="getRowHeight(row.index)"
             (click)="state.selectRow(row.index)"
           >
@@ -115,13 +117,23 @@
               ▾
             </button>
 
-            <!-- Active cell fill handle -->
-            <div class="fill-handle" *ngIf="isActiveCell(row.index, col.index)"></div>
           </td>
         </tr>
       </ng-container>
     </tbody>
   </table>
+
+  <!-- Selection Overlay -->
+  <div
+    class="excel-selection-overlay"
+    *ngIf="getSelectionOverlayRect() as rect"
+    [style.left.px]="rect.left"
+    [style.top.px]="rect.top"
+    [style.width.px]="rect.width"
+    [style.height.px]="rect.height"
+  >
+    <div class="fill-handle" *ngIf="!state.isEditing()"></div>
+  </div>
 
   <!-- Floating Charts Overlay -->
   <div

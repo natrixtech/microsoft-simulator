@@ -204,14 +204,25 @@
 }
 
 .excel-cell.selected {
-  background-color: rgba(16, 124, 65, 0.08);
+  position: relative;
+}
+
+.excel-cell.selected:not(.active-cell)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background-color: rgba(0, 0, 0, 0.08);
 }
 
 .excel-cell.active-cell {
-  outline: 2px solid #107c41;
-  outline-offset: -2px;
-  z-index: 5;
-  background-color: var(--surface, #ffffff);
+  outline: none;
+  z-index: 3;
+}
+
+.excel-cell:has(.inline-cell-editor)::after {
+  display: none;
 }
 
 .cell-text {
@@ -241,14 +252,16 @@
 /* Fill handle */
 .fill-handle {
   position: absolute;
-  right: -1px;
-  bottom: -1px;
+  right: -3px;
+  bottom: -3px;
   width: 6px;
   height: 6px;
   background: #107c41;
   border: 1px solid #ffffff;
+  box-sizing: border-box;
   cursor: crosshair;
-  z-index: 6;
+  pointer-events: auto;
+  z-index: 1;
 }
 
 /* Comment marker */
@@ -542,19 +555,28 @@
 }
 
 :host-context([data-theme="dark"]) .excel-cell.selected,
+:host-context([data-theme="DARK"]) .excel-cell.selected,
 :host-context(.dark-theme) .excel-cell.selected {
-  background-color: rgba(16, 124, 65, 0.28);
+  background-color: transparent;
+}
+
+:host-context([data-theme="dark"]) .excel-cell.selected:not(.active-cell)::after,
+:host-context([data-theme="DARK"]) .excel-cell.selected:not(.active-cell)::after,
+:host-context(.dark-theme) .excel-cell.selected:not(.active-cell)::after {
+  background-color: rgba(255, 255, 255, 0.10);
 }
 
 :host-context([data-theme="dark"]) .excel-cell.active-cell,
+:host-context([data-theme="DARK"]) .excel-cell.active-cell,
 :host-context(.dark-theme) .excel-cell.active-cell {
-  outline: 2px solid #107c41;
-  background-color: #1f1f1f;
+  outline: none;
+  z-index: 3;
 }
 
 :host-context([data-theme="dark"]) .excel-cell.selected.active-cell,
+:host-context([data-theme="DARK"]) .excel-cell.selected.active-cell,
 :host-context(.dark-theme) .excel-cell.selected.active-cell {
-  background-color: rgba(16, 124, 65, 0.28);
+  background-color: transparent;
 }
 
 /* Filled cells with no explicit text color: show dark text so it stays readable like light mode */
@@ -571,6 +593,7 @@
 }
 
 :host-context([data-theme="dark"]) .fill-handle,
+:host-context([data-theme="DARK"]) .fill-handle,
 :host-context(.dark-theme) .fill-handle {
   background: #107c41;
   border-color: #1f1f1f;
@@ -734,5 +757,58 @@
 :host-context([data-theme="DARK"]) .comment-note-text,
 :host-context(.dark-theme) .comment-note-text {
   color: #000000 !important;
+}
+
+/* Selection Overlay */
+.excel-selection-overlay {
+  position: absolute;
+  border: 2px solid #107c41;
+  background: transparent;
+  pointer-events: none;
+  box-sizing: border-box;
+  z-index: 8;
+}
+
+:host-context([data-theme="dark"]) .excel-selection-overlay,
+:host-context([data-theme="DARK"]) .excel-selection-overlay,
+:host-context(.dark-theme) .excel-selection-overlay {
+  border-color: #107c41;
+}
+
+/* Header selection highlights */
+.col-header.header-selected {
+  background: #e1dfdd;
+  color: #107c41;
+  font-weight: 600;
+  border-bottom-color: #107c41;
+  box-shadow: inset 0 -1px 0 0 #107c41;
+}
+
+.row-header.header-selected {
+  background: #e1dfdd;
+  color: #107c41;
+  font-weight: 600;
+  border-right-color: #107c41;
+  box-shadow: inset -1px 0 0 0 #107c41;
+}
+
+:host-context([data-theme="dark"]) .col-header.header-selected,
+:host-context([data-theme="DARK"]) .col-header.header-selected,
+:host-context(.dark-theme) .col-header.header-selected {
+  background: #3b3a39;
+  color: #6fd29a;
+  font-weight: 600;
+  border-bottom-color: #107c41;
+  box-shadow: inset 0 -1px 0 0 #107c41;
+}
+
+:host-context([data-theme="dark"]) .row-header.header-selected,
+:host-context([data-theme="DARK"]) .row-header.header-selected,
+:host-context(.dark-theme) .row-header.header-selected {
+  background: #3b3a39;
+  color: #6fd29a;
+  font-weight: 600;
+  border-right-color: #107c41;
+  box-shadow: inset -1px 0 0 0 #107c41;
 }
 

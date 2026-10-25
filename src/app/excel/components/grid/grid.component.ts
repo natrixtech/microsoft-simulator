@@ -253,6 +253,89 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
     return active.row === row && active.col === col;
   }
 
+  readonly selectionVisibleBounds = computed(() => {
+    const s = this.state.selectionCoords();
+    let first = -1;
+    let last = -1;
+    for (let r = s.startRow; r <= s.endRow; r++) {
+      if (!this.state.isRowFilteredOut(r)) {
+        if (first === -1) first = r;
+        last = r;
+      }
+    }
+    return {
+      startRow: s.startRow,
+      endRow: s.endRow,
+      startCol: s.startCol,
+      endCol: s.endCol,
+      firstVisibleRow: first,
+      lastVisibleRow: last,
+    };
+  });
+
+  getSelectionOverlayRect(): { left: number; top: number; width: number; height: number } | null {
+    const s = this.state.selectionCoords();
+    const b = this.selectionVisibleBounds();
+    if (b.firstVisibleRow === -1 || b.lastVisibleRow === -1) {
+      return null;
+    }
+
+    const startAddr = formatAddress({ row: b.firstVisibleRow, col: s.startCol });
+    const endAddr = formatAddress({ row: b.lastVisibleRow, col: s.endCol });
+
+    const container = this.gridScrollRef?.nativeElement;
+    if (container) {
+      const startEl = container.querySelector<HTMLElement>(`[data-cell-address="${startAddr}"]`);
+      const endEl = container.querySelector<HTMLElement>(`[data-cell-address="${endAddr}"]`);
+      if (startEl && endEl) {
+        const left = startEl.offsetLeft - 1;
+        const top = startEl.offsetTop - 1;
+        const width = (endEl.offsetLeft + endEl.offsetWidth) - startEl.offsetLeft + 2;
+        const height = (endEl.offsetTop + endEl.offsetHeight) - startEl.offsetTop + 2;
+        return { left, top, width, height };
+      }
+    }
+
+    // Fallback using column widths and row heights
+    let left = 44;
+    for (let c = 0; c < s.startCol; c++) {
+      left += this.getColWidth(this.cols[c].letter);
+    }
+    let width = 0;
+    for (let c = s.startCol; c <= s.endCol; c++) {
+      width += this.getColWidth(this.cols[c].letter);
+    }
+    let top = 24;
+    for (let r = 0; r < b.firstVisibleRow; r++) {
+      if (!this.isRowHidden(r)) {
+        top += this.getRowHeight(r);
+      }
+    }
+    let height = 0;
+    for (let r = b.firstVisibleRow; r <= b.lastVisibleRow; r++) {
+      if (!this.isRowHidden(r)) {
+        height += this.getRowHeight(r);
+      }
+    }
+    return {
+      left: left - 1,
+      top: top - 1,
+      width: width + 2,
+      height: height + 2,
+    };
+  }
+
+  isColHeaderSelected(colIndex: number): boolean {
+    const b = this.selectionVisibleBounds();
+    return colIndex >= b.startCol && colIndex <= b.endCol;
+  }
+
+  isRowHeaderSelected(rowIndex: number): boolean {
+    if (this.isRowHidden(rowIndex)) return false;
+    const b = this.selectionVisibleBounds();
+    return rowIndex >= b.startRow && rowIndex <= b.endRow;
+  }
+
   getCellData(row: number, col: number): CellData | undefined {
     const addr = formatAddress({ row, col });
     return this.state.getCell(addr);
