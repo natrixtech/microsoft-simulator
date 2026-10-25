@@ -143,7 +143,7 @@
                       [style.text-decoration]="replicaFormats().get(c + r)?.underline ? 'underline' : 'none'"
                       [style.text-align]="replicaFormats().get(c + r)?.align || 'left'"
                       [style.font-family]="replicaFormats().get(c + r)?.fontFamily || 'inherit'"
-                      [style.background-color]="replicaFormats().get(c + r)?.fillColor === 'lightGreen' ? '#bbf7d0' : (replicaFormats().get(c + r)?.fillColor || '')"
+                      [style.background-color]="getCellFill(c + r)"
                       [style.color]="replicaFormats().get(c + r)?.color || 'inherit'"
                     >
                       <span class="cell-display-text">{{ replicaCells().get(c + r)?.display || '' }}</span>
@@ -178,19 +178,22 @@
               </div>
 
               <!-- Floating Pivot Table Object -->
-              <div class="replica-pivot-card" *ngIf="hasPivotTableObject()">
+              <div class="replica-pivot-card" *ngIf="hasPivotTableObject() && pivotCardData() as pData">
                 <div class="pivot-card-title">PivotTable1</div>
                 <div class="pivot-card-table">
-                  <div class="pv-row pv-header"><span>Row Labels</span><span>Sum of Amount</span></div>
-                  <div class="pv-row"><span>Hardware</span><span>900</span></div>
-                  <div class="pv-row"><span>Office</span><span>350</span></div>
-                  <div class="pv-row"><span>Supplies</span><span>35</span></div>
-                  <div class="pv-row pv-total"><span>Grand Total</span><span>1285</span></div>
+                  <div class="pv-row pv-header"><span>Row Labels</span><span>{{ pData.headerValue }}</span></div>
+                  <div class="pv-row" *ngFor="let r of pData.rows"><span>{{ r.label }}</span><span>{{ r.value }}</span></div>
+                  <div class="pv-row pv-total"><span>Grand Total</span><span>{{ pData.grandTotal }}</span></div>
                 </div>
               </div>
 
               <!-- Floating Comment Balloon -->
-              <div class="replica-comment-balloon" *ngIf="hasCommentOnCell() as cAddr">
+              <div
+                class="replica-comment-balloon"
+                *ngIf="hasCommentOnCell() as cAddr"
+                [style.left.px]="commentBalloonPos()?.left"
+                [style.top.px]="commentBalloonPos()?.top"
+              >
                 <div class="cb-header">Note</div>
                 <div class="cb-body">{{ commentText() }}</div>
               </div>
@@ -268,15 +271,15 @@
                 <div class="rmb-body">
                   <div class="rmb-field">
                     <label>Rows:</label>
-                    <div class="rmb-fake-select">{{ pivotRows() }}</div>
+                    <div class="rmb-fake-select" data-demo-target="pivot-rows-select">{{ pivotRows() }}</div>
                   </div>
                   <div class="rmb-field">
                     <label>Values:</label>
-                    <div class="rmb-fake-select">{{ pivotValues() }}</div>
+                    <div class="rmb-fake-select" data-demo-target="pivot-values-select">{{ pivotValues() }}</div>
                   </div>
                   <div class="rmb-field">
                     <label>Summarize by:</label>
-                    <div class="rmb-fake-select">{{ pivotSummarize() }}</div>
+                    <div class="rmb-fake-select" data-demo-target="pivot-summarize-select">{{ pivotSummarize() }}</div>
                   </div>
                 </div>
                 <div class="rmb-footer">
@@ -308,15 +311,28 @@
                 <div class="rmb-body">
                   <div class="rmb-field">
                     <label>Format cells if:</label>
-                    <div class="rmb-fake-select">Greater than</div>
+                    <div class="rmb-fake-select" data-demo-target="cf-condition-select">{{ getConditionLabel(cfCondition()) }}</div>
                   </div>
-                  <div class="rmb-field">
+                  <div class="rmb-field" *ngIf="cfCondition() !== 'isEmpty'">
                     <label>Value:</label>
                     <input type="text" class="rmb-input" [value]="cfValue()" data-demo-target="cf-value-input" readonly />
                   </div>
+                  <div class="rmb-field" *ngIf="cfCondition() === 'between'">
+                    <label>Value 2:</label>
+                    <input type="text" class="rmb-input" [value]="cfValue2()" data-demo-target="cf-value2-input" readonly />
+                  </div>
                   <div class="rmb-field">
                     <label>Fill Color:</label>
-                    <div class="rmb-color-sample" [style.background]="cfColor() === 'lightGreen' ? '#bbf7d0' : cfColor()"></div>
+                    <div class="cf-swatches-grid">
+                      <div
+                        *ngFor="let k of colorKeys"
+                        class="cf-color-swatch"
+                        [attr.data-demo-target]="'cf-swatch-' + k"
+                        [class.selected-swatch]="cfColor() === k"
+                        [style.background-color]="COLORS[k]"
+                        [title]="k"
+                      ></div>
+                    </div>
                   </div>
                 </div>
                 <div class="rmb-footer">

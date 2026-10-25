@@ -1142,3 +1142,39 @@ app-excel-replica-ribbon {
 :host-context(.dark-theme) .mini-cell.copied-marching-ants {
   outline-color: #22c55e !important;
 }
+
+/* Conditional Formatting Swatches Grid */
+.cf-swatches-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 200px;
+  padding: 4px 0;
+}
+
+.cf-color-swatch {
+  width: 15px;
+  height: 15px;
+  border-radius: 2px;
+  border: 1px solid #cbd5e1;
+  cursor: pointer;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.cf-color-swatch.selected-swatch {
+  outline: 2px solid #107c41;
+  outline-offset: 1px;
+}
+
+:host-context([data-theme="dark"]) .cf-color-swatch,
+:host-context([data-theme="DARK"]) .cf-color-swatch,
+:host-context(.dark-theme) .cf-color-swatch {
+  border-color: #484644;
+}
+
+:host-context([data-theme="dark"]) .cf-color-swatch.selected-swatch,
+:host-context([data-theme="DARK"]) .cf-color-swatch.selected-swatch,
+:host-context(.dark-theme) .cf-color-swatch.selected-swatch {
+  outline-color: #6fd29a;
+}

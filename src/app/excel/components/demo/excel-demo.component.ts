@@ -15,13 +15,14 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TaskGoal } from 'shared';
+import { COLORS, TaskGoal } from 'shared';
 import { SheetSnapshot } from '../../models/excel.types';
 import {
   colLetterToIndex,
   formatAddress,
   indexToColLetter,
   parseAddress,
+  parseDateParts,
   parseRange,
   FormulaEngineService,
 } from '../../services/formula-engine.service';
@@ -132,12 +133,21 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly commentText = signal<string>('check pricing');
   readonly cfCondition = signal<string>('greaterThan');
   readonly cfValue = signal<string>('100');
+  readonly cfValue2 = signal<string>('');
   readonly cfColor = signal<string>('lightGreen');
   readonly dvType = signal<string>('List');
   readonly dvSource = signal<string>('Yes, No');
   readonly rdHeaders = signal<boolean>(false);
   readonly keyBadge = signal<string | null>(null);
   readonly replicaCopiedRange = signal<string | null>(null);
+  readonly commentBalloonPos = signal<{ left: number; top: number } | null>(null);
+  readonly pivotCardData = signal<{
+    headerValue: string;
+    rows: Array<{ label: string; value: string | number }>;
+    grandTotal: string | number;
+  } | null>(null);
+  readonly COLORS = COLORS;
+  readonly colorKeys = Object.keys(COLORS);
 
   private demoUndoStack: Array<{
     cells: Map<string, { value: any; calculatedValue?: any; display: string }>;
@@ -325,11 +335,11 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
       case 'chart':
         return `Insert ${g.chartType || 'column'} chart`;
       case 'pivotTable':
-        return 'Insert PivotTable';
+        return 'Insert a pivot table';
       case 'comment':
-        return 'Add cell comment';
+        return 'Add a comment';
       case 'conditionalFormat':
-        return 'Add conditional formatting rule';
+        return 'Add a rule';
       case 'dataValidation':
         return 'Add data validation';
       case 'noDuplicates':
@@ -392,7 +402,9 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.showToast.set(false);
     this.hasChartObject.set(null);
     this.hasPivotTableObject.set(false);
+    this.pivotCardData.set(null);
     this.hasCommentOnCell.set(null);
+    this.commentBalloonPos.set(null);
     this.hiddenRows.set(new Set());
     this.replicaDialog.set(null);
     this.replicaFillColorOpen.set(false);
@@ -401,6 +413,13 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.rdHeaders.set(false);
     this.dvType.set('List');
     this.dvSource.set('');
+    this.cfCondition.set('');
+    this.cfValue.set('');
+    this.cfValue2.set('');
+    this.cfColor.set('');
+    this.pivotRows.set('');
+    this.pivotValues.set('');
+    this.pivotSummarize.set('');
     this.keyBadge.set(null);
     this.replicaCopiedRange.set(null);
     this.demoUndoStack = [];
@@ -922,19 +941,57 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
     // 7. pivotTable
     if (type === 'pivotTable') {
       const range = g.range || 'A1:C6';
-      this.selectRange(range);
-      await this.moveToTarget(`replica-cell-${range.split(':')[0]}`);
-      await this.moveToTarget('tab-insert');
+      const parts = range.split(':');
+      const start = parts[0];
+      const end = parts[1] || start;
 
+      // Selection appears as cursor moves to start, then drags to end
+      await this.moveToTarget(`replica-cell-${start}`);
+      this.selectRange(start);
+      if (end !== start) {
+        await this.moveToTarget(`replica-cell-${end}`);
+        this.selectRange(range);
+      }
+
+      // Compute pivot table data dynamically from replica sheet
+      const pData = this.computePivotTableData(range, g.rowsField, g.valuesField, g.summarize);
+
+      // Insert tab -> PivotTable
+      this.replicaActiveTab.set('insert');
+      await this.moveToTarget('tab-insert');
       await this.moveToTarget('insert-pivottable-btn');
-      this.pivotRows.set(g.rowsField || 'Category');
-      this.pivotValues.set(g.valuesField || 'Amount');
-      this.pivotSummarize.set(g.summarize || 'SUM');
+
+      // Dialog opens with empty fields
+      this.pivotRows.set('');
+      this.pivotValues.set('');
+      this.pivotSummarize.set('');
       this.replicaDialog.set('pivotTable');
       await this.delay(POST_OPEN_PAUSE_MS);
 
+      // Click pivot-rows-select and pick rowsField
+      await this.moveToTarget('pivot-rows-select');
+      this.pivotRows.set(pData.resolvedRowsField);
+      this.cdr.detectChanges();
+      await this.delay(PRE_CLICK_PAUSE_MS);
+
+      // Click pivot-values-select and pick valuesField
+      await this.moveToTarget('pivot-values-select');
+      this.pivotValues.set(pData.resolvedValuesField);
+      this.cdr.detectChanges();
+      await this.delay(PRE_CLICK_PAUSE_MS);
+
+      // Click pivot-summarize-select and pick summarize (default SUM)
+      await this.moveToTarget('pivot-summarize-select');
+      this.pivotSummarize.set(pData.resolvedSummarize);
+      this.cdr.detectChanges();
+      await this.delay(PRE_CLICK_PAUSE_MS);
+
+      // Click OK
       await this.moveToTarget('pivottable-dialog-ok-btn');
       this.replicaDialog.set(null);
+
+      // Result card computed from replica sheet
+      this.pivotCardData.set(pData);
       this.hasPivotTableObject.set(true);
       return;
     }
@@ -942,17 +999,72 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
     // 8. comment
     if (type === 'comment') {
       const cellAddr = g.cell || 'C4';
-      this.replicaActiveCell.set(cellAddr);
-      await this.moveToTarget(`replica-cell-${cellAddr}`);
-      await this.moveToTarget('tab-insert');
 
+      // Cursor moves to cell FIRST, then cell is selected
+      await this.moveToTarget(`replica-cell-${cellAddr}`);
+      this.selectRange(cellAddr);
+
+      // Insert tab -> Comment
+      this.replicaActiveTab.set('insert');
+      await this.moveToTarget('tab-insert');
       await this.moveToTarget('insert-comment-btn');
-      this.commentText.set(g.contains || 'check pricing');
+
+      // Dialog opens EMPTY
+      this.commentText.set('');
       this.replicaDialog.set('comment');
       await this.delay(POST_OPEN_PAUSE_MS);
 
+      // Click comment-input and type text char by char
+      await this.moveToTarget('comment-input');
+      const targetText = g.contains || 'This value needs checking.';
+      let cur = '';
+      for (const ch of targetText) {
+        if (this.isCancelled) return;
+        cur += ch;
+        this.commentText.set(cur);
+        await this.delay(60);
+      }
+      await this.delay(PRE_CLICK_PAUSE_MS);
+
+      // Click comment-post-btn
       await this.moveToTarget('comment-post-btn');
       this.replicaDialog.set(null);
+
+      // Position balloon to the right of that cell, top-aligned with it
+      const ws = this.elRef.nativeElement.querySelector('.replica-grid-workspace') as HTMLElement | null;
+      const cellEl = this.elRef.nativeElement.querySelector(`[data-demo-target="replica-cell-${cellAddr}"]`) as HTMLElement | null;
+      let top = 0;
+      let left = 0;
+      if (cellEl && ws) {
+        let el: HTMLElement | null = cellEl;
+        let foundWs = false;
+        while (el) {
+          if (el === ws) {
+            foundWs = true;
+            break;
+          }
+          top += el.offsetTop;
+          left += el.offsetLeft;
+          el = el.offsetParent as HTMLElement | null;
+        }
+        if (foundWs) {
+          left += cellEl.offsetWidth + 6;
+        } else {
+          const wsRect = ws.getBoundingClientRect();
+          const cellRect = cellEl.getBoundingClientRect();
+          const scale = ws.offsetWidth > 0 ? wsRect.width / ws.offsetWidth : 1;
+          top = (cellRect.top - wsRect.top) / scale;
+          left = (cellRect.right - wsRect.left) / scale + 6;
+        }
+      } else {
+        const rowNum = parseInt(cellAddr.replace(/^[A-Z]+/i, ''), 10) || 1;
+        const colLetter = cellAddr.match(/^[A-Z]+/i)?.[0]?.toUpperCase() || 'A';
+        const colIdx = colLetter.charCodeAt(0) - 65;
+        top = 24 + (rowNum - 1) * 26;
+        left = 38 + (colIdx + 1) * 90 + 6;
+      }
+
+      this.commentBalloonPos.set({ left, top });
       this.hasCommentOnCell.set(cellAddr);
       return;
     }
@@ -960,27 +1072,93 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
     // 9. conditionalFormat
     if (type === 'conditionalFormat') {
       const range = g.range || 'C2:C8';
-      this.selectRange(range);
-      await this.moveToTarget(`replica-cell-${range.split(':')[0]}`);
-      await this.moveToTarget('tab-home');
+      const parts = range.split(':');
+      const start = parts[0];
+      const end = parts[1] || start;
 
+      // Selection appears as cursor moves to start, then drags to end
+      await this.moveToTarget(`replica-cell-${start}`);
+      this.selectRange(start);
+      if (end !== start) {
+        await this.moveToTarget(`replica-cell-${end}`);
+        this.selectRange(range);
+      }
+
+      // Home tab -> Conditional Formatting
+      this.replicaActiveTab.set('home');
+      await this.moveToTarget('tab-home');
       await this.moveToTarget('conditional-format-btn');
-      this.cfCondition.set(g.condition || 'greaterThan');
-      this.cfValue.set(String(g.value ?? 100));
-      this.cfColor.set(g.fillColor || 'lightGreen');
+
+      // Dialog opens with empty/default fields
+      this.cfCondition.set('');
+      this.cfValue.set('');
+      this.cfValue2.set('');
+      this.cfColor.set('');
       this.replicaDialog.set('conditionalFormat');
       await this.delay(POST_OPEN_PAUSE_MS);
 
+      // Click cf-condition-select and pick condition
+      const targetCondition = g.condition || 'greaterThan';
+      await this.moveToTarget('cf-condition-select');
+      this.cfCondition.set(targetCondition);
+      this.cdr.detectChanges();
+      await this.delay(PRE_CLICK_PAUSE_MS);
+
+      // Click cf-value-input and type value
+      const targetValue = g.value !== undefined ? g.value : 100;
+      if (targetCondition !== 'isEmpty' && targetValue !== undefined) {
+        await this.moveToTarget('cf-value-input');
+        let cur = '';
+        for (const ch of String(targetValue)) {
+          if (this.isCancelled) return;
+          cur += ch;
+          this.cfValue.set(cur);
+          await this.delay(60);
+        }
+        await this.delay(PRE_CLICK_PAUSE_MS);
+      }
+
+      // Click cf-value2-input if between
+      if (targetCondition === 'between' && g.value2 !== undefined) {
+        await this.moveToTarget('cf-value2-input');
+        let cur2 = '';
+        for (const ch of String(g.value2)) {
+          if (this.isCancelled) return;
+          cur2 += ch;
+          this.cfValue2.set(cur2);
+          await this.delay(60);
+        }
+        await this.delay(PRE_CLICK_PAUSE_MS);
+      }
+
+      // Click swatch cf-swatch-<goal.fillColor>
+      const targetColorKey = g.fillColor || 'lightGreen';
+      await this.moveToTarget(`cf-swatch-${targetColorKey}`);
+      this.cfColor.set(targetColorKey);
+      await this.delay(PRE_CLICK_PAUSE_MS);
+
+      // Click Done
       await this.moveToTarget('cf-dialog-done-btn');
       this.replicaDialog.set(null);
 
-      // Highlight matching cells (C2=125, C4=110, C6=150, C8=105)
-      const fmts = new Map(this.replicaFormats());
-      for (const addr of ['C2', 'C4', 'C6', 'C8']) {
-        const ex = fmts.get(addr) || {};
-        fmts.set(addr, { ...ex, fillColor: 'lightGreen' });
+      // Colour ONLY the cells in goal.range that match the condition
+      const parsed = parseRange(range);
+      if (parsed) {
+        const fmts = new Map(this.replicaFormats());
+        const exactColor = COLORS[targetColorKey] || targetColorKey;
+        for (let r = parsed.startRow; r <= parsed.endRow; r++) {
+          for (let c = parsed.startCol; c <= parsed.endCol; c++) {
+            const addr = formatAddress({ row: r, col: c });
+            const cell = this.replicaCells().get(addr);
+            const cellVal = cell?.calculatedValue !== undefined ? cell.calculatedValue : cell?.value;
+            if (this.evaluateDemoCondition(cellVal, targetCondition, targetValue, g.value2)) {
+              const ex = fmts.get(addr) || {};
+              fmts.set(addr, { ...ex, fillColor: exactColor });
+            }
+          }
+        }
+        this.replicaFormats.set(fmts);
       }
-      this.replicaFormats.set(fmts);
       return;
     }
 
@@ -1416,6 +1594,235 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
 
       return;
     }
+  }
+
+  getCellFill(cellAddr: string): string {
+    const f = this.replicaFormats().get(cellAddr);
+    if (!f?.fillColor) return '';
+    return (COLORS as Record<string, string>)[f.fillColor] || f.fillColor;
+  }
+
+  getConditionLabel(c: string): string {
+    switch (c) {
+      case 'greaterThan': return 'Greater than';
+      case 'lessThan': return 'Less than';
+      case 'equals': return 'Equal to';
+      case 'between': return 'Between';
+      case 'contains': return 'Text contains';
+      case 'isEmpty': return 'Is empty';
+      default: return c || 'Select condition...';
+    }
+  }
+
+  private evaluateDemoCondition(val: any, condition: string, targetVal?: any, targetVal2?: any): boolean {
+    const d1 = parseDateParts(val);
+    const d2 = parseDateParts(targetVal);
+    if (d1 && d2) {
+      if (condition === 'equals') return d1.utcTime === d2.utcTime;
+      if (condition === 'greaterThan') return d1.utcTime > d2.utcTime;
+      if (condition === 'lessThan') return d1.utcTime < d2.utcTime;
+      if (condition === 'between') {
+        const d3 = parseDateParts(targetVal2);
+        const tMin = Math.min(d2.utcTime, d3 ? d3.utcTime : d2.utcTime);
+        const tMax = Math.max(d2.utcTime, d3 ? d3.utcTime : d2.utcTime);
+        return d1.utcTime >= tMin && d1.utcTime <= tMax;
+      }
+    }
+
+    const str = String(val ?? '').trim().toLowerCase();
+    const num = Number(val);
+
+    switch (condition) {
+      case 'equals':
+        if (!isNaN(num) && targetVal !== undefined && !isNaN(Number(targetVal))) {
+          return Math.abs(num - Number(targetVal)) < 0.0001;
+        }
+        return str === String(targetVal ?? '').trim().toLowerCase();
+
+      case 'greaterThan':
+        return !isNaN(num) && targetVal !== undefined && num > Number(targetVal);
+
+      case 'lessThan':
+        return !isNaN(num) && targetVal !== undefined && num < Number(targetVal);
+
+      case 'between':
+        return (
+          !isNaN(num) &&
+          targetVal !== undefined &&
+          targetVal2 !== undefined &&
+          num >= Math.min(Number(targetVal), Number(targetVal2)) &&
+          num <= Math.max(Number(targetVal), Number(targetVal2))
+        );
+
+      case 'contains':
+        return str.includes(String(targetVal ?? '').trim().toLowerCase());
+
+      case 'isEmpty':
+        return val === '' || val === null || val === undefined;
+
+      default:
+        return true;
+    }
+  }
+
+  private computePivotTableData(
+    range: string,
+    goalRowsField?: string,
+    goalValuesField?: string,
+    goalSummarize?: string
+  ): {
+    headerValue: string;
+    rows: Array<{ label: string; value: string | number }>;
+    grandTotal: string | number;
+    resolvedRowsField: string;
+    resolvedValuesField: string;
+    resolvedSummarize: string;
+  } {
+    const parsed = parseRange(range) || { startRow: 0, startCol: 0, endRow: 5, endCol: 2 };
+    const headerRow = parsed.startRow;
+    const colHeaders: Array<{ col: number; name: string }> = [];
+    for (let c = parsed.startCol; c <= parsed.endCol; c++) {
+      const a = formatAddress({ row: headerRow, col: c });
+      const raw = this.replicaCells().get(a)?.value;
+      const name = raw !== undefined && raw !== null && String(raw).trim() !== ''
+        ? String(raw).trim()
+        : indexToColLetter(c);
+      colHeaders.push({ col: c, name });
+    }
+
+    let rowsCol = colHeaders[0]?.col ?? parsed.startCol;
+    let resolvedRowsField = colHeaders[0]?.name ?? 'Row';
+    if (goalRowsField) {
+      const match = colHeaders.find((h) => h.name.toLowerCase() === goalRowsField.trim().toLowerCase());
+      if (match) {
+        rowsCol = match.col;
+        resolvedRowsField = match.name;
+      } else {
+        resolvedRowsField = goalRowsField;
+      }
+    }
+
+    let valuesCol = -1;
+    let resolvedValuesField = '';
+    if (goalValuesField) {
+      const match = colHeaders.find((h) => h.name.toLowerCase() === goalValuesField.trim().toLowerCase());
+      if (match) {
+        valuesCol = match.col;
+        resolvedValuesField = match.name;
+      } else {
+        resolvedValuesField = goalValuesField;
+      }
+    }
+
+    if (valuesCol === -1) {
+      for (const h of colHeaders) {
+        let hasNum = false;
+        for (let r = headerRow + 1; r <= parsed.endRow; r++) {
+          const a = formatAddress({ row: r, col: h.col });
+          const val = this.replicaCells().get(a)?.value;
+          if (val !== undefined && val !== null && String(val).trim() !== '') {
+            const num = Number(val);
+            if (!isNaN(num)) {
+              hasNum = true;
+              break;
+            }
+          }
+        }
+        if (hasNum) {
+          valuesCol = h.col;
+          resolvedValuesField = h.name;
+          break;
+        }
+      }
+    }
+
+    if (valuesCol === -1) {
+      const fallbackH = colHeaders.find((h) => h.col !== rowsCol) || colHeaders[colHeaders.length - 1];
+      valuesCol = fallbackH?.col ?? parsed.endCol;
+      resolvedValuesField = fallbackH?.name ?? 'Values';
+    }
+
+    const resolvedSummarize = (goalSummarize || 'SUM').toUpperCase();
+
+    interface GroupAccumulator {
+      label: string;
+      sum: number;
+      count: number;
+      numCount: number;
+    }
+    const groupMap = new Map<string, GroupAccumulator>();
+
+    for (let r = headerRow + 1; r <= parsed.endRow; r++) {
+      const rowAddr = formatAddress({ row: r, col: rowsCol });
+      const rowRaw = this.replicaCells().get(rowAddr)?.value;
+      const label = rowRaw !== undefined && rowRaw !== null && String(rowRaw).trim() !== ''
+        ? String(rowRaw).trim()
+        : '(blank)';
+
+      const valAddr = formatAddress({ row: r, col: valuesCol });
+      const valRaw = this.replicaCells().get(valAddr)?.value;
+      const num = Number(valRaw);
+      const isNum = !isNaN(num) && valRaw !== '' && valRaw !== null && valRaw !== undefined;
+
+      let acc = groupMap.get(label);
+      if (!acc) {
+        acc = { label, sum: 0, count: 0, numCount: 0 };
+        groupMap.set(label, acc);
+      }
+      acc.count++;
+      if (isNum) {
+        acc.sum += num;
+        acc.numCount++;
+      }
+    }
+
+    const rows: Array<{ label: string; value: string | number }> = [];
+    let grandSum = 0;
+    let grandCount = 0;
+    let grandNumCount = 0;
+
+    for (const acc of groupMap.values()) {
+      grandSum += acc.sum;
+      grandCount += acc.count;
+      grandNumCount += acc.numCount;
+
+      let computedVal: number | string = 0;
+      if (resolvedSummarize === 'COUNT') {
+        computedVal = acc.count;
+      } else if (resolvedSummarize === 'AVERAGE') {
+        const avg = acc.numCount > 0 ? acc.sum / acc.numCount : 0;
+        computedVal = Number.isInteger(avg) ? avg : Math.round(avg * 100) / 100;
+      } else {
+        computedVal = Number.isInteger(acc.sum) ? acc.sum : Math.round(acc.sum * 100) / 100;
+      }
+      rows.push({ label: acc.label, value: computedVal });
+    }
+
+    let grandTotal: number | string = 0;
+    if (resolvedSummarize === 'COUNT') {
+      grandTotal = grandCount;
+    } else if (resolvedSummarize === 'AVERAGE') {
+      const avg = grandNumCount > 0 ? grandSum / grandNumCount : 0;
+      grandTotal = Number.isInteger(avg) ? avg : Math.round(avg * 100) / 100;
+    } else {
+      grandTotal = Number.isInteger(grandSum) ? grandSum : Math.round(grandSum * 100) / 100;
+    }
+
+    let summarizePrefix = 'Sum';
+    if (resolvedSummarize === 'COUNT') summarizePrefix = 'Count';
+    else if (resolvedSummarize === 'AVERAGE') summarizePrefix = 'Average';
+    else summarizePrefix = resolvedSummarize.charAt(0).toUpperCase() + resolvedSummarize.slice(1).toLowerCase();
+
+    const headerValue = `${summarizePrefix} of ${resolvedValuesField}`;
+
+    return {
+      headerValue,
+      rows,
+      grandTotal,
+      resolvedRowsField,
+      resolvedValuesField,
+      resolvedSummarize,
+    };
   }
 
   getToastTitle(): string {
