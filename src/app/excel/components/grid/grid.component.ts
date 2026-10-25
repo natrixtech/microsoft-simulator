@@ -106,6 +106,18 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
   private chartInitialX = 0;
   private chartInitialY = 0;
 
+  // PivotTable dragging & notification state
+  readonly isDraggingPivot = signal<boolean>(false);
+  readonly pivotDragTargetCell = signal<string | null>(null);
+  readonly pivotMessage = signal<string | null>(null);
+  private draggedPivot: PivotTableItem | null = null;
+  private pivotDragStartMouseX = 0;
+  private pivotDragStartMouseY = 0;
+  private pivotGrabRowOffset = 0;
+  private pivotGrabColOffset = 0;
+  private hasPivotDragMoved = false;
+  private pivotToastTimer: any = null;
+
   // Active validation dropdown menu
   readonly activeValidationMenu = signal<{ cell: string; allowed: string[]; x: number; y: number } | null>(null);
 
@@ -425,6 +437,8 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
       this.commitEdit(0, 0);
     }
 
+    this.state.selectedPivotTableId.set(null);
+
     const addr = formatAddress({ row, col });
 
     if (event.shiftKey) {
@@ -521,6 +535,22 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
     this.isSelectingRange = false;
     this.isDraggingChart = false;
     this.draggedChartId = null;
+
+    if (this.draggedPivot) {
+      const pt = this.draggedPivot;
+      const wasDragging = this.isDraggingPivot();
+      const newTarget = this.pivotDragTargetCell();
+
+      this.draggedPivot = null;
+      this.isDraggingPivot.set(false);
+      this.pivotDragTargetCell.set(null);
+      this.hasPivotDragMoved = false;
+
+      if (wasDragging && newTarget && newTarget !== pt.targetCell) {
+        this.tryMovePivot(pt, newTarget);
+      }
+    }
+
     if (this.hoveredCommentAddr()) {
       this.updateCommentNotePosition(this.hoveredCommentAddr()!);
     }
@@ -549,10 +579,18 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
   // Double click to edit cell
   onCellDblClick(row: number, col: number): void {
     const addr = formatAddress({ row, col });
+    if (this.isPivotBlocked(addr)) {
+      this.showPivotMessage('Cannot change this part of a PivotTable report.');
+      return;
+    }
     this.startEditing(addr, undefined, 'full');
   }
 
   startEditing(addr: string, initialChar?: string, mode: 'type' | 'full' = 'type'): void {
+    if (this.isPivotBlocked(addr)) {
+      this.showPivotMessage('Cannot change this part of a PivotTable report.');
+      return;
+    }
     this.hoveredCommentAddr.set(null);
     this.hoveredComment.set(null);
     this.editMode.set(mode);
@@ -576,10 +614,16 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
   commitEdit(dRow: number = 0, dCol: number = 0): void {
     if (!this.state.isEditing()) return;
 
+    const addr = this.state.editingAddress();
+    if (this.isPivotBlocked(addr)) {
+      this.cancelEdit();
+      this.showPivotMessage('Cannot change this part of a PivotTable report.');
+      return;
+    }
+
     const snap = this.state.getSnapshot();
     this.history.push(snap);
 
-    const addr = this.state.editingAddress();
     const val = this.state.editInput();
 
     // Data validation reject check
@@ -765,11 +809,19 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
       }
       if (key === 'x') {
         event.preventDefault();
+        if (this.isPivotBlocked()) {
+          this.showPivotMessage('Cannot change this part of a PivotTable report.');
+          return;
+        }
         this.clipboard.cut(this.state.selectedRange());
         return;
       }
       if (key === 'v') {
         event.preventDefault();
+        if (this.isPivotBlocked()) {
+          this.showPivotMessage('Cannot change this part of a PivotTable report.');
+          return;
+        }
         this.history.push(this.state.getSnapshot());
         this.clipboard.paste(this.state.activeCell());
         return;
@@ -910,6 +962,19 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
       this.moveActiveCell(0, event.shiftKey ? -1 : 1);
     } else if (event.key === 'Delete' || event.key === 'Backspace') {
       event.preventDefault();
+      if (this.state.selectedPivotTableId()) {
+        const ptId = this.state.selectedPivotTableId()!;
+        const pt = this.state.pivotTables().find((p) => p.id === ptId);
+        const targetCell = pt?.targetCell || 'A1';
+        this.history.push(this.state.getSnapshot());
+        this.state.deletePivotTable(ptId);
+        this.state.selectCell(targetCell);
+        return;
+      }
+      if (this.isPivotBlocked()) {
+        this.showPivotMessage('Cannot change this part of a PivotTable report.');
+        return;
+      }
       if (this.state.selectedChartId()) {
         this.state.deleteChart(this.state.selectedChartId()!);
         return;
@@ -918,10 +983,18 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
       this.state.clearSelection();
     } else if (event.key === 'F2') {
       event.preventDefault();
+      if (this.isPivotBlocked()) {
+        this.showPivotMessage('Cannot change this part of a PivotTable report.');
+        return;
+      }
       this.startEditing(this.state.activeCell(), undefined, 'full');
     } else if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
       // Start typing directly into active cell
       event.preventDefault();
+      if (this.isPivotBlocked()) {
+        this.showPivotMessage('Cannot change this part of a PivotTable report.');
+        return;
+      }
       this.startEditing(this.state.activeCell(), event.key, 'type');
     }
   }
@@ -933,6 +1006,7 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!isShift) {
       this.moveActiveCell(dRow, dCol);
     } else {
+      this.state.selectedPivotTableId.set(null);
       const nextR = Math.max(0, Math.min(this.numRows - 1, this.selectionLead.row + dRow));
       const nextC = Math.max(0, Math.min(this.numCols - 1, this.selectionLead.col + dCol));
       this.extendSelectionTo(nextR, nextC);
@@ -940,6 +1014,7 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private moveActiveCell(dRow: number, dCol: number): void {
+    this.state.selectedPivotTableId.set(null);
     const cur = parseAddress(this.state.activeCell());
     if (!cur) return;
     const r = Math.max(0, Math.min(this.numRows - 1, cur.row + dRow));
@@ -1208,6 +1283,32 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
         chart.x = Math.max(10, this.chartInitialX + deltaX);
         chart.y = Math.max(10, this.chartInitialY + deltaY);
         this.cdr.markForCheck();
+      }
+    }
+
+    if (this.draggedPivot) {
+      const deltaX = event.clientX - this.pivotDragStartMouseX;
+      const deltaY = event.clientY - this.pivotDragStartMouseY;
+      if (!this.hasPivotDragMoved && Math.hypot(deltaX, deltaY) > 3) {
+        this.hasPivotDragMoved = true;
+        this.isDraggingPivot.set(true);
+      }
+
+      if (this.isDraggingPivot()) {
+        const cellAddr = this.getCellAddressFromPoint(event.clientX, event.clientY);
+        if (cellAddr) {
+          const p = parseAddress(cellAddr);
+          if (p) {
+            const totalRows = this.draggedPivot.rows.length + 2;
+            const targetRow = Math.max(0, Math.min(this.rows.length - totalRows, p.row - this.pivotGrabRowOffset));
+            const targetCol = Math.max(0, Math.min(this.cols.length - 2, p.col - this.pivotGrabColOffset));
+            const snappedCell = formatAddress({ row: targetRow, col: targetCol });
+            if (snappedCell !== this.pivotDragTargetCell()) {
+              this.pivotDragTargetCell.set(snappedCell);
+              this.cdr.markForCheck();
+            }
+          }
+        }
       }
     }
   }
@@ -1932,6 +2033,388 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
     const p2Y = baseY + width * Math.cos(angle);
 
     return `${toX.toFixed(1)},${toY.toFixed(1)} ${p1X.toFixed(1)},${p1Y.toFixed(1)} ${p2X.toFixed(1)},${p2Y.toFixed(1)}`;
+  }
+
+  getPivotTableRect(pt: PivotTableItem): { left: number; top: number; width: number; height: number } | null {
+    const target = parseAddress(pt.targetCell || 'D1') || { row: 0, col: 3 };
+    const totalRows = pt.rows.length + 2;
+    const startRow = target.row;
+    const endRow = startRow + totalRows - 1;
+    const startCol = target.col;
+    const endCol = startCol + 1;
+    return this.getPivotTableRectForBounds(startRow, startCol, endRow, endCol);
+  }
+
+  getPivotTableRectForBounds(
+    startRow: number,
+    startCol: number,
+    endRow: number,
+    endCol: number
+  ): { left: number; top: number; width: number; height: number } | null {
+    const startAddr = formatAddress({ row: startRow, col: startCol });
+    const endAddr = formatAddress({ row: endRow, col: endCol });
+
+    const container = this.gridScrollRef?.nativeElement;
+    if (container) {
+      const startEl = container.querySelector<HTMLElement>(`[data-cell-address="${startAddr}"]`);
+      const endEl = container.querySelector<HTMLElement>(`[data-cell-address="${endAddr}"]`);
+      if (startEl && endEl) {
+        const left = startEl.offsetLeft;
+        const top = startEl.offsetTop;
+        const width = (endEl.offsetLeft + endEl.offsetWidth) - startEl.offsetLeft;
+        const height = (endEl.offsetTop + endEl.offsetHeight) - startEl.offsetTop;
+        return { left, top, width, height };
+      }
+    }
+
+    let left = 44;
+    for (let c = 0; c < startCol; c++) {
+      const letter = this.cols[c]?.letter || indexToColLetter(c);
+      left += this.getColWidth(letter);
+    }
+    let width = 0;
+    for (let c = startCol; c <= endCol; c++) {
+      const letter = this.cols[c]?.letter || indexToColLetter(c);
+      width += this.getColWidth(letter);
+    }
+    let top = 24;
+    for (let r = 0; r < startRow; r++) {
+      if (!this.isRowHidden(r)) {
+        top += this.getRowHeight(r);
+      }
+    }
+    let height = 0;
+    for (let r = startRow; r <= endRow; r++) {
+      if (!this.isRowHidden(r)) {
+        height += this.getRowHeight(r);
+      }
+    }
+    return { left, top, width, height };
+  }
+
+  getPivotRange(pt: PivotTableItem): string {
+    const target = parseAddress(pt.targetCell || 'D1') || { row: 0, col: 3 };
+    const totalRows = pt.rows.length + 2;
+    const startRow = target.row;
+    const endRow = startRow + totalRows - 1;
+    const startCol = target.col;
+    const endCol = startCol + 1;
+    return `${formatAddress({ row: startRow, col: startCol })}:${formatAddress({ row: endRow, col: endCol })}`;
+  }
+
+  getPivotColWidth(pt: PivotTableItem, colOffset: number): number {
+    const target = parseAddress(pt.targetCell || 'D1') || { row: 0, col: 3 };
+    const c = target.col + colOffset;
+    if (c >= 0 && c < this.cols.length) {
+      return this.getColWidth(this.cols[c].letter);
+    }
+    return 100;
+  }
+
+  getPivotRowHeight(pt: PivotTableItem, rowOffset: number): number {
+    const target = parseAddress(pt.targetCell || 'D1') || { row: 0, col: 3 };
+    const r = target.row + rowOffset;
+    if (r >= 0 && r < this.rows.length) {
+      return this.getRowHeight(r);
+    }
+    return 24;
+  }
+
+  formatPivotNumber(val: any): string {
+    const n = Number(val);
+    if (isNaN(n)) return String(val ?? '');
+    return Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100);
+  }
+
+  selectPivot(pt: PivotTableItem): void {
+    const range = this.getPivotRange(pt);
+    const targetCell = (pt.targetCell || 'D1').toUpperCase();
+    const p = parseAddress(targetCell) || { row: 0, col: 3 };
+    this.state.selectedPivotTableId.set(pt.id);
+    this.state.selectedChartId.set(null);
+    this.state.selectedRange.set(range);
+    this.state.activeCell.set(targetCell);
+    this.selectionAnchor = { row: p.row, col: p.col };
+    this.selectionLead = { row: p.row, col: p.col };
+    this.actionLogger.log('selectRange', range);
+    this.cdr.markForCheck();
+  }
+
+  onPivotDblClick(event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.showPivotMessage('Cannot change this part of a PivotTable report.');
+  }
+
+  isCellInsideAnyPivot(cellAddr: string): boolean {
+    const p = parseAddress(cellAddr);
+    if (!p) return false;
+    for (const pt of this.state.pivotTables()) {
+      const target = parseAddress(pt.targetCell || 'D1');
+      if (!target) continue;
+      const totalRows = pt.rows.length + 2;
+      const startRow = target.row;
+      const endRow = startRow + totalRows - 1;
+      const startCol = target.col;
+      const endCol = startCol + 1;
+      if (p.row >= startRow && p.row <= endRow && p.col >= startCol && p.col <= endCol) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  isRangeOverlappingAnyPivot(rangeStr: string): boolean {
+    const parsed = parseRange(rangeStr);
+    if (!parsed) return this.isCellInsideAnyPivot(rangeStr);
+    for (const pt of this.state.pivotTables()) {
+      const target = parseAddress(pt.targetCell || 'D1');
+      if (!target) continue;
+      const totalRows = pt.rows.length + 2;
+      const startRow = target.row;
+      const endRow = startRow + totalRows - 1;
+      const startCol = target.col;
+      const endCol = startCol + 1;
+      if (
+        parsed.startRow <= endRow &&
+        parsed.endRow >= startRow &&
+        parsed.startCol <= endCol &&
+        parsed.endCol >= startCol
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  isPivotBlocked(checkAddr?: string): boolean {
+    if (this.state.selectedPivotTableId()) {
+      return true;
+    }
+    if (checkAddr) {
+      return this.isCellInsideAnyPivot(checkAddr);
+    }
+    const selRange = this.state.selectedRange();
+    if (selRange && this.isRangeOverlappingAnyPivot(selRange)) {
+      return true;
+    }
+    const act = this.state.activeCell();
+    return act ? this.isCellInsideAnyPivot(act) : false;
+  }
+
+  onPivotMouseDown(pt: PivotTableItem, event: MouseEvent): void {
+    if (this.bridge.isPaused() || this.isCompleted) return;
+    if (event.button !== 0) return;
+    event.stopPropagation();
+
+    this.selectPivot(pt);
+    this.gridScrollRef?.nativeElement.focus({ preventScroll: true });
+
+    const parsedTarget = parseAddress(pt.targetCell) || { row: 0, col: 3 };
+    this.draggedPivot = pt;
+    this.pivotDragStartMouseX = event.clientX;
+    this.pivotDragStartMouseY = event.clientY;
+    this.hasPivotDragMoved = false;
+
+    const cellAddr = this.getCellAddressFromPoint(event.clientX, event.clientY);
+    if (cellAddr) {
+      const p = parseAddress(cellAddr);
+      if (p) {
+        this.pivotGrabRowOffset = p.row - parsedTarget.row;
+        this.pivotGrabColOffset = p.col - parsedTarget.col;
+      } else {
+        this.pivotGrabRowOffset = 0;
+        this.pivotGrabColOffset = 0;
+      }
+    } else {
+      this.pivotGrabRowOffset = 0;
+      this.pivotGrabColOffset = 0;
+    }
+  }
+
+  pivotDragOutlineRect(): { left: number; top: number; width: number; height: number } | null {
+    if (!this.isDraggingPivot() || !this.draggedPivot || !this.pivotDragTargetCell()) {
+      return null;
+    }
+    const target = parseAddress(this.pivotDragTargetCell()!);
+    if (!target) return null;
+    const totalRows = this.draggedPivot.rows.length + 2;
+    const startRow = target.row;
+    const endRow = startRow + totalRows - 1;
+    const startCol = target.col;
+    const endCol = startCol + 1;
+    return this.getPivotTableRectForBounds(startRow, startCol, endRow, endCol);
+  }
+
+  showPivotMessage(msg: string): void {
+    this.pivotMessage.set(msg);
+    if (this.pivotToastTimer) {
+      clearTimeout(this.pivotToastTimer);
+    }
+    this.pivotToastTimer = setTimeout(() => {
+      this.pivotMessage.set(null);
+      this.cdr.markForCheck();
+    }, 2500);
+    this.cdr.markForCheck();
+  }
+
+  private tryMovePivot(pt: PivotTableItem, newTarget: string): void {
+    if (!this.canPlacePivotAt(pt, newTarget)) {
+      this.showPivotMessage("There's already data there.");
+      return;
+    }
+    this.history.push(this.state.getSnapshot());
+    this.state.movePivotTable(pt.id, newTarget);
+    const updated = this.state.pivotTables().find((p) => p.id === pt.id) || { ...pt, targetCell: newTarget };
+    this.autofitPivotColumns(updated);
+    this.selectPivot(updated);
+    this.cdr.markForCheck();
+  }
+
+  private autofitPivotColumns(pt: PivotTableItem): void {
+    const target = parseAddress(pt.targetCell || 'D1') || { row: 0, col: 3 };
+    const col0Letter = indexToColLetter(target.col);
+    const col1Letter = indexToColLetter(target.col + 1);
+
+    const canvas = typeof document !== 'undefined' ? document.createElement('canvas') : null;
+    const ctx = canvas?.getContext('2d');
+    const measure = (text: string, bold: boolean): number => {
+      if (!ctx) return text.length * 8;
+      ctx.font = `${bold ? '600' : '400'} 10pt "Segoe UI", Arial, sans-serif`;
+      return ctx.measureText(text).width;
+    };
+
+    let maxW0 = measure(pt.headers.rowLabel || 'Row Labels', true);
+    maxW0 = Math.max(maxW0, measure('Grand Total', true));
+    for (const r of pt.rows) {
+      maxW0 = Math.max(maxW0, measure(String(r.rowLabel ?? ''), false));
+    }
+
+    let maxW1 = measure(pt.headers.valueLabel || '', true);
+    maxW1 = Math.max(maxW1, measure(this.formatPivotNumber(pt.grandTotal), true));
+    for (const r of pt.rows) {
+      maxW1 = Math.max(maxW1, measure(this.formatPivotNumber(r.value), false));
+    }
+
+    // Add cell padding (8px left + 8px right = 16px) plus safety spacing
+    const needed0 = Math.ceil(maxW0 + 24);
+    const needed1 = Math.ceil(maxW1 + 24);
+
+    const curWidths = this.state.columnWidths();
+    const cur0 = curWidths.get(col0Letter) || this.getColWidth(col0Letter);
+    const cur1 = curWidths.get(col1Letter) || this.getColWidth(col1Letter);
+
+    const next0 = Math.max(cur0, needed0);
+    const next1 = Math.max(cur1, needed1);
+
+    if (next0 !== cur0 || next1 !== cur1) {
+      const nextMap = new Map(curWidths);
+      nextMap.set(col0Letter, next0);
+      nextMap.set(col1Letter, next1);
+      this.state.columnWidths.set(nextMap);
+      this.cdr.markForCheck();
+    }
+  }
+
+  private canPlacePivotAt(pt: PivotTableItem, targetCell: string): boolean {
+    const target = parseAddress(targetCell);
+    if (!target) return false;
+    const totalRows = pt.rows.length + 2;
+    const startRow = target.row;
+    const endRow = startRow + totalRows - 1;
+    const startCol = target.col;
+    const endCol = startCol + 1;
+
+    if (startRow < 0 || endRow >= this.rows.length || startCol < 0 || endCol >= this.cols.length) {
+      return false;
+    }
+
+    const cells = this.state.cells();
+    for (let r = startRow; r <= endRow; r++) {
+      for (let c = startCol; c <= endCol; c++) {
+        const addr = formatAddress({ row: r, col: c });
+        const cell = cells.get(addr);
+        if (cell && cell.value !== '' && cell.value !== undefined && cell.value !== null) {
+          return false;
+        }
+      }
+    }
+
+    for (const other of this.state.pivotTables()) {
+      if (other.id === pt.id) continue;
+      const oTarget = parseAddress(other.targetCell || 'D1') || { row: 0, col: 3 };
+      const oTotalRows = other.rows.length + 2;
+      const oStartRow = oTarget.row;
+      const oEndRow = oStartRow + oTotalRows - 1;
+      const oStartCol = oTarget.col;
+      const oEndCol = oStartCol + 1;
+      if (startRow <= oEndRow && endRow >= oStartRow && startCol <= oEndCol && endCol >= oStartCol) {
+        return false;
+      }
+    }
+
+    for (const chart of this.state.charts()) {
+      const cParsed = parseRange(chart.range);
+      if (cParsed) {
+        if (startRow <= cParsed.endRow && endRow >= cParsed.startRow && startCol <= cParsed.endCol && endCol >= cParsed.startCol) {
+          return false;
+        }
+      }
+      const pRect = this.getPivotTableRectForBounds(startRow, startCol, endRow, endCol);
+      if (pRect && chart.x < pRect.left + pRect.width && chart.x + chart.width > pRect.left &&
+          chart.y < pRect.top + pRect.height && chart.y + chart.height > pRect.top) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private getCellAddressFromPoint(clientX: number, clientY: number): string | null {
+    const el = document.elementFromPoint(clientX, clientY);
+    const td = el?.closest<HTMLElement>('td.excel-cell[data-cell-address]');
+    if (td) {
+      const addr = td.getAttribute('data-cell-address');
+      if (addr) return addr;
+    }
+
+    const container = this.gridScrollRef?.nativeElement;
+    if (!container) return null;
+    const rect = container.getBoundingClientRect();
+    const x = clientX - rect.left + container.scrollLeft;
+    const y = clientY - rect.top + container.scrollTop;
+
+    let curX = 44;
+    let targetCol = -1;
+    for (let c = 0; c < this.cols.length; c++) {
+      const w = this.getColWidth(this.cols[c].letter);
+      if (x >= curX && x < curX + w) {
+        targetCol = c;
+        break;
+      }
+      curX += w;
+    }
+    if (targetCol === -1) {
+      targetCol = x < 44 ? 0 : this.cols.length - 1;
+    }
+
+    let curY = 24;
+    let targetRow = -1;
+    for (let r = 0; r < this.rows.length; r++) {
+      if (!this.isRowHidden(r)) {
+        const h = this.getRowHeight(r);
+        if (y >= curY && y < curY + h) {
+          targetRow = r;
+          break;
+        }
+        curY += h;
+      }
+    }
+    if (targetRow === -1) {
+      targetRow = y < 24 ? 0 : this.rows.length - 1;
+    }
+
+    return formatAddress({ row: targetRow, col: targetCol });
   }
 }
 

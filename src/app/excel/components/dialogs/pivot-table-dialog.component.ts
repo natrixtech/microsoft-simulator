@@ -92,6 +92,7 @@ export class PivotTableDialogComponent implements OnInit {
 
     const rows: Array<{ rowLabel: string; value: number }> = [];
     let grandTotal = 0;
+    const allValues: number[] = [];
 
     for (const [key, vals] of grouped.entries()) {
       let calc = 0;
@@ -102,9 +103,20 @@ export class PivotTableDialogComponent implements OnInit {
       } else if (summarize === 'AVERAGE') {
         calc = vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
       }
+      calc = Number.isInteger(calc) ? calc : Math.round(calc * 100) / 100;
       rows.push({ rowLabel: key, value: calc });
-      grandTotal += calc;
+      if (summarize !== 'AVERAGE') {
+        grandTotal += calc;
+      }
+      allValues.push(...vals);
     }
+
+    if (summarize === 'AVERAGE') {
+      grandTotal = allValues.length > 0 ? allValues.reduce((a, b) => a + b, 0) / allValues.length : 0;
+    }
+    grandTotal = Number.isInteger(grandTotal) ? grandTotal : Math.round(grandTotal * 100) / 100;
+
+    const summarizeLabel = summarize === 'COUNT' ? 'Count' : summarize === 'AVERAGE' ? 'Average' : 'Sum';
 
     const ptItem: PivotTableItem = {
       id: 'pt_' + Date.now(),
@@ -112,10 +124,10 @@ export class PivotTableDialogComponent implements OnInit {
       rowsField: rowField,
       valuesField: valField,
       summarize,
-      targetCell: formatAddress({ row: parsed.endRow + 2, col: parsed.startCol }),
+      targetCell: formatAddress({ row: parsed.startRow, col: parsed.endCol + 2 }),
       headers: {
-        rowLabel: `Row Labels (${rowField})`,
-        valueLabel: `${summarize} of ${valField}`,
+        rowLabel: 'Row Labels',
+        valueLabel: `${summarizeLabel} of ${valField}`,
       },
       rows,
       grandTotal,

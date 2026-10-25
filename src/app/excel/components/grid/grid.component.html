@@ -132,7 +132,7 @@
     [style.width.px]="rect.width"
     [style.height.px]="rect.height"
   >
-    <div class="fill-handle" *ngIf="!state.isEditing()"></div>
+    <div class="fill-handle" *ngIf="!state.isEditing() && !state.selectedPivotTableId()"></div>
   </div>
 
   <!-- Floating Charts Overlay -->
@@ -345,27 +345,57 @@
     </div>
   </div>
 
-  <!-- Floating PivotTables Overlay -->
-  <div *ngFor="let pt of state.pivotTables()" class="pivot-table-overlay" data-demo-target="sheet-pivottable">
-    <div class="pt-title">PivotTable: {{ pt.rowsField }} & {{ pt.valuesField }}</div>
+  <!-- PivotTables on Sheet -->
+  <div
+    *ngFor="let pt of state.pivotTables()"
+    class="pivot-table-overlay"
+    [class.selected-pivot]="state.selectedPivotTableId() === pt.id"
+    [style.left.px]="getPivotTableRect(pt)?.left"
+    [style.top.px]="getPivotTableRect(pt)?.top"
+    [style.width.px]="getPivotTableRect(pt)?.width"
+    [style.height.px]="getPivotTableRect(pt)?.height"
+    [style.pointer-events]="isDraggingPivot() ? 'none' : 'auto'"
+    (mousedown)="onPivotMouseDown(pt, $event)"
+    (dblclick)="onPivotDblClick($event)"
+    data-demo-target="sheet-pivottable"
+  >
     <table class="pt-table">
+      <colgroup>
+        <col [style.width.px]="getPivotColWidth(pt, 0)" />
+        <col [style.width.px]="getPivotColWidth(pt, 1)" />
+      </colgroup>
       <thead>
-        <tr>
-          <th>{{ pt.headers.rowLabel }}</th>
-          <th>{{ pt.headers.valueLabel }}</th>
+        <tr class="pt-header-row" [style.height.px]="getPivotRowHeight(pt, 0)">
+          <th class="pt-row-label">{{ pt.headers.rowLabel }}</th>
+          <th class="pt-val-label">{{ pt.headers.valueLabel }}</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let r of pt.rows">
-          <td>{{ r.rowLabel }}</td>
-          <td>{{ r.value }}</td>
+        <tr *ngFor="let r of pt.rows; let idx = index" class="pt-data-row" [style.height.px]="getPivotRowHeight(pt, idx + 1)">
+          <td class="pt-row-label">{{ r.rowLabel }}</td>
+          <td class="pt-val-label">{{ formatPivotNumber(r.value) }}</td>
         </tr>
-        <tr class="pt-grand-total">
-          <td>Grand Total</td>
-          <td>{{ pt.grandTotal }}</td>
+        <tr class="pt-grand-total-row" [style.height.px]="getPivotRowHeight(pt, pt.rows.length + 1)">
+          <td class="pt-row-label">Grand Total</td>
+          <td class="pt-val-label">{{ formatPivotNumber(pt.grandTotal) }}</td>
         </tr>
       </tbody>
     </table>
+  </div>
+
+  <!-- PivotTable Drag Snapping Outline -->
+  <div
+    *ngIf="pivotDragOutlineRect() as rect"
+    class="pivot-drag-outline"
+    [style.left.px]="rect.left"
+    [style.top.px]="rect.top"
+    [style.width.px]="rect.width"
+    [style.height.px]="rect.height"
+  ></div>
+
+  <!-- In-app Overlap Toast Message -->
+  <div class="pivot-overlap-toast" *ngIf="pivotMessage()">
+    {{ pivotMessage() }}
   </div>
 
   <!-- Active Data Validation Dropdown Menu -->

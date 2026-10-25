@@ -1110,7 +1110,47 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.commitPendingEdit();
     this.history.push(this.state.getSnapshot());
     this.state.addPivotTable(pt);
+    this.autofitPivotColumns(pt);
     this.closeDialog('pivot');
+  }
+
+  private autofitPivotColumns(pt: PivotTableItem): void {
+    const target = parseAddress(pt.targetCell || 'D1') || { row: 0, col: 3 };
+    const col0Letter = indexToColLetter(target.col);
+    const col1Letter = indexToColLetter(target.col + 1);
+
+    const canvas = typeof document !== 'undefined' ? document.createElement('canvas') : null;
+    const ctx = canvas?.getContext('2d');
+    const measure = (text: string, bold: boolean): number => {
+      if (!ctx) return text.length * 8;
+      ctx.font = `${bold ? '600' : '400'} 10pt "Segoe UI", Arial, sans-serif`;
+      return ctx.measureText(text).width;
+    };
+    const formatNum = (val: any): string => {
+      const n = Number(val);
+      if (isNaN(n)) return String(val ?? '');
+      return Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100);
+    };
+
+    let maxW0 = Math.max(measure(pt.headers.rowLabel || 'Row Labels', true), measure('Grand Total', true));
+    for (const r of pt.rows) maxW0 = Math.max(maxW0, measure(String(r.rowLabel ?? ''), false));
+
+    let maxW1 = Math.max(measure(pt.headers.valueLabel || '', true), measure(formatNum(pt.grandTotal), true));
+    for (const r of pt.rows) maxW1 = Math.max(maxW1, measure(formatNum(r.value), false));
+
+    const curWidths = this.state.columnWidths();
+    const cur0 = curWidths.get(col0Letter) || 84;
+    const cur1 = curWidths.get(col1Letter) || 84;
+    const next0 = Math.max(cur0, Math.ceil(maxW0 + 24));
+    const next1 = Math.max(cur1, Math.ceil(maxW1 + 24));
+
+    if (next0 !== cur0 || next1 !== cur1) {
+      const nextMap = new Map(curWidths);
+      nextMap.set(col0Letter, next0);
+      nextMap.set(col1Letter, next1);
+      this.state.columnWidths.set(nextMap);
+      this.cdr.markForCheck();
+    }
   }
 
   onSaveComment(data: { cell: string; text: string }): void {
@@ -1304,6 +1344,26 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     }
     if (this.bridge.isPaused() || this.isCompleted()) return;
+    if (this.state.selectedPivotTableId() && !this.state.isEditing()) {
+      const target = event.target as HTMLElement | null;
+      const isInput =
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable);
+      if (!isInput && (event.key === 'Delete' || event.key === 'Backspace')) {
+        event.preventDefault();
+        event.stopPropagation();
+        const ptId = this.state.selectedPivotTableId()!;
+        const pt = this.state.pivotTables().find((p) => p.id === ptId);
+        const targetCell = pt?.targetCell || 'A1';
+        this.history.push(this.state.getSnapshot());
+        this.state.deletePivotTable(ptId);
+        this.state.selectCell(targetCell);
+        this.cdr.markForCheck();
+        return;
+      }
+    }
     if ((event.ctrlKey || event.metaKey) && !this.state.isEditing()) {
       const target = event.target as HTMLElement | null;
       if (

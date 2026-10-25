@@ -68,6 +68,9 @@ export class ExcelStateService {
   // Selected chart (for delete / move)
   readonly selectedChartId = signal<string | null>(null);
 
+  // Selected pivot table (for delete / move)
+  readonly selectedPivotTableId = signal<string | null>(null);
+
   // Multiple Sheets
   readonly sheets = signal<SheetTabInfo[]>([{ id: 'sheet1', name: 'Sheet1' }]);
   readonly activeSheetId = signal<string>('sheet1');
@@ -1050,6 +1053,24 @@ export class ExcelStateService {
 
   addPivotTable(pt: PivotTableItem): void {
     this.pivotTables.update((list) => [...list, pt]);
+  }
+
+  deletePivotTable(id: string): void {
+    this.pivotTables.update((list) => list.filter((p) => p.id !== id));
+    if (this.selectedPivotTableId() === id) {
+      this.selectedPivotTableId.set(null);
+    }
+  }
+
+  movePivotTable(id: string, targetCell: string): boolean {
+    const list = this.pivotTables();
+    const idx = list.findIndex((p) => p.id === id);
+    if (idx === -1) return false;
+    const updated = { ...list[idx], targetCell: targetCell.toUpperCase() };
+    const nextList = [...list];
+    nextList[idx] = updated;
+    this.pivotTables.set(nextList);
+    return true;
   }
 
   setComment(cellAddr: string, text: string): void {
