@@ -137,6 +137,7 @@
                       [attr.data-demo-target]="'replica-cell-' + c + r"
                       [class.active-cell]="replicaActiveCell() === (c + r)"
                       [class.in-selection]="isCellInRange(c + r, replicaSelectedRange())"
+                      [class.copied-marching-ants]="isCellInRange(c + r, replicaCopiedRange())"
                       [style.font-weight]="replicaFormats().get(c + r)?.bold ? 'bold' : 'normal'"
                       [style.font-style]="replicaFormats().get(c + r)?.italic ? 'italic' : 'normal'"
                       [style.text-decoration]="replicaFormats().get(c + r)?.underline ? 'underline' : 'none'"
@@ -333,7 +334,7 @@
                 <div class="rmb-body">
                   <div class="rmb-field">
                     <label>Allow:</label>
-                    <div class="rmb-fake-select">List</div>
+                    <div class="rmb-fake-select" data-demo-target="dv-allow-select">{{ dvType() }}</div>
                   </div>
                   <div class="rmb-field">
                     <label>Source:</label>
@@ -354,7 +355,7 @@
                 </div>
                 <div class="rmb-body">
                   <div class="rmb-checkbox-row">
-                    <input type="checkbox" checked data-demo-target="rd-headers-checkbox" />
+                    <input type="checkbox" [checked]="rdHeaders()" data-demo-target="rd-headers-checkbox" />
                     <label>My data has headers</label>
                   </div>
                   <div class="rmb-info-text">Columns: Column A, Column B, Column C</div>
@@ -380,6 +381,17 @@
           <svg viewBox="0 0 24 24" class="cursor-svg">
             <path d="M4 2l16 11-7 2 5 7-3 1-5-7-6 5V2z" fill="#107c41" stroke="#ffffff" stroke-width="1.5"/>
           </svg>
+        </div>
+
+        <!-- Shortcut Key Badge near cursor -->
+        <div
+          class="demo-key-badge"
+          *ngIf="keyBadge() as badge"
+          [style.left.px]="cursorPixelX() + 18"
+          [style.top.px]="cursorPixelY() - 10"
+          aria-hidden="true"
+        >
+          {{ badge }}
         </div>
       </div>
     </div>

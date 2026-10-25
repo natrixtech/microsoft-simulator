@@ -135,7 +135,25 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly cfColor = signal<string>('lightGreen');
   readonly dvType = signal<string>('List');
   readonly dvSource = signal<string>('Yes, No');
-  readonly rdHeaders = signal<boolean>(true);
+  readonly rdHeaders = signal<boolean>(false);
+  readonly keyBadge = signal<string | null>(null);
+  readonly replicaCopiedRange = signal<string | null>(null);
+
+  private demoUndoStack: Array<{
+    cells: Map<string, { value: any; calculatedValue?: any; display: string }>;
+    formats: Map<string, any>;
+    hiddenRows: Set<number>;
+  }> = [];
+  private demoRedoStack: Array<{
+    cells: Map<string, { value: any; calculatedValue?: any; display: string }>;
+    formats: Map<string, any>;
+    hiddenRows: Set<number>;
+  }> = [];
+  private demoClipboard: {
+    range: string;
+    isCut: boolean;
+    cells: Map<string, { value: any; display: string }>;
+  } | null = null;
 
   // Grid visual additions
   readonly hasChartObject = signal<{ title: string; type: string } | null>(null);
@@ -313,12 +331,11 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
       case 'conditionalFormat':
         return 'Add conditional formatting rule';
       case 'dataValidation':
-        return 'Set up data validation';
+        return 'Add data validation';
       case 'noDuplicates':
-        return 'Remove duplicate rows';
+        return 'Remove duplicates';
       case 'action':
-        if (g.action === 'selectRange') return `Select range ${g.range || ''}`;
-        return 'Perform action';
+        return 'Do the action';
       default:
         return 'Complete task';
     }
@@ -381,6 +398,14 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.replicaFillColorOpen.set(false);
     this.replicaTextColorOpen.set(false);
     this.replicaHasFilter.set(false);
+    this.rdHeaders.set(false);
+    this.dvType.set('List');
+    this.dvSource.set('');
+    this.keyBadge.set(null);
+    this.replicaCopiedRange.set(null);
+    this.demoUndoStack = [];
+    this.demoRedoStack = [];
+    this.demoClipboard = null;
 
     const cellMap = new Map<string, { value: any; calculatedValue?: any; display: string }>();
     const fmtMap = new Map<string, any>();
@@ -575,6 +600,9 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
         'copy-btn',
         'autosum-btn',
         'sort-filter-btn',
+        'qa-undo-btn',
+        'qa-redo-btn',
+        'home-undo-btn',
       ].includes(targetName)
     ) {
       this.replicaActiveTab.set('home');
@@ -620,7 +648,7 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
-  isCellInRange(addr: string, rangeStr: string): boolean {
+  isCellInRange(addr: string, rangeStr: string | null | undefined): boolean {
     if (!rangeStr) return false;
     const parsed = parseRange(rangeStr);
     const cellCoord = parseAddress(addr);
@@ -631,6 +659,45 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
       cellCoord.col >= parsed.startCol &&
       cellCoord.col <= parsed.endCol
     );
+  }
+
+  private async showKeyBadge(shortcut: string, durationMs = 1000): Promise<void> {
+    if (this.isCancelled) return;
+    this.keyBadge.set(shortcut);
+    await this.delay(durationMs);
+    this.keyBadge.set(null);
+  }
+
+  private captureDemoSnapshot(): {
+    cells: Map<string, { value: any; calculatedValue?: any; display: string }>;
+    formats: Map<string, any>;
+    hiddenRows: Set<number>;
+  } {
+    const cellsCopy = new Map<string, { value: any; calculatedValue?: any; display: string }>();
+    for (const [k, v] of this.replicaCells().entries()) {
+      cellsCopy.set(k, { ...v });
+    }
+    const formatsCopy = new Map<string, any>();
+    for (const [k, v] of this.replicaFormats().entries()) {
+      formatsCopy.set(k, { ...v });
+    }
+    return {
+      cells: cellsCopy,
+      formats: formatsCopy,
+      hiddenRows: new Set(this.hiddenRows()),
+    };
+  }
+
+  private restoreDemoSnapshot(snap: {
+    cells: Map<string, { value: any; calculatedValue?: any; display: string }>;
+    formats: Map<string, any>;
+    hiddenRows: Set<number>;
+  }): void {
+    this.replicaCells.set(snap.cells);
+    this.replicaFormats.set(snap.formats);
+    this.hiddenRows.set(snap.hiddenRows);
+    this.evaluateAndFormatCells();
+    this.cdr.markForCheck();
   }
 
   private async executeDemoGoal(g: any): Promise<void> {
@@ -920,20 +987,54 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
     // 10. dataValidation
     if (type === 'dataValidation') {
       const range = g.range || 'B2:B6';
-      this.selectRange(range);
-      await this.moveToTarget(`replica-cell-${range.split(':')[0]}`);
-      await this.moveToTarget('tab-data');
+      const parts = range.split(':');
+      const start = parts[0];
+      const end = parts[1] || start;
 
+      // Selection appears as cursor drags, not before
+      await this.moveToTarget(`replica-cell-${start}`);
+      this.selectRange(start);
+      if (end !== start) {
+        await this.moveToTarget(`replica-cell-${end}`);
+        this.selectRange(range);
+      }
+
+      // Data tab -> Data Validation button
+      this.replicaActiveTab.set('data');
+      await this.moveToTarget('tab-data');
       await this.moveToTarget('data-validation-btn');
-      this.dvType.set('List');
-      this.dvSource.set(Array.isArray(g.allowed) ? g.allowed.join(', ') : 'Yes, No');
+
+      // Dialog opens with criteria empty or default
+      this.dvType.set('Any value');
+      this.dvSource.set('');
       this.replicaDialog.set('dataValidation');
       await this.delay(POST_OPEN_PAUSE_MS);
 
+      // The cursor clicks criteria control and chooses "List"
+      await this.moveToTarget('dv-allow-select');
+      this.dvType.set('List');
+      await this.delay(PRE_CLICK_PAUSE_MS);
+
+      // The cursor clicks values field and types goal.allowed joined with ", " char by char (fallback "Yes, No")
+      const allowedText = Array.isArray(g.allowed)
+        ? g.allowed.join(', ')
+        : (g.allowed ? String(g.allowed) : 'Yes, No');
+
+      await this.moveToTarget('dv-source-input');
+      let cur = '';
+      for (const ch of allowedText) {
+        if (this.isCancelled) return;
+        cur += ch;
+        this.dvSource.set(cur);
+        await this.delay(60);
+      }
+      await this.delay(PRE_CLICK_PAUSE_MS);
+
+      // Clicks OK / Done
       await this.moveToTarget('dv-dialog-done-btn');
       this.replicaDialog.set(null);
 
-      // Show dropdown arrows on B2:B6
+      // Dropdown arrows on the range
       const fmts = new Map(this.replicaFormats());
       const parsed = parseRange(range);
       if (parsed) {
@@ -951,52 +1052,368 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // 11. noDuplicates
     if (type === 'noDuplicates') {
-      const range = g.range || 'A1:C6';
-      this.selectRange(range);
-      await this.moveToTarget(`replica-cell-${range.split(':')[0]}`);
-      await this.moveToTarget('tab-data');
+      const rawRange = g.range || 'A1:C6';
+      const parsed = parseRange(rawRange);
 
+      let hasHeaderIncluded = false;
+      let selectRangeStr = rawRange;
+
+      if (parsed) {
+        if (parsed.startRow > 0) {
+          // Check if row directly above has values in replica sheet (a header row)
+          let hasAbove = false;
+          for (let c = parsed.startCol; c <= parsed.endCol; c++) {
+            const a = formatAddress({ row: parsed.startRow - 1, col: c });
+            const val = this.replicaCells().get(a)?.value;
+            if (val !== undefined && val !== null && String(val).trim() !== '') {
+              hasAbove = true;
+              break;
+            }
+          }
+          if (hasAbove) {
+            hasHeaderIncluded = true;
+            selectRangeStr = `${formatAddress({ row: parsed.startRow - 1, col: parsed.startCol })}:${formatAddress({ row: parsed.endRow, col: parsed.endCol })}`;
+          }
+        }
+      }
+
+      // Cursor moves to first cell and drags to last cell; selection grows as it moves
+      const parts = selectRangeStr.split(':');
+      const start = parts[0];
+      const end = parts[1] || start;
+
+      await this.moveToTarget(`replica-cell-${start}`);
+      this.selectRange(start);
+      if (end !== start) {
+        await this.moveToTarget(`replica-cell-${end}`);
+        this.selectRange(selectRangeStr);
+      }
+
+      // Data tab -> Remove Duplicates button
+      this.replicaActiveTab.set('data');
+      await this.moveToTarget('tab-data');
       await this.moveToTarget('data-remove-duplicates-btn');
-      this.rdHeaders.set(true);
+
+      // Dialog opens
+      this.rdHeaders.set(false);
       this.replicaDialog.set('removeDuplicates');
       await this.delay(POST_OPEN_PAUSE_MS);
 
+      // The cursor moves to "Data has header row" checkbox and ticks it ONLY if header row was included
+      if (hasHeaderIncluded) {
+        await this.moveToTarget('rd-headers-checkbox');
+        this.rdHeaders.set(true);
+        await this.delay(PRE_CLICK_PAUSE_MS);
+      }
+
+      // Clicks Remove duplicates
       await this.moveToTarget('rd-dialog-remove-btn');
       this.replicaDialog.set(null);
 
-      // Hide duplicate rows 4 and 6
-      const h = new Set<number>();
-      h.add(4);
-      h.add(6);
-      this.hiddenRows.set(h);
+      // Result: compute real duplicate rows from replica sheet data
+      if (parsed) {
+        const seenRows = new Set<string>();
+        const duplicates = new Set<number>();
+        for (let r = parsed.startRow; r <= parsed.endRow; r++) {
+          const rowParts: string[] = [];
+          let isEmpty = true;
+          for (let c = parsed.startCol; c <= parsed.endCol; c++) {
+            const addr = formatAddress({ row: r, col: c });
+            const cell = this.replicaCells().get(addr);
+            const val = cell?.value ?? '';
+            if (val !== '') isEmpty = false;
+            rowParts.push(String(val).trim().toLowerCase());
+          }
+          if (isEmpty) continue;
+          const key = rowParts.join('||');
+          if (seenRows.has(key)) {
+            duplicates.add(r + 1); // 1-based row number
+          } else {
+            seenRows.add(key);
+          }
+        }
+        this.hiddenRows.set(duplicates);
+      }
       return;
     }
 
     // 12. action
     if (type === 'action') {
       const act = g.action;
-      if (act === 'undo') {
-        await this.moveToTarget('qa-undo-btn');
-      } else if (act === 'copy') {
-        this.replicaActiveTab.set('home');
-        await this.moveToTarget('copy-btn');
-      } else if (act === 'paste') {
-        this.replicaActiveTab.set('home');
-        await this.moveToTarget('paste-btn');
-      } else if (act === 'selectRange' || act === 'goToCell') {
-        const range = g.range || 'B2:B4';
+
+      // selectRange / goToCell: keep current behaviour (cursor drags from start cell to end cell)
+      if (act === 'selectRange' || act === 'goToCell') {
+        const range = g.range || g.cell || 'B2:B4';
         const parts = range.split(':');
         const start = parts[0];
         const end = parts[1] || start;
 
-        // Move to start cell
         await this.moveToTarget(`replica-cell-${start}`);
-        // Drag to end cell
-        this.selectRange(range);
+        this.selectRange(start);
         if (end !== start) {
           await this.moveToTarget(`replica-cell-${end}`);
+          this.selectRange(range);
         }
+        return;
       }
+
+      const getFirstNonEmptyCell = (): string => {
+        for (let r = 0; r < 20; r++) {
+          for (let c = 0; c < 10; c++) {
+            const addr = formatAddress({ row: r, col: c });
+            const cell = this.replicaCells().get(addr);
+            if (cell && cell.value !== '' && cell.value !== undefined && cell.value !== null) {
+              return addr;
+            }
+          }
+        }
+        return 'A1';
+      };
+
+      // copy (Ctrl+C)
+      if (act === 'copy') {
+        let range = g.range || g.cell;
+        if (!range) {
+          range = getFirstNonEmptyCell();
+        }
+
+        const parts = range.split(':');
+        const start = parts[0];
+        const end = parts[1] || start;
+
+        await this.moveToTarget(`replica-cell-${start}`);
+        this.selectRange(start);
+        if (end !== start) {
+          await this.moveToTarget(`replica-cell-${end}`);
+          this.selectRange(range);
+        }
+
+        await this.showKeyBadge('Ctrl+C', 1000);
+        this.replicaCopiedRange.set(range);
+
+        const copiedMap = new Map<string, { value: any; display: string }>();
+        const parsed = parseRange(range);
+        if (parsed) {
+          for (let r = parsed.startRow; r <= parsed.endRow; r++) {
+            for (let c = parsed.startCol; c <= parsed.endCol; c++) {
+              const a = formatAddress({ row: r, col: c });
+              const cell = this.replicaCells().get(a);
+              copiedMap.set(a, { value: cell?.value ?? '', display: cell?.display ?? '' });
+            }
+          }
+        }
+        this.demoClipboard = { range, isCut: false, cells: copiedMap };
+        return;
+      }
+
+      // cut (Ctrl+X)
+      if (act === 'cut') {
+        let range = g.range || g.cell;
+        if (!range) {
+          range = getFirstNonEmptyCell();
+        }
+
+        const parts = range.split(':');
+        const start = parts[0];
+        const end = parts[1] || start;
+
+        await this.moveToTarget(`replica-cell-${start}`);
+        this.selectRange(start);
+        if (end !== start) {
+          await this.moveToTarget(`replica-cell-${end}`);
+          this.selectRange(range);
+        }
+
+        await this.showKeyBadge('Ctrl+X', 1000);
+        this.replicaCopiedRange.set(range);
+
+        const cutMap = new Map<string, { value: any; display: string }>();
+        const parsed = parseRange(range);
+        if (parsed) {
+          for (let r = parsed.startRow; r <= parsed.endRow; r++) {
+            for (let c = parsed.startCol; c <= parsed.endCol; c++) {
+              const a = formatAddress({ row: r, col: c });
+              const cell = this.replicaCells().get(a);
+              cutMap.set(a, { value: cell?.value ?? '', display: cell?.display ?? '' });
+            }
+          }
+        }
+        this.demoClipboard = { range, isCut: true, cells: cutMap };
+
+        const currentIndex = (this.goals || []).indexOf(g);
+        const hasLaterPaste = (this.goals || []).slice(currentIndex + 1).some(
+          (goal: any) => goal?.type === 'action' && goal?.action === 'paste'
+        );
+
+        if (!hasLaterPaste) {
+          this.demoUndoStack.push(this.captureDemoSnapshot());
+          this.demoRedoStack = [];
+          const curCells = new Map(this.replicaCells());
+          if (parsed) {
+            for (let r = parsed.startRow; r <= parsed.endRow; r++) {
+              for (let c = parsed.startCol; c <= parsed.endCol; c++) {
+                const a = formatAddress({ row: r, col: c });
+                curCells.set(a, { value: '', display: '' });
+              }
+            }
+          }
+          this.replicaCells.set(curCells);
+          this.replicaCopiedRange.set(null);
+          this.evaluateAndFormatCells();
+        }
+        return;
+      }
+
+      // paste (Ctrl+V)
+      if (act === 'paste') {
+        if (!this.demoClipboard) {
+          const actCell = this.replicaActiveCell() || getFirstNonEmptyCell();
+          await this.moveToTarget(`replica-cell-${actCell}`);
+          this.selectRange(actCell);
+          await this.showKeyBadge('Ctrl+C', 600);
+          this.replicaCopiedRange.set(actCell);
+          const cellData = this.replicaCells().get(actCell);
+          const cMap = new Map<string, { value: any; display: string }>();
+          cMap.set(actCell, { value: cellData?.value ?? '', display: cellData?.display ?? '' });
+          this.demoClipboard = { range: actCell, isCut: false, cells: cMap };
+        }
+
+        let targetRange = g.range || g.cell;
+        if (!targetRange) {
+          const cp = parseRange(this.demoClipboard.range);
+          if (cp) {
+            const targetCol = Math.min(this.columns.length - 1, cp.endCol + 1);
+            targetRange = formatAddress({ row: cp.startRow, col: targetCol });
+          } else {
+            targetRange = 'C2';
+          }
+        }
+
+        const tParts = targetRange.split(':');
+        const tStart = tParts[0];
+        const tEnd = tParts[1] || tStart;
+
+        await this.moveToTarget(`replica-cell-${tStart}`);
+        this.selectRange(tStart);
+        if (tEnd !== tStart) {
+          await this.moveToTarget(`replica-cell-${tEnd}`);
+          this.selectRange(targetRange);
+        }
+
+        await this.showKeyBadge('Ctrl+V', 1000);
+
+        this.demoUndoStack.push(this.captureDemoSnapshot());
+        this.demoRedoStack = [];
+
+        const srcP = parseRange(this.demoClipboard.range);
+        const tgtP = parseRange(targetRange);
+        if (srcP && tgtP) {
+          const dRow = tgtP.startRow - srcP.startRow;
+          const dCol = tgtP.startCol - srcP.startCol;
+          const curCells = new Map(this.replicaCells());
+
+          for (let r = srcP.startRow; r <= srcP.endRow; r++) {
+            for (let c = srcP.startCol; c <= srcP.endCol; c++) {
+              const srcAddr = formatAddress({ row: r, col: c });
+              const tgtAddr = formatAddress({ row: r + dRow, col: c + dCol });
+              const srcVal = this.demoClipboard.cells.get(srcAddr);
+              if (srcVal) {
+                curCells.set(tgtAddr, { value: srcVal.value, display: String(srcVal.value) });
+              }
+              if (this.demoClipboard.isCut) {
+                curCells.set(srcAddr, { value: '', display: '' });
+              }
+            }
+          }
+          this.replicaCells.set(curCells);
+        }
+
+        if (this.demoClipboard.isCut) {
+          this.replicaCopiedRange.set(null);
+          this.demoClipboard = null;
+        }
+        this.evaluateAndFormatCells();
+        return;
+      }
+
+      // undo (Ctrl+Z)
+      if (act === 'undo') {
+        if (this.demoUndoStack.length === 0) {
+          let emptyAddr = '';
+          for (let r = 1; r < 8; r++) {
+            for (let c = 1; c < 5; c++) {
+              const a = formatAddress({ row: r, col: c });
+              const cell = this.replicaCells().get(a);
+              if (!cell || cell.value === '' || cell.value === undefined) {
+                emptyAddr = a;
+                break;
+              }
+            }
+            if (emptyAddr) break;
+          }
+          if (!emptyAddr) emptyAddr = 'C2';
+          await this.moveToTarget(`replica-cell-${emptyAddr}`);
+          this.selectRange(emptyAddr);
+          this.demoUndoStack.push(this.captureDemoSnapshot());
+          const curCells = new Map(this.replicaCells());
+          curCells.set(emptyAddr, { value: '100', display: '100' });
+          this.replicaCells.set(curCells);
+          this.evaluateAndFormatCells();
+          await this.delay(600);
+        }
+
+        await this.moveToTarget('qa-undo-btn');
+        await this.showKeyBadge('Ctrl+Z', 1000);
+
+        const prev = this.demoUndoStack.pop()!;
+        this.demoRedoStack.push(this.captureDemoSnapshot());
+        this.restoreDemoSnapshot(prev);
+        return;
+      }
+
+      // redo (Ctrl+Y)
+      if (act === 'redo') {
+        if (this.demoRedoStack.length === 0) {
+          if (this.demoUndoStack.length === 0) {
+            let emptyAddr = '';
+            for (let r = 1; r < 8; r++) {
+              for (let c = 1; c < 5; c++) {
+                const a = formatAddress({ row: r, col: c });
+                const cell = this.replicaCells().get(a);
+                if (!cell || cell.value === '' || cell.value === undefined) {
+                  emptyAddr = a;
+                  break;
+                }
+              }
+              if (emptyAddr) break;
+            }
+            if (!emptyAddr) emptyAddr = 'C2';
+            await this.moveToTarget(`replica-cell-${emptyAddr}`);
+            this.selectRange(emptyAddr);
+            this.demoUndoStack.push(this.captureDemoSnapshot());
+            const curCells = new Map(this.replicaCells());
+            curCells.set(emptyAddr, { value: '50', display: '50' });
+            this.replicaCells.set(curCells);
+            this.evaluateAndFormatCells();
+            await this.delay(400);
+          }
+          await this.moveToTarget('qa-undo-btn');
+          await this.showKeyBadge('Ctrl+Z', 600);
+          const prev = this.demoUndoStack.pop()!;
+          this.demoRedoStack.push(this.captureDemoSnapshot());
+          this.restoreDemoSnapshot(prev);
+          await this.delay(400);
+        }
+
+        await this.moveToTarget('qa-redo-btn');
+        await this.showKeyBadge('Ctrl+Y', 1000);
+
+        const next = this.demoRedoStack.pop()!;
+        this.demoUndoStack.push(this.captureDemoSnapshot());
+        this.restoreDemoSnapshot(next);
+        return;
+      }
+
       return;
     }
   }

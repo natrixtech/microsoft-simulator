@@ -1109,3 +1109,36 @@ app-excel-replica-ribbon {
     font-size: 10px;
   }
 }
+
+/* Shortcut Key Badge near cursor */
+.demo-key-badge {
+  position: absolute;
+  z-index: 1000;
+  background: #1e293b;
+  color: #ffffff;
+  font-family: Consolas, "Segoe UI", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+:host-context(.dark-theme) .demo-key-badge {
+  background: #0f172a;
+  color: #f8fafc;
+  border-color: #334155;
+}
+
+/* Copied / Cut marquee dashed border */
+.mini-cell.copied-marching-ants {
+  outline: 2px dashed #107c41 !important;
+  outline-offset: -2px;
+}
+
+:host-context(.dark-theme) .mini-cell.copied-marching-ants {
+  outline-color: #22c55e !important;
+}
