@@ -297,6 +297,9 @@ app-excel-replica-ribbon {
   flex-shrink: 0;
   width: 100%;
   box-sizing: border-box;
+  position: relative;
+  z-index: 100;
+  overflow: visible !important;
 }
 
 /* Formula Bar */
@@ -312,6 +315,8 @@ app-excel-replica-ribbon {
   gap: 4px;
   flex-shrink: 0;
   box-sizing: border-box;
+  position: relative;
+  z-index: 10;
 }
 
 .replica-namebox-container {
@@ -396,6 +401,7 @@ app-excel-replica-ribbon {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  z-index: 1;
 }
 
 .replica-grid {
@@ -660,7 +666,7 @@ app-excel-replica-ribbon {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 200;
+  z-index: 500;
 }
 
 .replica-modal-box {
@@ -1330,3 +1336,218 @@ app-excel-replica-ribbon {
 :host-context(.dark-theme) .chart-card-header {
   color: #f3f2f1;
 }
+
+/* Replica Ribbon Insert/Delete Dropdowns (additive CSS) */
+:host ::ng-deep .replica-cell-btn-anchor {
+  position: relative;
+  display: inline-flex;
+}
+
+:host ::ng-deep .replica-cell-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 2px;
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--line, #e1dfdd);
+  border-radius: 4px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  padding: 4px 0;
+  z-index: 200;
+  min-width: 175px;
+  flex-direction: column;
+}
+
+:host ::ng-deep .show-insert-menu .replica-cell-dropdown.insert-dropdown,
+:host ::ng-deep .show-delete-menu .replica-cell-dropdown.delete-dropdown {
+  display: flex;
+}
+
+:host ::ng-deep .replica-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text, #242424);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+:host ::ng-deep .replica-menu-item:hover {
+  background: var(--soft, #f3f2f1);
+}
+
+:host-context([data-theme="dark"]) ::ng-deep .replica-cell-dropdown,
+:host-context([data-theme="DARK"]) ::ng-deep .replica-cell-dropdown,
+:host-context(.dark-theme) ::ng-deep .replica-cell-dropdown {
+  background: #252526;
+  border-color: #3b3a39;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+
+:host-context([data-theme="dark"]) ::ng-deep .replica-menu-item,
+:host-context([data-theme="DARK"]) ::ng-deep .replica-menu-item,
+:host-context(.dark-theme) ::ng-deep .replica-menu-item {
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) ::ng-deep .replica-menu-item:hover,
+:host-context([data-theme="DARK"]) ::ng-deep .replica-menu-item:hover,
+:host-context(.dark-theme) ::ng-deep .replica-menu-item:hover {
+  background: #3b3a39;
+}
+
+/* Ensure replica ribbon elements and popovers are visible on top of grid */
+:host ::ng-deep .excel-ribbon-container,
+:host ::ng-deep .ribbon-panel,
+:host ::ng-deep .ribbon-tab-content,
+:host ::ng-deep .ribbon-group,
+:host ::ng-deep .group-controls,
+:host ::ng-deep .picker-anchor,
+:host ::ng-deep .replica-cell-btn-anchor {
+  overflow: visible !important;
+}
+
+:host ::ng-deep .replica-cell-dropdown,
+:host ::ng-deep .replica-color-popover {
+  z-index: 250 !important;
+}
+
+/* Replica Sheet Tabs Bar */
+.replica-sheet-bar {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  min-height: 24px;
+  max-height: 24px;
+  background: var(--surface, #ffffff);
+  border-top: 1px solid var(--line, #e1dfdd);
+  padding: 0 6px;
+  gap: 2px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  font-size: 11px;
+  position: relative;
+  z-index: 2;
+}
+
+.replica-sheet-tab {
+  display: flex;
+  align-items: center;
+  padding: 2px 10px;
+  height: 20px;
+  font-size: 11px;
+  color: var(--text, #242424);
+  position: relative;
+  background: var(--surface, #ffffff);
+  cursor: default;
+  border: 1px solid transparent;
+  user-select: none;
+  border-radius: 2px 2px 0 0;
+}
+
+.replica-sheet-tab.active {
+  font-weight: 600;
+  color: #107c41;
+  background: var(--surface, #ffffff);
+}
+
+.replica-sheet-tab.active::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 2px;
+  right: 2px;
+  height: 2px;
+  background: #107c41;
+}
+
+.replica-sheet-rename-input {
+  border: 1px solid #107c41;
+  outline: none;
+  font-size: 11px;
+  font-family: inherit;
+  padding: 0 4px;
+  width: 65px;
+  height: 16px;
+  background: var(--surface, #ffffff);
+  color: var(--text, #242424);
+  box-sizing: border-box;
+}
+
+.replica-add-sheet-btn {
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted, #616161);
+  padding: 0 6px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  height: 20px;
+}
+
+.replica-add-sheet-btn:hover {
+  color: #107c41;
+}
+
+:host-context([data-theme="dark"]) .replica-sheet-bar,
+:host-context([data-theme="DARK"]) .replica-sheet-bar,
+:host-context(.dark-theme) .replica-sheet-bar {
+  background: #1f1f1f;
+  border-top-color: #3b3a39;
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .replica-sheet-tab,
+:host-context([data-theme="DARK"]) .replica-sheet-tab,
+:host-context(.dark-theme) .replica-sheet-tab {
+  background: #1f1f1f;
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .replica-sheet-tab.active,
+:host-context([data-theme="DARK"]) .replica-sheet-tab.active,
+:host-context(.dark-theme) .replica-sheet-tab.active {
+  background: #242424;
+  color: #52b99d;
+}
+
+:host-context([data-theme="dark"]) .replica-sheet-tab.active::after,
+:host-context([data-theme="DARK"]) .replica-sheet-tab.active::after,
+:host-context(.dark-theme) .replica-sheet-tab.active::after {
+  background: #52b99d;
+}
+
+:host-context([data-theme="dark"]) .replica-sheet-rename-input,
+:host-context([data-theme="DARK"]) .replica-sheet-rename-input,
+:host-context(.dark-theme) .replica-sheet-rename-input {
+  background: #2b2b2b;
+  border-color: #52b99d;
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .replica-add-sheet-btn,
+:host-context([data-theme="DARK"]) .replica-add-sheet-btn,
+:host-context(.dark-theme) .replica-add-sheet-btn {
+  color: #a19f9d;
+}
+
+:host-context([data-theme="dark"]) .replica-add-sheet-btn:hover,
+:host-context([data-theme="DARK"]) .replica-add-sheet-btn:hover,
+:host-context(.dark-theme) .replica-add-sheet-btn:hover {
+  color: #52b99d;
+}
+

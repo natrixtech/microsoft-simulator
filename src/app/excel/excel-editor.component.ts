@@ -777,6 +777,14 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.closeSheetContextMenu();
     this.editingSheetId.set(sheetId);
     this.sheetRenameValue.set(currentName);
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      const el = document.querySelector<HTMLInputElement>('.sheet-rename-input');
+      if (el) {
+        el.focus();
+        el.select();
+      }
+    }, 0);
   }
 
   commitRenameSheet(): void {

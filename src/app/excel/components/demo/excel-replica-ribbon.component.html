@@ -460,14 +460,38 @@
       <!-- 6. Cells -->
       <div class="ribbon-group group-cells">
         <div class="group-controls">
-          <button type="button" class="ribbon-btn btn-medium" title="Insert Cells" data-demo-target="insert-cells-btn">
-            <app-excel-icon name="insertCells" [size]="26"></app-excel-icon>
-            <span class="btn-text-sub">Insert <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon></span>
-          </button>
-          <button type="button" class="ribbon-btn btn-medium" title="Delete Cells" data-demo-target="delete-cells-btn">
-            <app-excel-icon name="deleteCells" [size]="26"></app-excel-icon>
-            <span class="btn-text-sub">Delete <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon></span>
-          </button>
+          <div class="replica-cell-btn-anchor picker-anchor">
+            <button type="button" class="ribbon-btn btn-medium" title="Insert Cells" data-demo-target="insert-cells-btn">
+              <app-excel-icon name="insertCells" [size]="26"></app-excel-icon>
+              <span class="btn-text-sub">Insert <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon></span>
+            </button>
+            <div class="replica-cell-dropdown insert-dropdown">
+              <button type="button" class="replica-menu-item" data-demo-target="insert-sheet-rows">
+                <app-excel-icon name="insertCells" [size]="16"></app-excel-icon>
+                <span>Insert Sheet Rows</span>
+              </button>
+              <button type="button" class="replica-menu-item" data-demo-target="insert-sheet-columns">
+                <app-excel-icon name="insertCells" [size]="16"></app-excel-icon>
+                <span>Insert Sheet Columns</span>
+              </button>
+            </div>
+          </div>
+          <div class="replica-cell-btn-anchor picker-anchor">
+            <button type="button" class="ribbon-btn btn-medium" title="Delete Cells" data-demo-target="delete-cells-btn">
+              <app-excel-icon name="deleteCells" [size]="26"></app-excel-icon>
+              <span class="btn-text-sub">Delete <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon></span>
+            </button>
+            <div class="replica-cell-dropdown delete-dropdown">
+              <button type="button" class="replica-menu-item" data-demo-target="delete-sheet-rows">
+                <app-excel-icon name="deleteCells" [size]="16"></app-excel-icon>
+                <span>Delete Sheet Rows</span>
+              </button>
+              <button type="button" class="replica-menu-item" data-demo-target="delete-sheet-columns">
+                <app-excel-icon name="deleteCells" [size]="16"></app-excel-icon>
+                <span>Delete Sheet Columns</span>
+              </button>
+            </div>
+          </div>
           <button type="button" class="ribbon-btn btn-medium disabled" disabled title="Format Cells">
             <app-excel-icon name="formatCells" [size]="26"></app-excel-icon>
             <span class="btn-text-sub">Format <app-excel-icon name="dropdownArrow" [size]="7"></app-excel-icon></span>

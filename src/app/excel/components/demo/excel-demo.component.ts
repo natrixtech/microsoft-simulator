@@ -113,6 +113,14 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly replicaHasFilter = signal<boolean>(false);
   readonly replicaFillColorOpen = signal<boolean>(false);
   readonly replicaTextColorOpen = signal<boolean>(false);
+  readonly replicaInsertMenuOpen = signal<boolean>(false);
+  readonly replicaDeleteMenuOpen = signal<boolean>(false);
+
+  // Replica Sheet Tabs State
+  readonly replicaSheets = signal<string[]>(['Sheet1']);
+  readonly replicaActiveSheetIndex = signal<number>(0);
+  readonly replicaEditingSheetIndex = signal<number | null>(null);
+  readonly replicaSheetRenameInput = signal<string>('');
 
   // In-replica dialogs & overlays
   readonly replicaDialog = signal<
@@ -274,6 +282,10 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private cancelAll(): void {
     this.isCancelled = true;
+    this.replicaInsertMenuOpen.set(false);
+    this.replicaDeleteMenuOpen.set(false);
+    this.replicaEditingSheetIndex.set(null);
+    this.replicaSheetRenameInput.set('');
     if (this.rafId) {
       cancelAnimationFrame(this.rafId);
       this.rafId = undefined;
@@ -342,6 +354,8 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
         return 'Remove duplicates';
       case 'action':
         return 'Do the action';
+      case 'sheets':
+        return 'Name the sheets';
       default:
         return 'Complete task';
     }
@@ -405,7 +419,13 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.replicaDialog.set(null);
     this.replicaFillColorOpen.set(false);
     this.replicaTextColorOpen.set(false);
+    this.replicaInsertMenuOpen.set(false);
+    this.replicaDeleteMenuOpen.set(false);
     this.replicaHasFilter.set(false);
+    this.replicaSheets.set(['Sheet1']);
+    this.replicaActiveSheetIndex.set(0);
+    this.replicaEditingSheetIndex.set(null);
+    this.replicaSheetRenameInput.set('');
     this.rdHeaders.set(false);
     this.dvType.set('List');
     this.dvSource.set('');
@@ -582,14 +602,11 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.isCancelled) return false;
 
     // Switch ribbon tab automatically if targeting tab buttons or tab controls
-    if (targetName === 'tab-insert' || targetName.startsWith('insert-')) {
-      this.replicaActiveTab.set('insert');
-    } else if (targetName === 'tab-formulas' || targetName.startsWith('formulas-')) {
-      this.replicaActiveTab.set('formulas');
-    } else if (targetName === 'tab-data' || targetName.startsWith('data-')) {
-      this.replicaActiveTab.set('data');
-    } else if (
+    if (
       targetName === 'tab-home' ||
+      targetName.startsWith('delete-') ||
+      targetName.startsWith('insert-sheet') ||
+      targetName === 'insert-cells-btn' ||
       [
         'bold-btn',
         'italic-btn',
@@ -622,6 +639,12 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
       ].includes(targetName)
     ) {
       this.replicaActiveTab.set('home');
+    } else if (targetName === 'tab-insert' || targetName.startsWith('insert-')) {
+      this.replicaActiveTab.set('insert');
+    } else if (targetName === 'tab-formulas' || targetName.startsWith('formulas-')) {
+      this.replicaActiveTab.set('formulas');
+    } else if (targetName === 'tab-data' || targetName.startsWith('data-')) {
+      this.replicaActiveTab.set('data');
     }
     this.cdr.markForCheck();
 
@@ -724,9 +747,16 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
       const cells = g.cells as Record<string, any>;
       if (cells) {
         for (const [addr, val] of Object.entries(cells)) {
+          const curCell = this.replicaCells().get(addr);
+          if (curCell !== undefined && (curCell.value === val || String(curCell.value) === String(val))) {
+            continue;
+          }
           this.replicaActiveCell.set(addr);
           this.replicaSelectedRange.set(addr);
           await this.moveToTarget(`replica-cell-${addr}`);
+
+          this.demoUndoStack.push(this.captureDemoSnapshot());
+          this.demoRedoStack = [];
 
           // Type value character by character into formula bar and cell
           const strVal = String(val);
@@ -754,6 +784,9 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
       this.replicaActiveCell.set(addr);
       this.replicaSelectedRange.set(addr);
       await this.moveToTarget(`replica-cell-${addr}`);
+
+      this.demoUndoStack.push(this.captureDemoSnapshot());
+      this.demoRedoStack = [];
 
       const formulaText = g.equals || (g.function ? `=${g.function}(${g.references || 'B2:B4'})` : '=SUM(B2:B4)');
       let cur = '';
@@ -792,6 +825,9 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
       }
 
       await this.moveToTarget('tab-home');
+
+      this.demoUndoStack.push(this.captureDemoSnapshot());
+      this.demoRedoStack = [];
 
       if (g.numberFormat === 'currency' || g.numberFormat === '$') {
         await this.moveToTarget('format-currency-btn');
@@ -1524,6 +1560,201 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
         return 'A1';
       };
 
+      // insertRow, insertColumn, deleteRow, deleteColumn
+      if (act === 'insertRow' || act === 'insertColumn' || act === 'deleteRow' || act === 'deleteColumn') {
+        const targetAddr = (g.range || g.cell || this.replicaActiveCell() || 'A1').split(':')[0];
+        await this.moveToTarget(`replica-cell-${targetAddr}`);
+        this.selectRange(targetAddr);
+        await this.delay(PRE_CLICK_PAUSE_MS);
+
+        await this.moveToTarget('tab-home');
+        this.replicaActiveTab.set('home');
+        await this.delay(PRE_CLICK_PAUSE_MS);
+
+        const isInsert = act === 'insertRow' || act === 'insertColumn';
+        const buttonTarget = isInsert ? 'insert-cells-btn' : 'delete-cells-btn';
+        await this.moveToTarget(buttonTarget);
+
+        if (isInsert) {
+          this.replicaInsertMenuOpen.set(true);
+        } else {
+          this.replicaDeleteMenuOpen.set(true);
+        }
+        this.cdr.markForCheck();
+        await this.delay(POST_OPEN_PAUSE_MS);
+
+        let itemTarget = '';
+        if (act === 'insertRow') itemTarget = 'insert-sheet-rows';
+        else if (act === 'insertColumn') itemTarget = 'insert-sheet-columns';
+        else if (act === 'deleteRow') itemTarget = 'delete-sheet-rows';
+        else if (act === 'deleteColumn') itemTarget = 'delete-sheet-columns';
+
+        await this.moveToTarget(itemTarget);
+        await this.delay(PRE_CLICK_PAUSE_MS);
+
+        if (isInsert) {
+          this.replicaInsertMenuOpen.set(false);
+        } else {
+          this.replicaDeleteMenuOpen.set(false);
+        }
+        this.cdr.markForCheck();
+
+        this.demoUndoStack.push(this.captureDemoSnapshot());
+        this.demoRedoStack = [];
+
+        const parsed = parseAddress(targetAddr);
+        const targetRow = parsed?.row ?? 0;
+        const targetCol = parsed?.col ?? 0;
+
+        const oldCells = this.replicaCells();
+        const oldFormats = this.replicaFormats();
+        const newCells = new Map<string, { value: any; calculatedValue?: any; display: string }>();
+        const newFormats = new Map<string, any>();
+
+        if (act === 'insertRow') {
+          for (const [addr, cell] of oldCells.entries()) {
+            const p = parseAddress(addr);
+            if (!p) continue;
+            if (p.row < targetRow) {
+              newCells.set(addr, { ...cell });
+            } else {
+              const newAddr = formatAddress({ row: p.row + 1, col: p.col });
+              const updatedVal =
+                typeof cell.value === 'string' && cell.value.startsWith('=')
+                  ? this.formulaEngine.updateFormulaOnRowColChange(cell.value, 'insertRow', targetRow)
+                  : cell.value;
+              newCells.set(newAddr, { ...cell, value: updatedVal });
+            }
+          }
+          for (const [addr, fmt] of oldFormats.entries()) {
+            const p = parseAddress(addr);
+            if (!p) continue;
+            if (p.row < targetRow) {
+              newFormats.set(addr, { ...fmt });
+            } else {
+              const newAddr = formatAddress({ row: p.row + 1, col: p.col });
+              newFormats.set(newAddr, { ...fmt });
+            }
+          }
+        } else if (act === 'deleteRow') {
+          for (const [addr, cell] of oldCells.entries()) {
+            const p = parseAddress(addr);
+            if (!p) continue;
+            if (p.row < targetRow) {
+              newCells.set(addr, { ...cell });
+            } else if (p.row > targetRow) {
+              const newAddr = formatAddress({ row: p.row - 1, col: p.col });
+              const updatedVal =
+                typeof cell.value === 'string' && cell.value.startsWith('=')
+                  ? this.formulaEngine.updateFormulaOnRowColChange(cell.value, 'deleteRow', targetRow)
+                  : cell.value;
+              newCells.set(newAddr, { ...cell, value: updatedVal });
+            }
+          }
+          for (const [addr, fmt] of oldFormats.entries()) {
+            const p = parseAddress(addr);
+            if (!p) continue;
+            if (p.row < targetRow) {
+              newFormats.set(addr, { ...fmt });
+            } else if (p.row > targetRow) {
+              const newAddr = formatAddress({ row: p.row - 1, col: p.col });
+              newFormats.set(newAddr, { ...fmt });
+            }
+          }
+        } else if (act === 'insertColumn') {
+          for (const [addr, cell] of oldCells.entries()) {
+            const p = parseAddress(addr);
+            if (!p) continue;
+            if (p.col < targetCol) {
+              newCells.set(addr, { ...cell });
+            } else {
+              const newAddr = formatAddress({ row: p.row, col: p.col + 1 });
+              const updatedVal =
+                typeof cell.value === 'string' && cell.value.startsWith('=')
+                  ? this.formulaEngine.updateFormulaOnRowColChange(cell.value, 'insertCol', targetCol)
+                  : cell.value;
+              newCells.set(newAddr, { ...cell, value: updatedVal });
+            }
+          }
+          for (const [addr, fmt] of oldFormats.entries()) {
+            const p = parseAddress(addr);
+            if (!p) continue;
+            if (p.col < targetCol) {
+              newFormats.set(addr, { ...fmt });
+            } else {
+              const newAddr = formatAddress({ row: p.row, col: p.col + 1 });
+              newFormats.set(newAddr, { ...fmt });
+            }
+          }
+        } else if (act === 'deleteColumn') {
+          for (const [addr, cell] of oldCells.entries()) {
+            const p = parseAddress(addr);
+            if (!p) continue;
+            if (p.col < targetCol) {
+              newCells.set(addr, { ...cell });
+            } else if (p.col > targetCol) {
+              const newAddr = formatAddress({ row: p.row, col: p.col - 1 });
+              const updatedVal =
+                typeof cell.value === 'string' && cell.value.startsWith('=')
+                  ? this.formulaEngine.updateFormulaOnRowColChange(cell.value, 'deleteCol', targetCol)
+                  : cell.value;
+              newCells.set(newAddr, { ...cell, value: updatedVal });
+            }
+          }
+          for (const [addr, fmt] of oldFormats.entries()) {
+            const p = parseAddress(addr);
+            if (!p) continue;
+            if (p.col < targetCol) {
+              newFormats.set(addr, { ...fmt });
+            } else if (p.col > targetCol) {
+              const newAddr = formatAddress({ row: p.row, col: p.col - 1 });
+              newFormats.set(newAddr, { ...fmt });
+            }
+          }
+        }
+
+        this.replicaCells.set(newCells);
+        this.replicaFormats.set(newFormats);
+        this.evaluateAndFormatCells();
+        this.cdr.markForCheck();
+        return;
+      }
+
+      // addSheet
+      if (act === 'addSheet') {
+        await this.moveToTarget('replica-add-sheet-btn');
+        const cur = [...this.replicaSheets()];
+        const nextNum = cur.length + 1;
+        cur.push(`Sheet${nextNum}`);
+        this.replicaSheets.set(cur);
+        this.replicaActiveSheetIndex.set(cur.length - 1);
+        this.cdr.markForCheck();
+        await this.delay(STEP_TRANSITION_PAUSE_MS);
+        return;
+      }
+
+      // renameSheet
+      if (act === 'renameSheet') {
+        const lastIdx = Math.max(0, this.replicaSheets().length - 1);
+        let newName = '';
+        if (g.range && typeof g.range === 'string' && !parseRange(g.range) && !parseAddress(g.range)) {
+          newName = g.range;
+        } else if (g.cell && typeof g.cell === 'string' && !parseAddress(g.cell)) {
+          newName = g.cell;
+        } else {
+          const sheetsGoal = (this.goals || []).find((x: any) => x?.type === 'sheets') as any;
+          if (sheetsGoal && typeof sheetsGoal['contains'] === 'string') {
+            newName = sheetsGoal['contains'];
+          } else if (sheetsGoal && Array.isArray(sheetsGoal['names']) && sheetsGoal['names'].length > 0) {
+            newName = String(sheetsGoal['names'][0]);
+          } else {
+            newName = 'Budget';
+          }
+        }
+        await this.performTabRenameAnimation(lastIdx, newName);
+        return;
+      }
+
       // copy (Ctrl+C)
       if (act === 'copy') {
         let range = g.range || g.cell;
@@ -1770,6 +2001,109 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
 
       return;
     }
+
+    // sheets
+    if (type === 'sheets') {
+      let changed = false;
+
+      // 1. If "count" is given, click "+" until there are that many tabs
+      if (typeof g.count === 'number' && g.count > this.replicaSheets().length) {
+        while (this.replicaSheets().length < g.count) {
+          if (this.isCancelled) return;
+          await this.moveToTarget('replica-add-sheet-btn');
+          const cur = [...this.replicaSheets()];
+          cur.push(`Sheet${cur.length + 1}`);
+          this.replicaSheets.set(cur);
+          this.replicaActiveSheetIndex.set(cur.length - 1);
+          this.cdr.markForCheck();
+          changed = true;
+          await this.delay(300);
+        }
+      }
+
+      // 2. If "contains" is given and no tab has that name, rename the last tab to it
+      if (g.contains && typeof g.contains === 'string') {
+        const containsName = g.contains.trim();
+        const hasName = this.replicaSheets().some((s) => s.toLowerCase() === containsName.toLowerCase());
+        if (!hasName) {
+          const lastIdx = Math.max(0, this.replicaSheets().length - 1);
+          await this.performTabRenameAnimation(lastIdx, containsName);
+          changed = true;
+        }
+      }
+
+      // 3. If "names" is given, rename the tabs in order
+      if (Array.isArray(g.names) && g.names.length > 0) {
+        for (let i = 0; i < g.names.length; i++) {
+          if (this.isCancelled) return;
+          const targetName = String(g.names[i]);
+          if (i >= this.replicaSheets().length) {
+            await this.moveToTarget('replica-add-sheet-btn');
+            const cur = [...this.replicaSheets()];
+            cur.push(`Sheet${cur.length + 1}`);
+            this.replicaSheets.set(cur);
+            this.replicaActiveSheetIndex.set(cur.length - 1);
+            this.cdr.markForCheck();
+            changed = true;
+            await this.delay(300);
+          }
+          if (this.replicaSheets()[i] !== targetName) {
+            await this.performTabRenameAnimation(i, targetName);
+            changed = true;
+          }
+        }
+      }
+
+      // If earlier steps already made it match, just pause briefly
+      if (!changed) {
+        await this.delay(600);
+      }
+      return;
+    }
+  }
+
+  private async performTabRenameAnimation(tabIdx: number, newName: string): Promise<void> {
+    if (this.isCancelled) return;
+    const tabTarget = `replica-sheet-tab-${tabIdx}`;
+    await this.moveToTarget(tabTarget);
+    this.replicaActiveSheetIndex.set(tabIdx);
+
+    // Double-click animation on the tab
+    this.isClicking.set(true);
+    await this.delay(100);
+    this.isClicking.set(false);
+    await this.delay(100);
+    this.isClicking.set(true);
+    await this.delay(100);
+    this.isClicking.set(false);
+    await this.delay(PRE_CLICK_PAUSE_MS);
+
+    // Show edit box
+    this.replicaEditingSheetIndex.set(tabIdx);
+    this.replicaSheetRenameInput.set('');
+    this.cdr.markForCheck();
+    await this.delay(200);
+
+    // Type the new name letter by letter
+    let typed = '';
+    for (const ch of newName) {
+      if (this.isCancelled) return;
+      typed += ch;
+      this.replicaSheetRenameInput.set(typed);
+      this.cdr.markForCheck();
+      await this.delay(80);
+    }
+    await this.delay(PRE_CLICK_PAUSE_MS);
+
+    // Enter
+    await this.showKeyBadge('Enter', 600);
+    const cur = [...this.replicaSheets()];
+    cur[tabIdx] = newName;
+    this.replicaSheets.set(cur);
+    this.replicaEditingSheetIndex.set(null);
+    this.replicaSheetRenameInput.set('');
+    this.cdr.markForCheck();
+    await this.delay(STEP_TRANSITION_PAUSE_MS);
   }
 
   getCellFontSize(cellAddr: string): string {

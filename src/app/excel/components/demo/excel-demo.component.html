@@ -49,7 +49,11 @@
           [style.width]="scalerWidth()"
           [style.height]="scalerHeight()"
         >
-          <div class="replica-excel-window">
+          <div
+            class="replica-excel-window"
+            [class.show-insert-menu]="replicaInsertMenuOpen()"
+            [class.show-delete-menu]="replicaDeleteMenuOpen()"
+          >
             <!-- Excel Titlebar -->
             <div class="replica-excel-titlebar">
               <div class="re-titlebar-left">
@@ -302,8 +306,35 @@
                 [style.top.px]="commentBalloonPos()?.top"
               >
                 <div class="cb-header">Note</div>
-                <div class="cb-body">{{ commentText() }}</div>
               </div>
+            </div>
+
+            <!-- Replica Sheet Tabs Bar -->
+            <div class="replica-sheet-bar" role="tablist">
+              <div
+                *ngFor="let s of replicaSheets(); let i = index"
+                class="replica-sheet-tab"
+                [class.active]="i === replicaActiveSheetIndex()"
+                [attr.data-demo-target]="'replica-sheet-tab-' + i"
+              >
+                <ng-container *ngIf="replicaEditingSheetIndex() === i; else tabName">
+                  <input
+                    type="text"
+                    class="replica-sheet-rename-input"
+                    [value]="replicaSheetRenameInput()"
+                    readonly
+                  />
+                </ng-container>
+                <ng-template #tabName>
+                  <span>{{ s }}</span>
+                </ng-template>
+              </div>
+              <button
+                type="button"
+                class="replica-add-sheet-btn"
+                data-demo-target="replica-add-sheet-btn"
+                title="New Sheet"
+              >+</button>
             </div>
 
             <!-- In-Replica Dialog Overlays (Driven Step-by-Step) -->

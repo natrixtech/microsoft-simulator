@@ -55,7 +55,7 @@
         <option value="noDuplicates">Lesson 11: Remove Duplicates (noDuplicates)</option>
         <option value="action">Lesson 12: Select Range (action)</option>
         <option value="assessment">Lesson 13: Multi-Task Assessment (3 tasks, state inheritance)</option>
-        <option value="fontFamily">Lesson 14: Font Family & Sheets (fontFamily)</option>
+        <option value="fontFamily">Lesson 14: Font Family (cellFormat)</option>
         <option value="autoSumMax">Lesson 15: AutoSum and MAX (cellFormula)</option>
         <option value="operationFormulas">Lesson 16: Operation Formulas: AVERAGE, COUNT, MIN (assessment)</option>
         <option value="vlookupIf">Lesson 17: VLOOKUP and IF (cellFormula)</option>
@@ -115,27 +115,7 @@
       let readyTimeout = null;
 
       const samples = {
-        cellValue: {
-          app: 'excel',
-          mode: 'lesson',
-          title: 'Enter Data into Cells',
-          tasks: [
-            {
-              title: 'Type values into cells',
-              explanation: 'Cells can store numbers and text. Click on a cell and type to enter data.',
-              instructions: ['Click cell A2 and type `Pencil`.', 'Click cell B2 and type `1.50`.', 'Click Check My Work.'],
-              hint: 'Type Pencil in cell A2 and 1.50 in cell B2.',
-              startingSheet: {
-                cells: { 'A1': 'Item', 'B1': 'Price' },
-                formats: { 'A1:B1': { bold: true } }
-              },
-              goals: [{ type: 'cellValue', cells: { 'A2': 'Pencil', 'B2': 1.5 } }],
-              showMeHow: true
-            }
-          ],
-          assetBaseUrl: './assets/',
-          theme: 'LIGHT'
-        },
+        cellValue: {"app":"excel","mode":"lesson","title":"Enter Data into Cells","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Type values into cells","explanation":"Cells can store numbers and text. Click on a cell and type to enter data.","instructions":["Click cell A2, type `Pencil` and press Enter.","Click cell B2, type `1.50` and press Enter."],"hint":"Type Pencil in cell A2 and 1.50 in cell B2.","startingSheet":{"cells":{"A1":"Item","B1":"Price"},"formats":{"A1:B1":{"bold":true}}},"goals":[{"type":"cellValue","cells":{"A2":"Pencil","B2":1.5}}],"showMeHow":true}]},
 
         cellFormula: {
           app: 'excel',
@@ -192,89 +172,11 @@
           theme: 'LIGHT'
         },
 
-        sorted: {
-          app: 'excel',
-          mode: 'lesson',
-          title: 'Sort Data by Price',
-          tasks: [
-            {
-              title: 'Sort range descending',
-              explanation: 'Sorting helps organize data so you can quickly find highest or lowest values.',
-              instructions: ['Select range A1:B5.', 'Click Sort in the Data tab and sort by Column B descending (Z to A).'],
-              hint: 'Go to Data tab, open Sort, select Column B, choose Z to A, and click OK.',
-              startingSheet: {
-                cells: {
-                  'A1': 'Item', 'B1': 'Price',
-                  'A2': 'Pen', 'B2': 2,
-                  'A3': 'Desk', 'B3': 150,
-                  'A4': 'Chair', 'B4': 75,
-                  'A5': 'Lamp', 'B5': 35
-                },
-                formats: { 'A1:B1': { bold: true } }
-              },
-              goals: [{ type: 'sorted', range: 'A1:B5', byColumn: 'B', order: 'desc', hasHeader: true }],
-              showMeHow: true
-            }
-          ],
-          assetBaseUrl: './assets/',
-          theme: 'LIGHT'
-        },
+        sorted: {"app":"excel","mode":"lesson","title":"Sort Data by Price","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Sort prices high to low","explanation":"Sorting helps organize data so you can quickly find the highest or lowest values.","instructions":["Click any price in column B, for example B2.","On the Data tab click Sort Z to A."],"hint":"Click B2, then Data > Sort Z to A. Desk (150) should move to the top.","startingSheet":{"cells":{"A1":"Item","B1":"Price","A2":"Pen","B2":2,"A3":"Desk","B3":150,"A4":"Chair","B4":75,"A5":"Lamp","B5":35},"formats":{"A1:B1":{"bold":true}}},"goals":[{"type":"sorted","range":"A1:B5","byColumn":"B","order":"desc","hasHeader":true}],"showMeHow":true}]},
 
-        filter: {
-          app: 'excel',
-          mode: 'lesson',
-          title: 'Filter High Value Orders',
-          tasks: [
-            {
-              title: 'Create a filter',
-              explanation: 'Filters allow you to temporarily hide rows that do not match specified criteria.',
-              instructions: ['Select range A1:C5.', 'Click Filter on the Data tab.', 'Filter Column C for values greater than 50.'],
-              hint: 'Select A1:C5, click Filter in Data tab, then open Column C filter and set condition to greaterThan 50.',
-              startingSheet: {
-                cells: {
-                  'A1': 'Order', 'B1': 'Customer', 'C1': 'Total',
-                  'A2': '101', 'B2': 'Acme', 'C2': 120,
-                  'A3': '102', 'B3': 'Beta', 'C3': 40,
-                  'A4': '103', 'B4': 'Gamma', 'C4': 85,
-                  'A5': '104', 'B5': 'Delta', 'C5': 30
-                },
-                formats: { 'A1:C1': { bold: true } }
-              },
-              goals: [{ type: 'filter', range: 'A1:C5', column: 'C', condition: 'greaterThan', value: 50 }],
-              showMeHow: true
-            }
-          ],
-          assetBaseUrl: './assets/',
-          theme: 'LIGHT'
-        },
+        filter: {"app":"excel","mode":"lesson","title":"Filter High Value Orders","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Show orders over 50","explanation":"Filters temporarily hide rows that do not match a condition.","instructions":["Select A1:C5 and on the Data tab click Filter.","Click the arrow on Total, choose Filter by condition, then Greater than.","Type `50` and click OK."],"hint":"Only the orders with a Total over 50 (120 and 85) should stay visible.","startingSheet":{"cells":{"A1":"Order","B1":"Customer","C1":"Total","A2":"101","B2":"Acme","C2":120,"A3":"102","B3":"Beta","C3":40,"A4":"103","B4":"Gamma","C4":85,"A5":"104","B5":"Delta","C5":30},"formats":{"A1:C1":{"bold":true}}},"goals":[{"type":"filter","range":"A1:C5","column":"C","condition":"greaterThan","value":50}],"showMeHow":true}]},
 
-        chart: {
-          app: 'excel',
-          mode: 'lesson',
-          title: 'Insert Column Chart',
-          tasks: [
-            {
-              title: 'Insert a chart',
-              explanation: 'Charts provide visual summaries of spreadsheet numbers.',
-              instructions: ['Select range A1:B5.', 'Go to Insert tab, click Column Chart, and set title to `Sales Report`.'],
-              hint: 'Select A1:B5, click Column Chart on Insert tab, enter title Sales Report and insert.',
-              startingSheet: {
-                cells: {
-                  'A1': 'Month', 'B1': 'Revenue',
-                  'A2': 'Jan', 'B2': 12000,
-                  'A3': 'Feb', 'B3': 15000,
-                  'A4': 'Mar', 'B4': 18000,
-                  'A5': 'Apr', 'B5': 14000
-                },
-                formats: { 'A1:B1': { bold: true } }
-              },
-              goals: [{ type: 'chart', chartType: 'column', range: 'A1:B5', title: 'Sales Report' }],
-              showMeHow: true
-            }
-          ],
-          assetBaseUrl: './assets/',
-          theme: 'LIGHT'
-        },
+        chart: {"app":"excel","mode":"lesson","title":"Insert Column Chart","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Insert a column chart","explanation":"Charts give a quick visual summary of spreadsheet numbers.","instructions":["Select A1:B5.","On the Insert tab click the Column chart button.","Type the title `Sales Report` and click Insert."],"hint":"Select A1:B5, then Insert > Column chart, title Sales Report.","startingSheet":{"cells":{"A1":"Month","B1":"Revenue","A2":"Jan","B2":12000,"A3":"Feb","B3":15000,"A4":"Mar","B4":18000,"A5":"Apr","B5":14000},"formats":{"A1:B1":{"bold":true}}},"goals":[{"type":"chart","chartType":"column","range":"A1:B5","title":"Sales Report"}],"showMeHow":true}]},
 
         pivotTable: {
           app: 'excel',
@@ -332,65 +234,9 @@
           theme: 'LIGHT'
         },
 
-        conditionalFormat: {
-          app: 'excel',
-          mode: 'lesson',
-          title: 'Highlight Values with Conditional Formatting',
-          tasks: [
-            {
-              title: 'Add conditional format rule',
-              explanation: 'Conditional formatting changes the appearance of cells based on rules you set.',
-              instructions: ['Select range C2:C8.', 'Click Conditional Formatting on Home tab.', 'Highlight cells greater than 100 with light green.'],
-              hint: 'Select C2:C8, open Conditional Formatting on Home tab, pick greaterThan 100 with lightGreen fill.',
-              startingSheet: {
-                cells: {
-                  'A1': 'ID', 'B1': 'Name', 'C1': 'Score',
-                  'A2': '1', 'B2': 'Alex', 'C2': 125,
-                  'A3': '2', 'B3': 'Blake', 'C2': 90,
-                  'A4': '3', 'B4': 'Casey', 'C4': 110,
-                  'A5': '4', 'B5': 'Dana', 'C5': 85,
-                  'A6': '5', 'B6': 'Evan', 'C6': 150,
-                  'A7': '6', 'B7': 'Fox', 'C7': 75,
-                  'A8': '7', 'B8': 'Glen', 'C8': 105
-                },
-                formats: { 'A1:C1': { bold: true } }
-              },
-              goals: [{ type: 'conditionalFormat', range: 'C2:C8', condition: 'greaterThan', value: 100, fillColor: 'lightGreen' }],
-              showMeHow: true
-            }
-          ],
-          assetBaseUrl: './assets/',
-          theme: 'LIGHT'
-        },
+        conditionalFormat: {"app":"excel","mode":"lesson","title":"Highlight Values with Conditional Formatting","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Highlight scores over 100","explanation":"Conditional formatting changes the look of cells automatically when they meet a rule.","instructions":["Select C2:C8, then on the Home tab click Conditional Formatting.","Choose Greater than and type `100`.","Pick `light green` and click Done."],"hint":"Only 110, 150 and 105 should turn light green.","startingSheet":{"cells":{"A1":"ID","B1":"Name","C1":"Score","A2":"1","B2":"Alex","C2":90,"A3":"2","B3":"Blake","A4":"3","B4":"Casey","C4":110,"A5":"4","B5":"Dana","C5":85,"A6":"5","B6":"Evan","C6":150,"A7":"6","B7":"Fox","C7":75,"A8":"7","B8":"Glen","C8":105},"formats":{"A1:C1":{"bold":true}}},"goals":[{"type":"conditionalFormat","range":"C2:C8","condition":"greaterThan","value":100,"fillColor":"lightGreen"}],"showMeHow":true}]},
 
-        dataValidation: {
-          app: 'excel',
-          mode: 'lesson',
-          title: 'Create Dropdown with Data Validation',
-          tasks: [
-            {
-              title: 'Add list data validation',
-              explanation: 'Data validation restricts the type of data or values that users can enter into a cell.',
-              instructions: ['Select range B2:B6.', 'Click Data Validation on Data tab.', 'Set allowed items to `Yes, No`.'],
-              hint: 'Select B2:B6, open Data Validation on Data tab, enter Yes, No and click OK.',
-              startingSheet: {
-                cells: {
-                  'A1': 'Employee', 'B1': 'Completed Training',
-                  'A2': 'Jordan', 'B2': 'Yes',
-                  'A3': 'Taylor', 'B3': 'No',
-                  'A4': 'Morgan', 'B4': 'Yes',
-                  'A5': 'Sam', 'B5': '',
-                  'A6': 'Riley', 'B6': ''
-                },
-                formats: { 'A1:B1': { bold: true } }
-              },
-              goals: [{ type: 'dataValidation', range: 'B2:B6', allowed: ['Yes', 'No'] }],
-              showMeHow: true
-            }
-          ],
-          assetBaseUrl: './assets/',
-          theme: 'LIGHT'
-        },
+        dataValidation: {"app":"excel","mode":"lesson","title":"Create Dropdown with Data Validation","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Add a Yes/No dropdown","explanation":"Data validation limits a cell to a list of allowed values.","instructions":["Select B2:B6, then on the Data tab click Data Validation.","Choose List and type `Yes, No` as the allowed items.","Click OK."],"hint":"Select B2:B6, Data > Data Validation, List, Yes, No, OK.","startingSheet":{"cells":{"A1":"Employee","B1":"Completed Training","A2":"Jordan","B2":"Yes","A3":"Taylor","B3":"No","A4":"Morgan","B4":"Yes","A5":"Sam","B5":"","A6":"Riley","B6":""},"formats":{"A1:B1":{"bold":true}}},"goals":[{"type":"dataValidation","range":"B2:B6","allowed":["Yes","No"]}],"showMeHow":true}]},
 
         noDuplicates: {
           app: 'excel',
@@ -421,121 +267,18 @@
           theme: 'LIGHT'
         },
 
-        action: {
-          app: 'excel',
-          mode: 'lesson',
-          title: 'Select a Range of Cells',
-          tasks: [
-            {
-              title: 'Select cells B2 to B4',
-              explanation: 'Selecting a range allows you to format or copy multiple cells at once.',
-              instructions: ['Click on cell B2 and drag down to B4 to select B2:B4.', 'Click Check My Work.'],
-              hint: 'Drag your mouse from cell B2 down to cell B4.',
-              startingSheet: {
-                cells: {
-                  'A1': 'Item', 'B1': 'Qty',
-                  'A2': 'Pencil', 'B2': 10,
-                  'A3': 'Ruler', 'B3': 5,
-                  'A4': 'Eraser', 'B4': 12
-                },
-                formats: { 'A1:B1': { bold: true } }
-              },
-              goals: [{ type: 'action', action: 'selectRange', range: 'B2:B4' }],
-              showMeHow: true
-            }
-          ],
-          assetBaseUrl: './assets/',
-          theme: 'LIGHT'
-        },
+        action: {"app":"excel","mode":"lesson","title":"Select a Range of Cells","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Select cells B2 to B4","explanation":"Selecting a range lets you format or copy several cells at once.","instructions":["Click cell B2 and drag down to B4 to select B2:B4."],"hint":"Drag your mouse from cell B2 down to cell B4.","startingSheet":{"cells":{"A1":"Item","B1":"Qty","A2":"Pencil","B2":10,"A3":"Ruler","B3":5,"A4":"Eraser","B4":12},"formats":{"A1:B1":{"bold":true}}},"goals":[{"type":"action","action":"selectRange","range":"B2:B4"}],"showMeHow":true}]},
 
-        assessment: {
-          app: 'excel',
-          mode: 'assessment',
-          title: 'Excel Skills Assessment',
-          tasks: [
-            {
-              title: 'Enter Price',
-              explanation: 'Enter the missing price for the notebook.',
-              instructions: ['Click cell B3 and type `3.50`.', 'Click Check My Work.'],
-              hint: 'Type 3.5 in cell B3.',
-              startingSheet: {
-                cells: {
-                  'A1': 'Item', 'B1': 'Price',
-                  'A2': 'Pencil', 'B2': 1.0,
-                  'A3': 'Notebook', 'B3': '',
-                  'A4': 'Binder', 'B4': 5.5
-                },
-                formats: { 'A1:B1': { bold: true } }
-              },
-              goals: [{ type: 'cellValue', cells: { 'B3': 3.5 } }]
-            },
-            {
-              title: 'Calculate Total',
-              explanation: 'Use the SUM function to calculate the total price.',
-              instructions: ['Select cell B5.', 'Enter `=SUM(B2:B4)`.', 'Click Check My Work.'],
-              hint: 'Enter =SUM(B2:B4) in cell B5.',
-              startingSheet: null,
-              goals: [{ type: 'cellFormula', cell: 'B5', function: 'SUM', references: 'B2:B4' }]
-            },
-            {
-              title: 'Format Currency',
-              explanation: 'Format all prices and the total as currency.',
-              instructions: ['Select range B2:B5.', 'Click the $ button on the toolbar.', 'Click Check My Work.'],
-              hint: 'Highlight B2:B5 and click $.',
-              startingSheet: null,
-              goals: [{ type: 'cellFormat', range: 'B2:B5', numberFormat: 'currency' }]
-            }
-          ],
-          assetBaseUrl: './assets/',
-          theme: 'LIGHT'
-        },
-        fontFamily: {
-          app: 'excel',
-          mode: 'lesson',
-          title: 'Lesson 14: Font Family & Worksheets',
-          instruction: 'Change the font family of cells and manage worksheet tabs.',
-          tasks: [
-            {
-              title: 'Change Font Family',
-              explanation: 'Change the font of the title cell to Arial.',
-              instructions: [
-                'Select cell A1.',
-                'Open the Font Family dropdown on the Home tab and choose Arial.',
-                'Click Check My Work.'
-              ],
-              hint: 'Select A1 and choose Arial from the font dropdown.',
-              startingSheet: {
-                cells: {
-                  'A1': 'Quarterly Report',
-                  'A2': 'Region', 'B2': 'Sales',
-                  'A3': 'North', 'B3': 1200,
-                  'A4': 'South', 'B4': 1500,
-                  'A5': 'Total', 'B5': '=SUM(B3:B4)'
-                },
-                formats: {
-                  'A1': { bold: true, fontSize: 14 }
-                }
-              },
-              goals: [
-                {
-                  type: 'cellFormat',
-                  range: 'A1',
-                  fontFamily: 'Arial'
-                }
-              ],
-              showMeHow: true
-            }
-          ],
-          assetBaseUrl: './assets/',
-          theme: 'LIGHT'
-        },
+        assessment: {"app":"excel","mode":"assessment","title":"Excel Skills Assessment","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Enter Price","explanation":"Enter the missing price for the notebook.","instructions":["Click cell B3, type `3.50` and press Enter."],"hint":"Type 3.50 in cell B3.","startingSheet":{"cells":{"A1":"Item","B1":"Price","A2":"Pencil","B2":1,"A3":"Notebook","B3":"","A4":"Binder","B4":5.5},"formats":{"A1:B1":{"bold":true}}},"goals":[{"type":"cellValue","cells":{"B3":3.5}}],"showMeHow":true},{"title":"Calculate Total","explanation":"Use the SUM function to add up all the prices.","instructions":["Click cell B5, type `=SUM(B2:B4)` and press Enter."],"hint":"Enter =SUM(B2:B4) in cell B5.","startingSheet":null,"goals":[{"type":"cellFormula","cell":"B5","function":"SUM","references":"B2:B4"}],"showMeHow":true},{"title":"Format Currency","explanation":"Format all prices and the total as currency.","instructions":["Select B2:B5.","Click the $ button on the Home tab."],"hint":"Select B2:B5 and click $.","startingSheet":null,"goals":[{"type":"cellFormat","range":"B2:B5","numberFormat":"currency"}],"showMeHow":true}]},
+
+        fontFamily: {"app":"excel","mode":"lesson","title":"Change the Title Font","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Change the font to Arial","explanation":"Changing the font gives a title its own look.","instructions":["Select cell A1.","On the Home tab open the Font list and choose `Arial`."],"hint":"Select A1 and choose Arial from the Font list.","startingSheet":{"cells":{"A1":"Quarterly Report","A2":"Region","B2":"Sales","A3":"North","B3":1200,"A4":"South","B4":1500,"A5":"Total","B5":"=SUM(B3:B4)"},"formats":{"A1":{"bold":true,"fontSize":14}}},"goals":[{"type":"cellFormat","range":"A1","fontFamily":"Arial"}],"showMeHow":true}]},
         autoSumMax: {"app":"excel","mode":"lesson","title":"Weekly Sales Totals","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Total and best day","explanation":"AutoSum adds a column for you in one click. MAX finds the largest number in a range.","instructions":["Click B6, then on the Formulas tab click AutoSum and press Enter.","Click B7, type `=MAX(B2:B5)` and press Enter."],"hint":"B6 should show 300 and B7 should show 120.","startingSheet":{"cells":{"A1":"Day","B1":"Sales","A2":"Mon","B2":120,"A3":"Tue","B3":80,"A4":"Wed","B4":45,"A5":"Thu","B5":55,"A6":"Total","A7":"Best day"},"formats":{"A1:B1":{"bold":true}}},"goals":[{"type":"cellFormula","cell":"B6","function":"SUM","references":"B2:B5"},{"type":"cellFormula","cell":"B7","function":"MAX","references":"B2:B5"},{"type":"cellValue","cells":{"B6":300,"B7":120}}],"showMeHow":true}]},
         operationFormulas: {"app":"excel","mode":"assessment","title":"Operation Formulas","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Average the hours","explanation":"AVERAGE adds the numbers and divides by how many there are.","instructions":["Click B8, then on the Formulas tab click Insert Function and choose `AVERAGE`.","Complete it as `=AVERAGE(B2:B6)` and press Enter."],"hint":"B8 should show 40.","startingSheet":{"cells":{"A1":"Worker","B1":"Hours","A2":"Sam","B2":45,"A3":"Ria","B3":30,"A4":"Tom","B4":60,"A5":"Ana","B5":25,"A6":"Lee","B6":40,"A8":"Average","A9":"Count","A10":"Minimum"},"formats":{"A1:B1":{"bold":true}}},"goals":[{"type":"cellFormula","cell":"B8","function":"AVERAGE","references":"B2:B6"},{"type":"cellValue","cells":{"B8":40}}],"showMeHow":true},{"title":"Count the workers","explanation":"COUNT tells you how many cells contain numbers.","instructions":["Click B9, type `=COUNT(B2:B6)` and press Enter."],"hint":"B9 should show 5.","startingSheet":null,"goals":[{"type":"cellFormula","cell":"B9","function":"COUNT","references":"B2:B6"},{"type":"cellValue","cells":{"B9":5}}],"showMeHow":true},{"title":"Find the fewest hours","explanation":"MIN returns the smallest number in a range.","instructions":["Click B10, type `=MIN(B2:B6)` and press Enter."],"hint":"B10 should show 25.","startingSheet":null,"goals":[{"type":"cellFormula","cell":"B10","function":"MIN","references":"B2:B6"},{"type":"cellValue","cells":{"B10":25}}],"showMeHow":true}]},
         vlookupIf: {"app":"excel","mode":"lesson","title":"Look Up and Check a Price","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Find a price and label it","explanation":"VLOOKUP finds a value in a table. IF shows one result when a test is true and another when it is false.","instructions":["Click E2, on the Formulas tab open Lookup & Reference, choose `VLOOKUP` and complete it as `=VLOOKUP(D2,A2:B5,2,FALSE)`, then press Enter.","Click F2, open Logical, choose `IF` and complete it as `=IF(E2>2,\"High\",\"Low\")`, then press Enter."],"hint":"E2 should show 2.5 and F2 should show High.","startingSheet":{"cells":{"A1":"Fruit","B1":"Price","A2":"Apple","B2":1.2,"A3":"Pear","B3":0.8,"A4":"Mango","B4":2.5,"A5":"Grape","B5":3,"D1":"Find","E1":"Price","F1":"Level","D2":"Mango"},"formats":{"A1:F1":{"bold":true}}},"goals":[{"type":"cellFormula","cell":"E2","function":"VLOOKUP","equals":"=VLOOKUP(D2,A2:B5,2,FALSE)"},{"type":"cellFormula","cell":"F2","function":"IF","equals":"=IF(E2>2,\"High\",\"Low\")"},{"type":"cellValue","cells":{"E2":2.5,"F2":"High"}}],"showMeHow":true}]},
         concatenateText: {"app":"excel","mode":"lesson","title":"Build Name and Salary Labels","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Join text and format a number","explanation":"CONCATENATE joins text from several cells. TEXT turns a number into text with a format such as a dollar amount.","instructions":["Click C2, on the Formulas tab open Text, choose `CONCATENATE` and complete it as `=CONCATENATE(A2,\" \",B2)`, then press Enter.","Click E2, open Text, choose `TEXT` and complete it as `=TEXT(D2,\"$0.00\")`, then press Enter."],"hint":"C2 should show Ana Lopez and E2 should show $1234.50.","startingSheet":{"cells":{"A1":"First","B1":"Last","C1":"Full Name","D1":"Salary","E1":"Label","A2":"Ana","B2":"Lopez","D2":1234.5},"formats":{"A1:E1":{"bold":true}}},"goals":[{"type":"cellFormula","cell":"C2","function":"CONCATENATE","equals":"=CONCATENATE(A2,\" \",B2)"},{"type":"cellFormula","cell":"E2","function":"TEXT","equals":"=TEXT(D2,\"$0.00\")"},{"type":"cellValue","cells":{"C2":"Ana Lopez","E2":"$1234.50"}}],"showMeHow":true}]},
         yearMonth: {"app":"excel","mode":"lesson","title":"Split a Date","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Get the year and month","explanation":"YEAR and MONTH pull parts out of a date, which helps when you group records by time.","instructions":["Click C2, on the Formulas tab open Date & Time, choose `YEAR` and complete it as `=YEAR(B2)`, then press Enter.","Click D2, open Date & Time, choose `MONTH` and complete it as `=MONTH(B2)`, then press Enter."],"hint":"C2 should show 2026 and D2 should show 9.","startingSheet":{"cells":{"A1":"Event","B1":"Date","C1":"Year","D1":"Month","A2":"Science Fair","B2":"2026-09-28"},"formats":{"A1:D1":{"bold":true},"B2":{"numberFormat":"date"}}},"goals":[{"type":"cellFormula","cell":"C2","function":"YEAR","references":"B2"},{"type":"cellFormula","cell":"D2","function":"MONTH","references":"B2"},{"type":"cellValue","cells":{"C2":2026,"D2":9}}],"showMeHow":true}]},
         sumifCountif: {"app":"excel","mode":"lesson","title":"East Region Summary","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Total and count East sales","explanation":"SUMIF adds only the values whose row matches a condition. COUNTIF counts how many cells match it.","instructions":["Click E2, on the Formulas tab open Math & Trig, choose `SUMIF` and complete it as `=SUMIF(A2:A5,\"East\",B2:B5)`, then press Enter.","Click E3, open Math & Trig, choose `COUNTIF` and complete it as `=COUNTIF(A2:A5,\"East\")`, then press Enter."],"hint":"E2 should show 170 and E3 should show 2.","startingSheet":{"cells":{"A1":"Region","B1":"Sales","A2":"East","B2":100,"A3":"West","B3":50,"A4":"East","B4":70,"A5":"North","B5":40,"D2":"East total","D3":"East count"},"formats":{"A1:B1":{"bold":true}}},"goals":[{"type":"cellFormula","cell":"E2","function":"SUMIF","equals":"=SUMIF(A2:A5,\"East\",B2:B5)"},{"type":"cellFormula","cell":"E3","function":"COUNTIF","equals":"=COUNTIF(A2:A5,\"East\")"},{"type":"cellValue","cells":{"E2":170,"E3":2}}],"showMeHow":true}]},
-        absReferenceRound: {"app":"excel","mode":"lesson","title":"Calculate and Round Tax","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Use $B$1 and round the result","explanation":"A $ sign locks a reference so it does not change when copied. ROUND shortens a number to the decimals you choose.","instructions":["Click C4, type `=B4*$B$1` and press Enter.","Click D4, on the Formulas tab open Math & Trig, choose `ROUND` and complete it as `=ROUND(C4,1)`, then press Enter."],"hint":"C4 should show 1.234 and D4 should show 1.2.","startingSheet":{"cells":{"A1":"Tax rate","B1":0.1,"A3":"Item","B3":"Price","C3":"Tax","D3":"Rounded","A4":"Lamp","B4":12.34},"formats":{"A3:D3":{"bold":true}}},"goals":[{"type":"cellFormula","cell":"C4","references":["B4","B1"],"absolute":true},{"type":"cellFormula","cell":"D4","function":"ROUND","equals":"=ROUND(C4,1)"},{"type":"cellValue","cells":{"C4":1.234,"D4":1.2}}],"showMeHow":true}]},
+        absReferenceRound: {"app":"excel","mode":"lesson","title":"Calculate and Round Tax","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Use $B$1 and round the result","explanation":"A $ sign locks a reference so it does not change when copied. ROUND shortens a number to the decimals you choose.","instructions":["Click C4, type `=B4*$B$1` and press Enter.","Click D4, on the Formulas tab open Math & Trig, choose `ROUND` and complete it as `=ROUND(C4,1)`, then press Enter."],"hint":"C4 should show 1.234 and D4 should show 1.2.","startingSheet":{"cells":{"A1":"Tax rate","B1":0.1,"A3":"Item","B3":"Price","C3":"Tax","D3":"Rounded","A4":"Lamp","B4":12.34},"formats":{"A3:D3":{"bold":true}}},"goals":[{"type":"cellFormula","cell":"C4","equals":"=B4*$B$1","absolute":true},{"type":"cellFormula","cell":"D4","function":"ROUND","equals":"=ROUND(C4,1)"},{"type":"cellValue","cells":{"C4":1.234,"D4":1.2}}],"showMeHow":true}]},
         fontStylesSize: {"app":"excel","mode":"lesson","title":"Make Sales Stand Out","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Style the sales numbers","explanation":"Bold, italic, underline and a bigger font size make important numbers easy to spot.","instructions":["Select B2:B5.","On the Home tab click Bold, Italic and Underline.","Set the font size to `14`."],"hint":"Select B2:B5, click B, I and U, then choose 14 in the font size box.","startingSheet":{"cells":{"A1":"Fruit","B1":"Sales","A2":"Apple","B2":30,"A3":"Mango","B3":80,"A4":"Pear","B4":20,"A5":"Grape","B5":50},"formats":{"A1:B1":{"bold":true}}},"goals":[{"type":"cellFormat","range":"B2:B5","bold":true,"italic":true,"underline":true,"fontSize":14}],"showMeHow":true}]},
         percentDateFormats: {"app":"excel","mode":"lesson","title":"Format Rates and Deadlines","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Use Percent and Date formats","explanation":"Number formats change how values look: Percent shows 0.25 as 25%, Date shows 2026-09-28 as 9/28/2026.","instructions":["Select B2:B4 and click the % button on the Home tab.","Select C2:C4, open the number format list on the Home tab and choose `Date`."],"hint":"B2:B4 should show 25%, 50%, 75%. C2:C4 should show dates like 9/28/2026.","startingSheet":{"cells":{"A1":"Team","B1":"Rate","C1":"Deadline","A2":"Red","B2":0.25,"C2":"2026-09-28","A3":"Blue","B3":0.5,"C3":"2026-10-05","A4":"Green","B4":0.75,"C4":"2026-10-12"},"formats":{"A1:C1":{"bold":true}}},"goals":[{"type":"cellFormat","range":"B2:B4","numberFormat":"percent"},{"type":"cellFormat","range":"C2:C4","numberFormat":"date"}],"showMeHow":true}]},
         alignColors: {"app":"excel","mode":"lesson","title":"Style the Header Row","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Center and color the headers","explanation":"Centered, colored headers make a table easy to read.","instructions":["Select A1:C1 and click Center on the Home tab.","With A1:C1 still selected, open Fill Color and choose `light blue`.","Open Font Color and choose `blue`."],"hint":"A1:C1 must be centered, with a light blue fill and blue text.","startingSheet":{"cells":{"A1":"Item","B1":"Qty","C1":"Price","A2":"Pen","B2":3,"C2":2}},"goals":[{"type":"cellFormat","range":"A1:C1","align":"center","fillColor":"lightBlue","textColor":"blue"}],"showMeHow":true}]},
@@ -543,9 +286,9 @@
         lineBarCharts: {"app":"excel","mode":"lesson","title":"Chart Monthly Visitors","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Insert a line chart and a bar chart","explanation":"A line chart shows change over time. A bar chart compares values side by side.","instructions":["Select A1:B5.","On the Insert tab click the Line chart button, type the title `Visitors` and click Insert.","Select A1:B5 again, click the Bar chart button, type the title `Monthly Bars` and click Insert."],"hint":"You need two charts: a line chart titled Visitors and a bar chart titled Monthly Bars.","startingSheet":{"cells":{"A1":"Month","B1":"Visitors","A2":"Jan","B2":120,"A3":"Feb","B3":80,"A4":"Mar","B4":200,"A5":"Apr","B5":150},"formats":{"A1:B1":{"bold":true}}},"goals":[{"type":"chart","chartType":"line","range":"A1:B5","title":"Visitors"},{"type":"chart","chartType":"bar","range":"A1:B5","title":"Monthly Bars"}],"showMeHow":true}]},
         pieChart: {"app":"excel","mode":"lesson","title":"Sales Pie Chart","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Insert a pie chart","explanation":"A pie chart shows how each part makes up the whole.","instructions":["Select A1:B5.","On the Insert tab click the Pie chart button.","Type the title `Fruit Sales` and click Insert."],"hint":"Select A1:B5, then Insert > Pie, title Fruit Sales.","startingSheet":{"cells":{"A1":"Fruit","B1":"Sales","A2":"Apple","B2":30,"A3":"Mango","B3":80,"A4":"Pear","B4":20,"A5":"Grape","B5":50},"formats":{"A1:B1":{"bold":true}}},"goals":[{"type":"chart","chartType":"pie","range":"A1:B5","title":"Fruit Sales"}],"showMeHow":true}]},
         pivotAverage: {"app":"excel","mode":"lesson","title":"Average Score by Type","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Average score by type","explanation":"A PivotTable groups rows and can show the average value of each group.","instructions":["Select A1:B4.","On the Insert tab click PivotTable.","Set Rows to `Type`, Values to `Score`, Summarize by `AVERAGE` and click OK."],"hint":"Fruit should show 5, Veg 7 and the Grand Total 5.67.","startingSheet":{"cells":{"A1":"Type","B1":"Score","A2":"Fruit","B2":4,"A3":"Veg","B3":7,"A4":"Fruit","B4":6},"formats":{"A1:B1":{"bold":true}}},"goals":[{"type":"pivotTable","range":"A1:B4","rowsField":"Type","valuesField":"Score","summarize":"AVERAGE"}],"showMeHow":true}]},
-        copyMoveCells: {"app":"excel","mode":"lesson","title":"Copy and Move Cell Entries","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Copy a price and move a row","explanation":"Copy puts a duplicate in a new place. Cut and Paste moves cells and leaves the old place empty.","instructions":["Select B2, press Ctrl+C (or click Copy), select D2 and press Ctrl+V (or click Paste).","Select A3:B3, press Ctrl+X (or click Cut), select A6 and press Ctrl+V."],"hint":"D2 should show 2.5, B2 keeps 2.5, Book and 8 should now be in A6:B6 and A3:B3 should be empty.","startingSheet":{"cells":{"A1":"Item","B1":"Price","D1":"Copy","A2":"Pen","B2":2.5,"A3":"Book","B3":8},"formats":{"A1:D1":{"bold":true}}},"goals":[{"type":"action","action":"copy"},{"type":"action","action":"cut"},{"type":"cellValue","cells":{"D2":2.5,"B2":2.5,"A6":"Book","B6":8,"A3":"","B3":""}}],"showMeHow":true}]},
-        undoRedo: {"app":"excel","mode":"lesson","title":"Undo and Redo","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Undo and redo a change","explanation":"Undo reverses your last change. Redo puts it back.","instructions":["Select A1 and click Bold on the Home tab.","Click Undo (or press Ctrl+Z) so A1 is not bold.","Click Redo (or press Ctrl+Y) so A1 is bold again."],"hint":"Bold A1, then Undo, then Redo. A1 must end up bold.","startingSheet":{"cells":{"A1":"Report","A2":"Draft"}},"goals":[{"type":"action","action":"undo"},{"type":"action","action":"redo"},{"type":"cellFormat","range":"A1","bold":true}],"showMeHow":true}]},
-        insertDeleteRowCol: {"app":"excel","mode":"lesson","title":"Insert and Delete Rows and Columns","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Add a row and remove a column","explanation":"Inserting a row makes space for new data. Deleting a column removes it and shifts the columns on the right to the left.","instructions":["Click A3, then on the Home tab open Insert and choose Insert Sheet Rows.","Click B1, then on the Home tab open Delete and choose Delete Sheet Columns."],"hint":"Book should move down to row 4, and Price should move from column C to column B.","startingSheet":{"cells":{"A1":"Item","B1":"Notes","C1":"Price","A2":"Pen","B2":"old","C2":2,"A3":"Book","B3":"new","C3":8},"formats":{"A1:C1":{"bold":true}}},"goals":[{"type":"action","action":"insertRow"},{"type":"action","action":"deleteColumn"},{"type":"cellValue","cells":{"A3":"","A4":"Book","B1":"Price","B2":2,"B4":8}}],"showMeHow":true}]},
+        copyMoveCells: {"app":"excel","mode":"lesson","title":"Copy and Move Cell Entries","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Copy a price and move a row","explanation":"Copy puts a duplicate in a new place. Cut and Paste moves cells and leaves the old place empty.","instructions":["Select B2, press Ctrl+C (or click Copy), select D2 and press Ctrl+V (or click Paste).","Select A3:B3, press Ctrl+X (or click Cut), select A6 and press Ctrl+V."],"hint":"D2 should show 2.5, B2 keeps 2.5, Book and 8 should now be in A6:B6 and A3:B3 should be empty.","startingSheet":{"cells":{"A1":"Item","B1":"Price","D1":"Copy","A2":"Pen","B2":2.5,"A3":"Book","B3":8},"formats":{"A1:D1":{"bold":true}}},"goals":[{"type":"action","action":"copy","range":"B2"},{"type":"action","action":"paste","range":"D2"},{"type":"action","action":"cut","range":"A3:B3"},{"type":"action","action":"paste","range":"A6"},{"type":"cellValue","cells":{"D2":2.5,"B2":2.5,"A6":"Book","B6":8,"A3":"","B3":""}}],"showMeHow":true}]},
+        undoRedo: {"app":"excel","mode":"lesson","title":"Undo and Redo","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Undo and redo a change","explanation":"Undo reverses your last change. Redo puts it back.","instructions":["Select A1 and click Bold on the Home tab.","Click Undo (or press Ctrl+Z) so A1 is not bold.","Click Redo (or press Ctrl+Y) so A1 is bold again."],"hint":"Bold A1, then Undo, then Redo. A1 must end up bold.","startingSheet":{"cells":{"A1":"Report","A2":"Draft"}},"goals":[{"type":"cellFormat","range":"A1","bold":true},{"type":"action","action":"undo"},{"type":"action","action":"redo"}],"showMeHow":true}]},
+        insertDeleteRowCol: {"app":"excel","mode":"lesson","title":"Insert and Delete Rows and Columns","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Add a row and remove a column","explanation":"Inserting a row makes space for new data. Deleting a column removes it and shifts the columns on the right to the left.","instructions":["Click A3, then on the Home tab open Insert and choose Insert Sheet Rows.","Click B1, then on the Home tab open Delete and choose Delete Sheet Columns."],"hint":"Book should move down to row 4, and Price should move from column C to column B.","startingSheet":{"cells":{"A1":"Item","B1":"Notes","C1":"Price","A2":"Pen","B2":"old","C2":2,"A3":"Book","B3":"new","C3":8},"formats":{"A1:C1":{"bold":true}}},"goals":[{"type":"action","action":"insertRow","range":"A3"},{"type":"action","action":"deleteColumn","range":"B1"},{"type":"cellValue","cells":{"A3":"","A4":"Book","B1":"Price","B2":2,"B4":8}}],"showMeHow":true}]},
         addRenameSheet: {"app":"excel","mode":"lesson","title":"Add and Rename a Worksheet","assetBaseUrl":"./assets/","theme":"LIGHT","tasks":[{"title":"Add a sheet and rename it","explanation":"Worksheets keep different data on separate tabs. Clear names make a workbook easy to use.","instructions":["Click the + button next to the Sheet1 tab at the bottom to add Sheet2.","Double-click the Sheet2 tab, type `Budget` and press Enter."],"hint":"Add a sheet with +, then double-click its tab to rename it Budget.","startingSheet":{"cells":{"A1":"January","B1":900}},"goals":[{"type":"action","action":"addSheet"},{"type":"action","action":"renameSheet"},{"type":"sheets","contains":"Budget","count":2}],"showMeHow":true}]}
       };
 

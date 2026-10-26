@@ -8,6 +8,9 @@
   flex-shrink: 0;
   width: 100%;
   box-sizing: border-box;
+  overflow: visible !important;
+  position: relative;
+  z-index: 100;
 }
 
 .ribbon-tab-strip {
@@ -110,8 +113,9 @@
   background: var(--surface, #ffffff);
   flex-shrink: 0;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: visible !important;
   position: relative;
+  z-index: 50;
 }
 
 .ribbon-tab-content {
@@ -123,11 +127,13 @@
   background: var(--surface, #ffffff);
   padding: 2px 4px;
   gap: 0;
-  overflow-x: hidden;
-  overflow-y: hidden !important;
+  overflow: visible !important;
+  overflow-x: visible !important;
+  overflow-y: visible !important;
   scrollbar-width: none;
   flex-wrap: nowrap;
   user-select: none;
+  position: relative;
 }
 
 .ribbon-tab-content::-webkit-scrollbar {
@@ -379,7 +385,7 @@
   border-radius: 4px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
   padding: 8px;
-  z-index: 100;
+  z-index: 250;
   width: 140px;
   box-sizing: border-box;
 }
