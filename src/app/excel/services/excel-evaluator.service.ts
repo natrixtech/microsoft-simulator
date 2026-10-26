@@ -72,6 +72,8 @@ export class ExcelEvaluatorService {
         return this.evalNoDuplicates(goal);
       case 'action':
         return this.evalAction(goal);
+      case 'sheets':
+        return this.evalSheets(goal);
       default:
         return false;
     }
@@ -481,6 +483,39 @@ export class ExcelEvaluatorService {
     const action = goal.action;
     const range = goal.range || goal.cell;
     return this.actionLogger.hasAction(action, range);
+  }
+
+  // 13. sheets
+  private evalSheets(goal: any): boolean {
+    const sheets = this.state.sheets();
+
+    if (goal.contains !== undefined) {
+      const expected = String(goal.contains).trim().toLowerCase();
+      const hasMatch = sheets.some((s) => s.name.trim().toLowerCase() === expected);
+      if (!hasMatch) return false;
+    }
+
+    if (goal.count !== undefined) {
+      if (sheets.length !== Number(goal.count)) {
+        return false;
+      }
+    }
+
+    if (goal.names !== undefined) {
+      const namesList = Array.isArray(goal.names) ? goal.names : [];
+      if (sheets.length !== namesList.length) {
+        return false;
+      }
+      for (let i = 0; i < sheets.length; i++) {
+        const actualName = sheets[i].name.trim().toLowerCase();
+        const expectedName = String(namesList[i]).trim().toLowerCase();
+        if (actualName !== expectedName) {
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 
   // Helper comparisons

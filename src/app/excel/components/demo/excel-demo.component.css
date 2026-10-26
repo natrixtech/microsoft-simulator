@@ -209,7 +209,7 @@
   position: absolute;
   top: 12px;
   right: 12px;
-  background: #107c41;
+  background: #323130;
   color: #ffffff;
   padding: 8px 16px;
   border-radius: 20px;
@@ -1177,4 +1177,156 @@ app-excel-replica-ribbon {
 :host-context([data-theme="DARK"]) .cf-color-swatch.selected-swatch,
 :host-context(.dark-theme) .cf-color-swatch.selected-swatch {
   outline-color: #6fd29a;
+}
+
+:host-context([data-theme="dark"]) .demo-completion-toast,
+:host-context([data-theme="DARK"]) .demo-completion-toast,
+:host-context(.dark-theme) .demo-completion-toast {
+  background: #201f1e;
+  color: #ffffff;
+  border: 1px solid #3b3a39;
+}
+
+/* Replica Chart SVG & Slices */
+.replica-chart-svg {
+  width: 100%;
+  height: 105px;
+  display: block;
+}
+
+.replica-chart-svg text {
+  fill: #616161;
+}
+
+:host-context([data-theme="dark"]) .replica-chart-svg text,
+:host-context([data-theme="DARK"]) .replica-chart-svg text,
+:host-context(.dark-theme) .replica-chart-svg text {
+  fill: #d1d5db;
+}
+
+:host-context([data-theme="dark"]) .replica-chart-svg line,
+:host-context([data-theme="DARK"]) .replica-chart-svg line,
+:host-context(.dark-theme) .replica-chart-svg line {
+  stroke: #484644;
+}
+
+/* Replica Filter Popover Controls */
+.rfp-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 5px 8px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #107c41;
+  cursor: pointer;
+  text-align: left;
+}
+
+.rfp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rfp-label {
+  font-size: 11px;
+  color: #616161;
+}
+
+.rfp-select {
+  height: 24px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 3px;
+  font-size: 11px;
+  color: #242424;
+}
+
+.rfp-input-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rfp-input {
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 3px;
+  font-size: 11px;
+  color: #242424;
+  box-sizing: border-box;
+}
+
+.rfp-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.rfp-btn {
+  padding: 4px 12px;
+  font-size: 11px;
+  border-radius: 3px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #242424;
+  cursor: pointer;
+}
+
+.rfp-btn.primary {
+  background: #107c41;
+  border-color: #107c41;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+:host-context([data-theme="dark"]) .replica-filter-popover,
+:host-context([data-theme="DARK"]) .replica-filter-popover,
+:host-context(.dark-theme) .replica-filter-popover {
+  background: #252526;
+  border-color: #3b3a39;
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .rfp-toggle-btn,
+:host-context([data-theme="DARK"]) .rfp-toggle-btn,
+:host-context(.dark-theme) .rfp-toggle-btn {
+  background: #2d2d2d;
+  border-color: #3b3a39;
+  color: #6fd29a;
+}
+
+:host-context([data-theme="dark"]) .rfp-select,
+:host-context([data-theme="DARK"]) .rfp-select,
+:host-context(.dark-theme) .rfp-select,
+:host-context([data-theme="dark"]) .rfp-input,
+:host-context([data-theme="DARK"]) .rfp-input,
+:host-context(.dark-theme) .rfp-input {
+  background: #1e1e1e;
+  border-color: #3b3a39;
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .replica-chart-card,
+:host-context([data-theme="DARK"]) .replica-chart-card,
+:host-context(.dark-theme) .replica-chart-card {
+  background: #252526;
+  border-color: #3b3a39;
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .chart-card-header,
+:host-context([data-theme="DARK"]) .chart-card-header,
+:host-context(.dark-theme) .chart-card-header {
+  color: #f3f2f1;
 }

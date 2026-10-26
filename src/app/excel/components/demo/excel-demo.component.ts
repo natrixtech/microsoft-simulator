@@ -124,6 +124,7 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly sortOrder = signal<string>('Z to A');
   readonly filterCondition = signal<string>('greaterThan');
   readonly filterValue = signal<string>('50');
+  readonly filterValue2 = signal<string>('');
   readonly filterColumn = signal<string>('C');
   readonly chartTitle = signal<string>('Sales Report');
   readonly chartType = signal<string>('column');
@@ -166,7 +167,7 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
   } | null = null;
 
   // Grid visual additions
-  readonly hasChartObject = signal<{ title: string; type: string } | null>(null);
+  readonly hasChartObject = signal<any | null>(null);
   readonly hasPivotTableObject = signal<boolean>(false);
   readonly hasCommentOnCell = signal<string | null>(null);
   readonly hiddenRows = signal<Set<number>>(new Set());
@@ -318,22 +319,17 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
   private getStepLabelForGoal(g: any): string {
     switch (g?.type) {
       case 'cellValue':
-        return 'Type values into cells';
+        return 'Type the values';
       case 'cellFormula':
-        return g.function ? `Enter =${g.function}(${g.references || ''}) formula` : 'Enter the formula';
+        return 'Enter the formula';
       case 'cellFormat':
-        if (g.numberFormat === 'currency' || g.numberFormat === '$') return 'Format range as currency ($)';
-        if (g.numberFormat === 'percent' || g.numberFormat === '%') return 'Format range as percent (%)';
-        if (g.fontFamily) return `Set font family to ${g.fontFamily}`;
-        if (g.bold) return 'Apply bold formatting';
-        if (g.fillColor) return 'Apply fill color';
-        return 'Format cells on Home tab';
+        return 'Select the range, then Apply the format';
       case 'sorted':
-        return `Sort range by column ${g.byColumn || 'B'} (${g.order === 'desc' ? 'Z to A' : 'A to Z'})`;
+        return 'Sort the data';
       case 'filter':
-        return `Filter column ${g.column || 'C'} (${g.condition || 'condition'} ${g.value ?? ''})`;
+        return 'Create a filter, then Set the condition';
       case 'chart':
-        return `Insert ${g.chartType || 'column'} chart`;
+        return 'Insert a chart';
       case 'pivotTable':
         return 'Insert a pivot table';
       case 'comment':
@@ -416,6 +412,7 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.cfCondition.set('');
     this.cfValue.set('');
     this.cfValue2.set('');
+    this.filterValue2.set('');
     this.cfColor.set('');
     this.pivotRows.set('');
     this.pivotValues.set('');
@@ -782,8 +779,18 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
     // 3. cellFormat
     if (type === 'cellFormat') {
       const range = g.range || 'B2:B4';
-      this.selectRange(range);
-      await this.moveToTarget(`replica-cell-${range.split(':')[0]}`);
+      const parts = range.split(':');
+      const start = parts[0];
+      const end = parts[1] || start;
+
+      // Selection appears as cursor moves to start, then drags to end
+      await this.moveToTarget(`replica-cell-${start}`);
+      this.selectRange(start);
+      if (end !== start) {
+        await this.moveToTarget(`replica-cell-${end}`);
+        this.selectRange(range);
+      }
+
       await this.moveToTarget('tab-home');
 
       if (g.numberFormat === 'currency' || g.numberFormat === '$') {
@@ -845,7 +852,7 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
         await this.moveToTarget('text-color-btn');
         this.replicaTextColorOpen.set(true);
         await this.delay(POST_OPEN_PAUSE_MS);
-        await this.moveToTarget(`demo-text-swatch-${g.color || 'red'}`);
+        await this.moveToTarget(`demo-text-swatch-${g.color || g.textColor || 'red'}`);
         this.replicaTextColorOpen.set(false);
         this.applyReplicaFormat(range, { color: g.color || g.textColor });
       }
@@ -855,86 +862,255 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
     // 4. sorted
     if (type === 'sorted') {
       const range = g.range || 'A1:B5';
-      this.selectRange(range);
-      await this.moveToTarget(`replica-cell-${range.split(':')[0]}`);
+      const parsed = parseRange(range) || { startRow: 0, startCol: 0, endRow: 4, endCol: 1 };
+      const colLetter = (g.byColumn || indexToColLetter(parsed.startCol)).toUpperCase();
+      const colIdx = colLetterToIndex(colLetter);
+
+      // Check header
+      let hasHeader = !!g.hasHeader;
+      if (g.hasHeader === undefined && parsed.endRow > parsed.startRow) {
+        let isTextAboveNumbers = false;
+        for (let c = parsed.startCol; c <= parsed.endCol; c++) {
+          const v1 = this.replicaCells().get(formatAddress({ row: parsed.startRow, col: c }))?.value;
+          const v2 = this.replicaCells().get(formatAddress({ row: parsed.startRow + 1, col: c }))?.value;
+          if (
+            v1 !== undefined && v1 !== null && isNaN(Number(v1)) &&
+            v2 !== undefined && v2 !== null && v2 !== '' && !isNaN(Number(v2))
+          ) {
+            isTextAboveNumbers = true;
+            break;
+          }
+        }
+        if (isTextAboveNumbers) {
+          hasHeader = true;
+        }
+      }
+
+      // The cursor clicks a cell in goal.byColumn inside goal.range
+      const cellRow = hasHeader && parsed.endRow > parsed.startRow ? parsed.startRow + 1 : parsed.startRow;
+      const targetCell = formatAddress({ row: cellRow, col: colIdx });
+      await this.moveToTarget(`replica-cell-${targetCell}`);
+      this.selectRange(targetCell);
+
+      // Then the Data tab
+      this.replicaActiveTab.set('data');
       await this.moveToTarget('tab-data');
 
-      // Open Sort dialog
-      await this.moveToTarget('data-sort-dialog-btn');
-      this.sortColumn.set('Column ' + (g.byColumn || 'B'));
-      this.sortOrder.set(g.order === 'desc' ? 'Z to A' : 'A to Z');
-      this.replicaDialog.set('sort');
-      await this.delay(POST_OPEN_PAUSE_MS);
-
-      await this.moveToTarget('sort-dialog-ok-btn');
-      this.replicaDialog.set(null);
-
-      // Reorder rows descending in replica grid
-      const m = new Map(this.replicaCells());
-      if (g.order === 'desc') {
-        m.set('A2', { value: 'Desk', display: 'Desk' });
-        m.set('B2', { value: 150, display: '150' });
-        m.set('A3', { value: 'Chair', display: 'Chair' });
-        m.set('B3', { value: 75, display: '75' });
-        m.set('A4', { value: 'Lamp', display: 'Lamp' });
-        m.set('B4', { value: 35, display: '35' });
-        m.set('A5', { value: 'Pen', display: 'Pen' });
-        m.set('B5', { value: 2, display: '2' });
+      // Then Sort A->Z button or Sort Z->A button
+      const isDesc = g.order === 'desc';
+      if (isDesc) {
+        await this.moveToTarget('data-sort-desc-btn');
+      } else {
+        await this.moveToTarget('data-sort-asc-btn');
       }
-      this.replicaCells.set(m);
+
+      // Really sort the rows of goal.range by that column (whole rows move together)
+      const dataStartRow = hasHeader ? parsed.startRow + 1 : parsed.startRow;
+      interface SortRowEntry {
+        cells: Map<number, { value: any; calculatedValue?: any; display: string }>;
+        formats: Map<number, any>;
+        sortKey: any;
+      }
+      const rowEntries: SortRowEntry[] = [];
+      const curCells = new Map(this.replicaCells());
+      const curFmts = new Map(this.replicaFormats());
+
+      for (let r = dataStartRow; r <= parsed.endRow; r++) {
+        const cMap = new Map<number, { value: any; calculatedValue?: any; display: string }>();
+        const fMap = new Map<number, any>();
+        for (let c = parsed.startCol; c <= parsed.endCol; c++) {
+          const a = formatAddress({ row: r, col: c });
+          const cellObj = curCells.get(a);
+          if (cellObj) cMap.set(c, { ...cellObj });
+          const fmtObj = curFmts.get(a);
+          if (fmtObj) fMap.set(c, { ...fmtObj });
+        }
+        const sortAddr = formatAddress({ row: r, col: colIdx });
+        const sortCell = curCells.get(sortAddr);
+        const sortKey = sortCell?.calculatedValue !== undefined ? sortCell.calculatedValue : sortCell?.value;
+        rowEntries.push({ cells: cMap, formats: fMap, sortKey });
+      }
+
+      rowEntries.sort((a, b) => {
+        const comp = this.compareSortValues(a.sortKey, b.sortKey);
+        return isDesc ? -comp : comp;
+      });
+
+      // Write sorted rows back into replicaCells and replicaFormats
+      for (let i = 0; i < rowEntries.length; i++) {
+        const targetRow = dataStartRow + i;
+        const entry = rowEntries[i];
+        for (let c = parsed.startCol; c <= parsed.endCol; c++) {
+          const a = formatAddress({ row: targetRow, col: c });
+          const cData = entry.cells.get(c);
+          if (cData) {
+            curCells.set(a, cData);
+          } else {
+            curCells.delete(a);
+          }
+          const fData = entry.formats.get(c);
+          if (fData) {
+            curFmts.set(a, fData);
+          } else {
+            curFmts.delete(a);
+          }
+        }
+      }
+
+      this.replicaCells.set(curCells);
+      this.replicaFormats.set(curFmts);
+      this.evaluateAndFormatCells();
+      this.cdr.markForCheck();
       return;
     }
 
     // 5. filter
     if (type === 'filter') {
       const range = g.range || 'A1:C5';
-      this.selectRange(range);
-      await this.moveToTarget(`replica-cell-${range.split(':')[0]}`);
-      await this.moveToTarget('tab-data');
+      const parts = range.split(':');
+      const start = parts[0];
+      const end = parts[1] || start;
 
-      // Click filter toggle button
+      // Select goal.range
+      await this.moveToTarget(`replica-cell-${start}`);
+      this.selectRange(start);
+      if (end !== start) {
+        await this.moveToTarget(`replica-cell-${end}`);
+        this.selectRange(range);
+      }
+
+      // Data tab -> Filter button -> filter arrows appear on header row
+      this.replicaActiveTab.set('data');
+      await this.moveToTarget('tab-data');
       await this.moveToTarget('data-filter-btn');
       this.replicaHasFilter.set(true);
       await this.delay(POST_OPEN_PAUSE_MS);
 
-      // Click column filter arrow
-      const col = g.column || 'C';
-      await this.moveToTarget(`col-filter-btn-${col}`);
-      this.filterColumn.set(col);
-      this.filterCondition.set(g.condition || 'greaterThan');
-      this.filterValue.set(String(g.value ?? 50));
-      this.replicaDialog.set('filter');
-      await this.delay(POST_OPEN_PAUSE_MS);
+      // If goal.column and goal.condition are given
+      if (g.column && g.condition) {
+        const col = String(g.column).toUpperCase();
+        await this.moveToTarget(`col-filter-btn-${col}`);
 
-      // Click OK on filter dialog
-      await this.moveToTarget('filter-dialog-ok-btn');
-      this.replicaDialog.set(null);
+        // Dialog opens with empty/clean fields
+        this.filterColumn.set(col);
+        this.filterCondition.set('');
+        this.filterValue.set('');
+        this.filterValue2.set('');
+        this.replicaDialog.set('filter');
+        await this.delay(POST_OPEN_PAUSE_MS);
 
-      // Hide rows where col C <= 50 (Row 3: 40, Row 5: 30)
+        // Picks "Filter by condition"
+        await this.moveToTarget('filter-condition-toggle-btn');
+        await this.delay(PRE_CLICK_PAUSE_MS);
+
+        // Picks the condition
+        await this.moveToTarget('filter-condition-select');
+        this.filterCondition.set(g.condition);
+        this.cdr.detectChanges();
+        await this.delay(PRE_CLICK_PAUSE_MS);
+
+        // Types value
+        if (g.condition !== 'isEmpty' && g.value !== undefined) {
+          await this.moveToTarget('filter-condition-val-input');
+          let cur = '';
+          for (const ch of String(g.value)) {
+            if (this.isCancelled) return;
+            cur += ch;
+            this.filterValue.set(cur);
+            await this.delay(60);
+          }
+          await this.delay(PRE_CLICK_PAUSE_MS);
+        }
+
+        // Types second value for between
+        if (g.condition === 'between' && g.value2 !== undefined) {
+          await this.moveToTarget('filter-condition-val2-input');
+          let cur2 = '';
+          for (const ch of String(g.value2)) {
+            if (this.isCancelled) return;
+            cur2 += ch;
+            this.filterValue2.set(cur2);
+            await this.delay(60);
+          }
+          await this.delay(PRE_CLICK_PAUSE_MS);
+        }
+
+        // Clicks OK
+        await this.moveToTarget('filter-dialog-ok-btn');
+        this.replicaDialog.set(null);
+      }
+
+      // Result: hide ONLY the data rows that do NOT match the condition, using evaluateDemoCondition()
+      const parsed = parseRange(range);
       const h = new Set<number>();
-      h.add(3);
-      h.add(5);
+      if (parsed && g.column && g.condition) {
+        const colIdx = colLetterToIndex(String(g.column).toUpperCase());
+        for (let r = parsed.startRow + 1; r <= parsed.endRow; r++) {
+          const rowNum = r + 1;
+          const addr = formatAddress({ row: r, col: colIdx });
+          const cell = this.replicaCells().get(addr);
+          const cellVal = cell?.calculatedValue !== undefined ? cell.calculatedValue : cell?.value;
+          if (!this.evaluateDemoCondition(cellVal, g.condition, g.value, g.value2)) {
+            h.add(rowNum);
+          }
+        }
+      }
       this.hiddenRows.set(h);
+      this.cdr.markForCheck();
       return;
     }
 
     // 6. chart
     if (type === 'chart') {
       const range = g.range || 'A1:B5';
-      this.selectRange(range);
-      await this.moveToTarget(`replica-cell-${range.split(':')[0]}`);
+      const parts = range.split(':');
+      const start = parts[0];
+      const end = parts[1] || start;
+
+      // Select goal.range
+      await this.moveToTarget(`replica-cell-${start}`);
+      this.selectRange(start);
+      if (end !== start) {
+        await this.moveToTarget(`replica-cell-${end}`);
+        this.selectRange(range);
+      }
+
+      // Insert tab -> button for goal.chartType
+      this.replicaActiveTab.set('insert');
       await this.moveToTarget('tab-insert');
 
-      const cType = g.chartType || 'column';
-      await this.moveToTarget(`insert-chart-${cType}-btn`);
-      this.chartType.set(cType);
-      this.chartTitle.set(g.title || 'Sales Report');
+      const cType = (g.chartType || 'column').toLowerCase();
+      const validTypes = ['column', 'bar', 'line', 'pie'];
+      const resolvedType = validTypes.includes(cType) ? cType : 'column';
+      await this.moveToTarget(`insert-chart-${resolvedType}-btn`);
+
+      // Dialog opens with empty title
+      this.chartType.set(resolvedType);
+      this.chartTitle.set('');
       this.replicaDialog.set('chart');
       await this.delay(POST_OPEN_PAUSE_MS);
 
+      // If goal.title is given: the cursor clicks chart-title-input and types it
+      if (g.title) {
+        await this.moveToTarget('chart-title-input');
+        let cur = '';
+        for (const ch of String(g.title)) {
+          if (this.isCancelled) return;
+          cur += ch;
+          this.chartTitle.set(cur);
+          await this.delay(60);
+        }
+        await this.delay(PRE_CLICK_PAUSE_MS);
+      }
+
+      // Click Insert
       await this.moveToTarget('chart-dialog-insert-btn');
       this.replicaDialog.set(null);
-      this.hasChartObject.set({ title: g.title || 'Sales Report', type: cType });
+
+      // Chart card drawn from data in goal.range
+      const chartData = this.computeChartData(range, resolvedType, g.title || (resolvedType.charAt(0).toUpperCase() + resolvedType.slice(1) + ' Chart'));
+      this.hasChartObject.set(chartData);
+      this.cdr.markForCheck();
       return;
     }
 
@@ -1596,6 +1772,15 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  getCellFontSize(cellAddr: string): string {
+    const f = this.replicaFormats().get(cellAddr);
+    if (!f?.fontSize) return '';
+    const sz = Number(f.fontSize);
+    if (!sz || isNaN(sz)) return '';
+    const px = Math.round((sz / 11) * 13);
+    return `${px}px`;
+  }
+
   getCellFill(cellAddr: string): string {
     const f = this.replicaFormats().get(cellAddr);
     if (!f?.fillColor) return '';
@@ -1822,6 +2007,185 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
       resolvedRowsField,
       resolvedValuesField,
       resolvedSummarize,
+    };
+  }
+
+  private compareSortValues(a: any, b: any): number {
+    const d1 = parseDateParts(a);
+    const d2 = parseDateParts(b);
+    if (d1 && d2) {
+      if (d1.utcTime === d2.utcTime) return 0;
+      return d1.utcTime < d2.utcTime ? -1 : 1;
+    }
+
+    const n1 = Number(a);
+    const n2 = Number(b);
+    if (!isNaN(n1) && !isNaN(n2) && a !== '' && b !== '' && a !== null && b !== null) {
+      if (Math.abs(n1 - n2) < 0.0001) return 0;
+      return n1 < n2 ? -1 : 1;
+    }
+    const s1 = String(a ?? '').trim().toLowerCase();
+    const s2 = String(b ?? '').trim().toLowerCase();
+    if (s1 < s2) return -1;
+    if (s1 > s2) return 1;
+    return 0;
+  }
+
+  private computeChartData(
+    range: string,
+    chartType: string,
+    title: string
+  ): {
+    title: string;
+    type: string;
+    left: number;
+    top: number;
+    items: Array<{ label: string; value: number }>;
+    pieSlices?: Array<{ d: string; color: string; label: string; value: number }>;
+    columnBars?: Array<{ x: number; y: number; width: number; height: number; color: string; label: string; value: number }>;
+    horizontalBars?: Array<{ x: number; y: number; width: number; height: number; color: string; label: string; value: number }>;
+    linePoints?: string;
+    points?: Array<{ cx: number; cy: number; label: string; value: number }>;
+  } {
+    const parsed = parseRange(range) || { startRow: 0, startCol: 0, endRow: 4, endCol: 1 };
+    const catCol = parsed.startCol;
+
+    // Find first numeric column
+    let valuesCol = -1;
+    for (let c = parsed.startCol + 1; c <= parsed.endCol; c++) {
+      for (let r = parsed.startRow; r <= parsed.endRow; r++) {
+        const a = formatAddress({ row: r, col: c });
+        const val = this.replicaCells().get(a)?.value;
+        if (val !== undefined && val !== null && val !== '') {
+          const num = Number(val);
+          if (!isNaN(num)) {
+            valuesCol = c;
+            break;
+          }
+        }
+      }
+      if (valuesCol !== -1) break;
+    }
+    if (valuesCol === -1) {
+      valuesCol = parsed.endCol > parsed.startCol ? parsed.startCol + 1 : parsed.startCol;
+    }
+
+    // Determine if first row is a header
+    let dataStartRow = parsed.startRow;
+    if (parsed.endRow > parsed.startRow) {
+      const r0Addr = formatAddress({ row: parsed.startRow, col: valuesCol });
+      const r0Val = this.replicaCells().get(r0Addr)?.value;
+      const r1Addr = formatAddress({ row: parsed.startRow + 1, col: valuesCol });
+      const r1Val = this.replicaCells().get(r1Addr)?.value;
+      if (
+        r0Val !== undefined && r0Val !== null && isNaN(Number(r0Val)) &&
+        r1Val !== undefined && r1Val !== null && r1Val !== '' && !isNaN(Number(r1Val))
+      ) {
+        dataStartRow = parsed.startRow + 1;
+      }
+    }
+
+    // Collect data items
+    const items: Array<{ label: string; value: number }> = [];
+    for (let r = dataStartRow; r <= parsed.endRow; r++) {
+      const cAddr = formatAddress({ row: r, col: catCol });
+      const vAddr = formatAddress({ row: r, col: valuesCol });
+      const cRaw = this.replicaCells().get(cAddr)?.value;
+      const vCell = this.replicaCells().get(vAddr);
+      const vRaw = vCell?.calculatedValue !== undefined ? vCell.calculatedValue : vCell?.value;
+      const label = cRaw !== undefined && cRaw !== null && String(cRaw).trim() !== ''
+        ? String(cRaw).trim()
+        : `Item ${r - dataStartRow + 1}`;
+      const num = Number(vRaw);
+      const value = !isNaN(num) && vRaw !== '' && vRaw !== null && vRaw !== undefined ? num : 0;
+      items.push({ label, value: Math.max(0, value) });
+    }
+    if (items.length === 0) {
+      items.push({ label: 'Sample', value: 10 });
+    }
+
+    // Position next to range
+    let left = 38 + (parsed.endCol + 1) * 92 + 10;
+    if (left > 340) left = 340;
+    if (left < 210) left = 210;
+    let top = 24 + parsed.startRow * 26 + 6;
+    if (top < 28) top = 28;
+    if (top > 120) top = 120;
+
+    const colors = ['#4472c4', '#ed7d31', '#a5a5a5', '#ffc000', '#5b9bd5', '#70ad47', '#264478'];
+    const maxVal = Math.max(...items.map((it) => it.value), 1);
+
+    // Column bars
+    const totalColW = 160;
+    const colSlot = totalColW / items.length;
+    const colBarW = Math.max(8, Math.min(24, colSlot * 0.65));
+    const columnBars = items.map((it, idx) => {
+      const h = Math.max(4, Math.round((it.value / maxVal) * 65));
+      const x = Math.round(25 + idx * colSlot + (colSlot - colBarW) / 2);
+      const y = 88 - h;
+      return { x, y, width: colBarW, height: h, color: colors[idx % colors.length], label: it.label, value: it.value };
+    });
+
+    // Horizontal bars
+    const totalBarH = 75;
+    const barSlot = totalBarH / items.length;
+    const barH = Math.max(8, Math.min(18, barSlot * 0.65));
+    const horizontalBars = items.map((it, idx) => {
+      const w = Math.max(4, Math.round((it.value / maxVal) * 125));
+      const y = Math.round(12 + idx * barSlot + (barSlot - barH) / 2);
+      const x = 40;
+      return { x, y, width: w, height: barH, color: colors[idx % colors.length], label: it.label, value: it.value };
+    });
+
+    // Line points
+    const points = items.map((it, idx) => {
+      const cx = Math.round(30 + (items.length > 1 ? (idx / (items.length - 1)) * 140 : 70));
+      const cy = Math.round(85 - (it.value / maxVal) * 65);
+      return { cx, cy, label: it.label, value: it.value };
+    });
+    const linePoints = points.map((p) => `${p.cx},${p.cy}`).join(' ');
+
+    // Pie slices
+    const totalPie = items.reduce((s, it) => s + it.value, 0) || 1;
+    const pcx = 65;
+    const pcy = 52;
+    const pr = 42;
+    let currentAngle = -Math.PI / 2;
+    const pieSlices: Array<{ d: string; color: string; label: string; value: number }> = [];
+
+    for (let idx = 0; idx < items.length; idx++) {
+      const it = items[idx];
+      const fraction = it.value / totalPie;
+      const sliceAngle = fraction * 2 * Math.PI;
+      const startAngle = currentAngle;
+      const endAngle = currentAngle + sliceAngle;
+      currentAngle = endAngle;
+
+      let d = '';
+      if (items.length === 1 || fraction >= 0.9999) {
+        d = `M ${pcx} ${pcy - pr} A ${pr} ${pr} 0 1 1 ${pcx} ${pcy + pr} A ${pr} ${pr} 0 1 1 ${pcx} ${pcy - pr} Z`;
+      } else {
+        const x1 = (pcx + pr * Math.cos(startAngle)).toFixed(1);
+        const y1 = (pcy + pr * Math.sin(startAngle)).toFixed(1);
+        const x2 = (pcx + pr * Math.cos(endAngle)).toFixed(1);
+        const y2 = (pcy + pr * Math.sin(endAngle)).toFixed(1);
+        const largeArc = sliceAngle > Math.PI ? 1 : 0;
+        d = `M ${pcx} ${pcy} L ${x1} ${y1} A ${pr} ${pr} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+      }
+      pieSlices.push({ d, color: colors[idx % colors.length], label: it.label, value: it.value });
+    }
+
+    return {
+      title,
+      type: chartType,
+      left,
+      top,
+      items,
+      columnBars,
+      horizontalBars,
+      points,
+      linePoints,
+      pieSlices,
     };
   }
 

@@ -143,6 +143,7 @@
                       [style.text-decoration]="replicaFormats().get(c + r)?.underline ? 'underline' : 'none'"
                       [style.text-align]="replicaFormats().get(c + r)?.align || 'left'"
                       [style.font-family]="replicaFormats().get(c + r)?.fontFamily || 'inherit'"
+                      [style.font-size]="getCellFontSize(c + r)"
                       [style.background-color]="getCellFill(c + r)"
                       [style.color]="replicaFormats().get(c + r)?.color || 'inherit'"
                     >
@@ -167,14 +168,120 @@
               </div>
 
               <!-- Floating Chart Object -->
-              <div class="replica-chart-card" *ngIf="hasChartObject() as ch">
+              <div
+                class="replica-chart-card"
+                *ngIf="hasChartObject() as ch"
+                [style.left.px]="ch.left"
+                [style.top.px]="ch.top"
+              >
                 <div class="chart-card-header">{{ ch.title }}</div>
-                <div class="chart-card-bars">
-                  <div class="chart-bar-rect" style="height: 55%; background: #4472c4;"></div>
-                  <div class="chart-bar-rect" style="height: 75%; background: #4472c4;"></div>
-                  <div class="chart-bar-rect" style="height: 90%; background: #4472c4;"></div>
-                  <div class="chart-bar-rect" style="height: 65%; background: #4472c4;"></div>
-                </div>
+
+                <!-- Column Chart -->
+                <svg
+                  *ngIf="ch.type === 'column'"
+                  class="replica-chart-svg"
+                  viewBox="0 0 200 105"
+                >
+                  <line x1="20" y1="88" x2="190" y2="88" stroke="#cbd5e1" stroke-width="1" />
+                  <line x1="20" y1="10" x2="20" y2="88" stroke="#cbd5e1" stroke-width="1" />
+                  <g *ngFor="let b of ch.columnBars">
+                    <rect
+                      [attr.x]="b.x"
+                      [attr.y]="b.y"
+                      [attr.width]="b.width"
+                      [attr.height]="b.height"
+                      [attr.fill]="b.color"
+                      rx="1"
+                    />
+                    <text
+                      [attr.x]="b.x + b.width / 2"
+                      y="99"
+                      text-anchor="middle"
+                      font-size="8"
+                    >{{ b.label }}</text>
+                  </g>
+                </svg>
+
+                <!-- Bar Chart (Horizontal) -->
+                <svg
+                  *ngIf="ch.type === 'bar'"
+                  class="replica-chart-svg"
+                  viewBox="0 0 200 105"
+                >
+                  <line x1="40" y1="10" x2="40" y2="92" stroke="#cbd5e1" stroke-width="1" />
+                  <line x1="40" y1="92" x2="190" y2="92" stroke="#cbd5e1" stroke-width="1" />
+                  <g *ngFor="let b of ch.horizontalBars">
+                    <text
+                      x="36"
+                      [attr.y]="b.y + b.height / 2 + 3"
+                      text-anchor="end"
+                      font-size="8"
+                    >{{ b.label }}</text>
+                    <rect
+                      [attr.x]="b.x"
+                      [attr.y]="b.y"
+                      [attr.width]="b.width"
+                      [attr.height]="b.height"
+                      [attr.fill]="b.color"
+                      rx="1"
+                    />
+                  </g>
+                </svg>
+
+                <!-- Line Chart -->
+                <svg
+                  *ngIf="ch.type === 'line'"
+                  class="replica-chart-svg"
+                  viewBox="0 0 200 105"
+                >
+                  <line x1="20" y1="88" x2="190" y2="88" stroke="#cbd5e1" stroke-width="1" />
+                  <line x1="20" y1="10" x2="20" y2="88" stroke="#cbd5e1" stroke-width="1" />
+                  <polyline
+                    [attr.points]="ch.linePoints"
+                    fill="none"
+                    stroke="#4472c4"
+                    stroke-width="2"
+                  />
+                  <g *ngFor="let p of ch.points">
+                    <circle
+                      [attr.cx]="p.cx"
+                      [attr.cy]="p.cy"
+                      r="3.5"
+                      fill="#4472c4"
+                      stroke="#ffffff"
+                      stroke-width="1.5"
+                    />
+                    <text
+                      [attr.x]="p.cx"
+                      y="99"
+                      text-anchor="middle"
+                      font-size="8"
+                    >{{ p.label }}</text>
+                  </g>
+                </svg>
+
+                <!-- Pie Chart -->
+                <svg
+                  *ngIf="ch.type === 'pie'"
+                  class="replica-chart-svg"
+                  viewBox="0 0 200 105"
+                >
+                  <g>
+                    <path
+                      *ngFor="let s of ch.pieSlices"
+                      [attr.d]="s.d"
+                      [attr.fill]="s.color"
+                      stroke="#ffffff"
+                      stroke-width="1"
+                    />
+                  </g>
+                  <g transform="translate(116, 16)">
+                    <g *ngFor="let s of ch.pieSlices; let idx = index" [attr.transform]="'translate(0, ' + idx * 16 + ')'">
+                      <rect width="8" height="8" [attr.fill]="s.color" rx="1" />
+                      <text x="12" y="7" font-size="8">{{ s.label }} ({{ s.value }})</text>
+                    </g>
+                  </g>
+                </svg>
               </div>
 
               <!-- Floating Pivot Table Object -->
@@ -229,13 +336,49 @@
 
               <!-- 2. Filter Dropdown Popover -->
               <div class="replica-filter-popover" *ngIf="replicaDialog() === 'filter'">
-                <div class="rfp-title">Filter by condition</div>
-                <div class="rfp-select">Greater than</div>
-                <div class="rfp-input-box">
-                  <input type="text" class="rfp-input" [value]="filterValue()" data-demo-target="filter-condition-value" readonly />
+                <button
+                  type="button"
+                  class="rfp-toggle-btn"
+                  data-demo-target="filter-condition-toggle-btn"
+                >
+                  <span class="icon">⚡</span> Filter by condition...
+                </button>
+                <div class="rfp-field">
+                  <label class="rfp-label">Condition:</label>
+                  <div class="rfp-select" data-demo-target="filter-condition-select">
+                    {{ getConditionLabel(filterCondition()) }}
+                  </div>
+                </div>
+                <div class="rfp-input-box" *ngIf="filterCondition() !== 'isEmpty'">
+                  <label class="rfp-label">Value:</label>
+                  <input
+                    type="text"
+                    class="rfp-input"
+                    [value]="filterValue()"
+                    data-demo-target="filter-condition-val-input"
+                    data-demo-target-alt="filter-condition-value"
+                    readonly
+                  />
+                </div>
+                <div class="rfp-input-box" *ngIf="filterCondition() === 'between'">
+                  <label class="rfp-label">Value 2:</label>
+                  <input
+                    type="text"
+                    class="rfp-input"
+                    [value]="filterValue2()"
+                    data-demo-target="filter-condition-val2-input"
+                    readonly
+                  />
                 </div>
                 <div class="rfp-actions">
-                  <button type="button" class="rfp-btn primary" data-demo-target="filter-dialog-ok-btn" data-demo-target-alt="filter-ok-btn">OK</button>
+                  <button
+                    type="button"
+                    class="rfp-btn primary"
+                    data-demo-target="filter-dialog-ok-btn"
+                    data-demo-target-alt="filter-ok-btn"
+                  >
+                    OK
+                  </button>
                   <button type="button" class="rfp-btn">Cancel</button>
                 </div>
               </div>

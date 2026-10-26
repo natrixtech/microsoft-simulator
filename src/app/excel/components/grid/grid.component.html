@@ -132,7 +132,13 @@
     [style.width.px]="rect.width"
     [style.height.px]="rect.height"
   >
-    <div class="fill-handle" *ngIf="!state.isEditing() && !state.selectedPivotTableId()"></div>
+    <ng-container *ngIf="!state.isEditing() && !state.selectedPivotTableId()">
+      <div class="selection-edge edge-top" (mousedown)="onSelectionBorderMouseDown($event)"></div>
+      <div class="selection-edge edge-bottom" (mousedown)="onSelectionBorderMouseDown($event)"></div>
+      <div class="selection-edge edge-left" (mousedown)="onSelectionBorderMouseDown($event)"></div>
+      <div class="selection-edge edge-right" (mousedown)="onSelectionBorderMouseDown($event)"></div>
+      <div class="fill-handle"></div>
+    </ng-container>
   </div>
 
   <!-- Floating Charts Overlay -->
@@ -448,4 +454,43 @@
       <div class="comment-note-text">{{ hoveredComment()!.text }}</div>
     </div>
   </ng-container>
+
+  <!-- Cell Drag Move / Copy Outline -->
+  <div
+    class="excel-drag-outline"
+    *ngIf="dragOutlineRect() as rect"
+    [style.left.px]="rect.left"
+    [style.top.px]="rect.top"
+    [style.width.px]="rect.width"
+    [style.height.px]="rect.height"
+  ></div>
+
+  <!-- Cell Drag Move / Copy Tooltip -->
+  <div
+    class="excel-drag-tooltip"
+    *ngIf="dragMoveState() && hasDragMoved"
+    [style.left.px]="dragMoveState()!.mouseX + 14"
+    [style.top.px]="dragMoveState()!.mouseY + 14"
+  >
+    <span class="excel-drag-copy-plus" *ngIf="dragMoveState()!.isCopy">+</span>
+    <span>{{ dragMoveState()!.targetRangeStr }}</span>
+  </div>
+
+  <!-- Replace Confirmation In-App Modal Dialog -->
+  <div class="excel-modal-backdrop" *ngIf="pendingMoveReplace()" (click)="cancelPendingMove()">
+    <div class="excel-confirm-dialog" (click)="$event.stopPropagation()">
+      <div class="confirm-dialog-titlebar">
+        <span>Microsoft Excel</span>
+        <button type="button" class="confirm-dialog-close" (click)="cancelPendingMove()" title="Close">✕</button>
+      </div>
+      <div class="confirm-dialog-body">
+        <div class="confirm-dialog-icon">⚠️</div>
+        <div class="confirm-dialog-text">There's already data here. Do you want to replace it?</div>
+      </div>
+      <div class="confirm-dialog-actions">
+        <button type="button" class="confirm-dialog-btn confirm-dialog-btn-primary" (click)="confirmPendingMove()">OK</button>
+        <button type="button" class="confirm-dialog-btn" (click)="cancelPendingMove()">Cancel</button>
+      </div>
+    </div>
+  </div>
 </div>

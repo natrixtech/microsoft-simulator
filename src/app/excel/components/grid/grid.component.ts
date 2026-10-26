@@ -118,6 +118,14 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
   private hasPivotDragMoved = false;
   private pivotToastTimer: any = null;
 
+  // Cell Drag Move / Copy state
+  readonly dragMoveState = signal<DragMoveState | null>(null);
+  readonly pendingMoveReplace = signal<PendingMoveReplace | null>(null);
+  private isDraggingSelectionBorder = false;
+  hasDragMoved = false;
+  private dragStartMouseX = 0;
+  private dragStartMouseY = 0;
+
   // Active validation dropdown menu
   readonly activeValidationMenu = signal<{ cell: string; allowed: string[]; x: number; y: number } | null>(null);
 
@@ -285,15 +293,14 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
     };
   });
 
-  getSelectionOverlayRect(): { left: number; top: number; width: number; height: number } | null {
-    const s = this.state.selectionCoords();
-    const b = this.selectionVisibleBounds();
-    if (b.firstVisibleRow === -1 || b.lastVisibleRow === -1) {
-      return null;
-    }
-
-    const startAddr = formatAddress({ row: b.firstVisibleRow, col: s.startCol });
-    const endAddr = formatAddress({ row: b.lastVisibleRow, col: s.endCol });
+  getRangeBoundingRect(
+    startRow: number,
+    startCol: number,
+    endRow: number,
+    endCol: number
+  ): { left: number; top: number; width: number; height: number } | null {
+    const startAddr = formatAddress({ row: startRow, col: startCol });
+    const endAddr = formatAddress({ row: endRow, col: endCol });
 
     const container = this.gridScrollRef?.nativeElement;
     if (container) {
@@ -310,21 +317,21 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // Fallback using column widths and row heights
     let left = 44;
-    for (let c = 0; c < s.startCol; c++) {
-      left += this.getColWidth(this.cols[c].letter);
+    for (let c = 0; c < startCol; c++) {
+      left += this.getColWidth(this.cols[c]?.letter || indexToColLetter(c));
     }
     let width = 0;
-    for (let c = s.startCol; c <= s.endCol; c++) {
-      width += this.getColWidth(this.cols[c].letter);
+    for (let c = startCol; c <= endCol; c++) {
+      width += this.getColWidth(this.cols[c]?.letter || indexToColLetter(c));
     }
     let top = 24;
-    for (let r = 0; r < b.firstVisibleRow; r++) {
+    for (let r = 0; r < startRow; r++) {
       if (!this.isRowHidden(r)) {
         top += this.getRowHeight(r);
       }
     }
     let height = 0;
-    for (let r = b.firstVisibleRow; r <= b.lastVisibleRow; r++) {
+    for (let r = startRow; r <= endRow; r++) {
       if (!this.isRowHidden(r)) {
         height += this.getRowHeight(r);
       }
@@ -335,6 +342,23 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
       width: width + 2,
       height: height + 2,
     };
+  }
+
+  getSelectionOverlayRect(): { left: number; top: number; width: number; height: number } | null {
+    const s = this.state.selectionCoords();
+    const b = this.selectionVisibleBounds();
+    if (b.firstVisibleRow === -1 || b.lastVisibleRow === -1) {
+      return null;
+    }
+    return this.getRangeBoundingRect(b.firstVisibleRow, s.startCol, b.lastVisibleRow, s.endCol);
+  }
+
+  dragOutlineRect(): { left: number; top: number; width: number; height: number } | null {
+    const drag = this.dragMoveState();
+    if (!this.isDraggingSelectionBorder || !drag || !this.hasDragMoved) {
+      return null;
+    }
+    return this.getRangeBoundingRect(drag.targetStartRow, drag.targetStartCol, drag.targetEndRow, drag.targetEndCol);
   }
 
   isColHeaderSelected(colIndex: number): boolean {
@@ -535,6 +559,19 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
     this.isSelectingRange = false;
     this.isDraggingChart = false;
     this.draggedChartId = null;
+
+    if (this.isDraggingSelectionBorder) {
+      const drag = this.dragMoveState();
+      const moved = this.hasDragMoved;
+      this.isDraggingSelectionBorder = false;
+      this.hasDragMoved = false;
+      this.dragMoveState.set(null);
+      this.cdr.markForCheck();
+
+      if (drag && moved) {
+        this.handleDragDrop(drag);
+      }
+    }
 
     if (this.draggedPivot) {
       const pt = this.draggedPivot;
@@ -1284,6 +1321,49 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
         chart.y = Math.max(10, this.chartInitialY + deltaY);
         this.cdr.markForCheck();
       }
+    }
+
+    if (this.isDraggingSelectionBorder && this.dragMoveState()) {
+      const deltaX = event.clientX - this.dragStartMouseX;
+      const deltaY = event.clientY - this.dragStartMouseY;
+      if (!this.hasDragMoved && Math.hypot(deltaX, deltaY) > 2) {
+        this.hasDragMoved = true;
+      }
+
+      const curState = this.dragMoveState()!;
+      const isCopy = event.ctrlKey || event.metaKey;
+      let targetStartRow = curState.targetStartRow;
+      let targetStartCol = curState.targetStartCol;
+
+      const cellAddr = this.getCellAddressFromPoint(event.clientX, event.clientY);
+      if (cellAddr) {
+        const p = parseAddress(cellAddr);
+        if (p) {
+          targetStartRow = Math.max(0, Math.min(this.numRows - curState.numRows, p.row - curState.grabRowOffset));
+          targetStartCol = Math.max(0, Math.min(this.numCols - curState.numCols, p.col - curState.grabColOffset));
+        }
+      }
+
+      const targetEndRow = targetStartRow + curState.numRows - 1;
+      const targetEndCol = targetStartCol + curState.numCols - 1;
+      const targetTopLeft = formatAddress({ row: targetStartRow, col: targetStartCol });
+      const targetRangeStr = curState.numRows === 1 && curState.numCols === 1
+        ? targetTopLeft
+        : `${targetTopLeft}:${formatAddress({ row: targetEndRow, col: targetEndCol })}`;
+
+      this.dragMoveState.set({
+        ...curState,
+        targetStartRow,
+        targetStartCol,
+        targetEndRow,
+        targetEndCol,
+        targetTopLeft,
+        targetRangeStr,
+        isCopy,
+        mouseX: event.clientX,
+        mouseY: event.clientY,
+      });
+      this.cdr.markForCheck();
     }
 
     if (this.draggedPivot) {
@@ -2416,6 +2496,224 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
 
     return formatAddress({ row: targetRow, col: targetCol });
   }
+
+  @HostListener('document:keydown', ['$event'])
+  onDocumentKeyDown(event: KeyboardEvent): void {
+    if (this.pendingMoveReplace()) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        event.stopPropagation();
+        this.confirmPendingMove();
+        return;
+      }
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        this.cancelPendingMove();
+        return;
+      }
+    }
+
+    if (this.isDraggingSelectionBorder) {
+      if (event.key === 'Control' || event.key === 'Meta') {
+        this.updateDragCopyState(true);
+      } else if (event.key === 'Escape') {
+        this.cancelDragMove();
+      }
+    }
+  }
+
+  @HostListener('document:keyup', ['$event'])
+  onDocumentKeyUp(event: KeyboardEvent): void {
+    if (this.isDraggingSelectionBorder && (event.key === 'Control' || event.key === 'Meta')) {
+      this.updateDragCopyState(false);
+    }
+  }
+
+  onSelectionBorderMouseDown(event: MouseEvent): void {
+    if (this.bridge.isPaused() || this.isCompleted) return;
+    if (this.state.isEditing()) return;
+    if (event.button !== 0) return;
+    event.stopPropagation();
+    event.preventDefault();
+
+    const selRange = this.state.selectedRange();
+    if (this.isRangeOverlappingAnyPivot(selRange)) {
+      this.showPivotMessage('Cannot change this part of a PivotTable report.');
+      return;
+    }
+
+    const parsed = parseRange(selRange);
+    if (!parsed) return;
+
+    const numRows = parsed.endRow - parsed.startRow + 1;
+    const numCols = parsed.endCol - parsed.startCol + 1;
+
+    const cellAddr = this.getCellAddressFromPoint(event.clientX, event.clientY);
+    let grabRowOffset = 0;
+    let grabColOffset = 0;
+    if (cellAddr) {
+      const p = parseAddress(cellAddr);
+      if (p) {
+        grabRowOffset = Math.max(0, Math.min(numRows - 1, p.row - parsed.startRow));
+        grabColOffset = Math.max(0, Math.min(numCols - 1, p.col - parsed.startCol));
+      }
+    }
+
+    const isCopy = event.ctrlKey || event.metaKey;
+    const targetTopLeft = formatAddress({ row: parsed.startRow, col: parsed.startCol });
+    const targetRangeStr = numRows === 1 && numCols === 1
+      ? targetTopLeft
+      : `${targetTopLeft}:${formatAddress({ row: parsed.endRow, col: parsed.endCol })}`;
+
+    this.isDraggingSelectionBorder = true;
+    this.hasDragMoved = false;
+    this.dragStartMouseX = event.clientX;
+    this.dragStartMouseY = event.clientY;
+
+    this.dragMoveState.set({
+      sourceRange: selRange,
+      sourceStartRow: parsed.startRow,
+      sourceStartCol: parsed.startCol,
+      sourceEndRow: parsed.endRow,
+      sourceEndCol: parsed.endCol,
+      numRows,
+      numCols,
+      grabRowOffset,
+      grabColOffset,
+      targetStartRow: parsed.startRow,
+      targetStartCol: parsed.startCol,
+      targetEndRow: parsed.endRow,
+      targetEndCol: parsed.endCol,
+      targetTopLeft,
+      targetRangeStr,
+      isCopy,
+      mouseX: event.clientX,
+      mouseY: event.clientY,
+    });
+    this.cdr.markForCheck();
+  }
+
+  private updateDragCopyState(isCopy: boolean): void {
+    const cur = this.dragMoveState();
+    if (cur && cur.isCopy !== isCopy) {
+      this.dragMoveState.set({ ...cur, isCopy });
+      this.cdr.markForCheck();
+    }
+  }
+
+  private cancelDragMove(): void {
+    this.isDraggingSelectionBorder = false;
+    this.hasDragMoved = false;
+    this.dragMoveState.set(null);
+    this.cdr.markForCheck();
+  }
+
+  private handleDragDrop(drag: DragMoveState): void {
+    if (drag.targetStartRow === drag.sourceStartRow && drag.targetStartCol === drag.sourceStartCol) {
+      return;
+    }
+
+    if (this.isRangeOverlappingAnyPivot(drag.targetRangeStr)) {
+      this.showPivotMessage('Cannot change this part of a PivotTable report.');
+      return;
+    }
+
+    const hasData = this.targetHasExistingData(
+      drag.sourceRange,
+      drag.targetStartRow,
+      drag.targetStartCol,
+      drag.numRows,
+      drag.numCols,
+      drag.isCopy
+    );
+
+    if (hasData) {
+      this.pendingMoveReplace.set({
+        sourceRange: drag.sourceRange,
+        targetTopLeft: drag.targetTopLeft,
+        targetRangeStr: drag.targetRangeStr,
+        isCopy: drag.isCopy,
+      });
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.executeMoveOrCopy(drag.sourceRange, drag.targetTopLeft, drag.targetRangeStr, drag.isCopy);
+  }
+
+  private targetHasExistingData(
+    sourceRange: string,
+    targetStartRow: number,
+    targetStartCol: number,
+    numRows: number,
+    numCols: number,
+    isCopy: boolean
+  ): boolean {
+    const src = parseRange(sourceRange);
+    const cells = this.state.cells();
+
+    for (let r = 0; r < numRows; r++) {
+      for (let c = 0; c < numCols; c++) {
+        const row = targetStartRow + r;
+        const col = targetStartCol + c;
+
+        if (!isCopy && src) {
+          if (row >= src.startRow && row <= src.endRow && col >= src.startCol && col <= src.endCol) {
+            continue;
+          }
+        }
+
+        const addr = formatAddress({ row, col });
+        const cell = cells.get(addr);
+        if (cell) {
+          const hasVal = cell.value !== '' && cell.value !== null && cell.value !== undefined;
+          const hasRaw = cell.raw !== '' && cell.raw !== null && cell.raw !== undefined;
+          if (hasVal || hasRaw || !!cell.formula) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  executeMoveOrCopy(sourceRange: string, targetTopLeft: string, targetRangeStr: string, isCopy: boolean): void {
+    this.history.push(this.state.getSnapshot());
+
+    if (isCopy) {
+      this.actionLogger.log('copy', sourceRange);
+      this.actionLogger.log('paste', targetTopLeft);
+    } else {
+      this.actionLogger.log('cut', sourceRange);
+      this.actionLogger.log('paste', targetTopLeft);
+    }
+
+    this.state.moveOrCopyRange(sourceRange, targetTopLeft, isCopy);
+    this.state.selectRange(targetRangeStr);
+    this.state.activeCell.set(targetTopLeft);
+
+    const parsedTarget = parseRange(targetRangeStr);
+    if (parsedTarget) {
+      this.selectionAnchor = { row: parsedTarget.startRow, col: parsedTarget.startCol };
+      this.selectionLead = { row: parsedTarget.endRow, col: parsedTarget.endCol };
+    }
+
+    this.cdr.markForCheck();
+  }
+
+  confirmPendingMove(): void {
+    const pending = this.pendingMoveReplace();
+    this.pendingMoveReplace.set(null);
+    if (pending) {
+      this.executeMoveOrCopy(pending.sourceRange, pending.targetTopLeft, pending.targetRangeStr, pending.isCopy);
+    }
+  }
+
+  cancelPendingMove(): void {
+    this.pendingMoveReplace.set(null);
+    this.cdr.markForCheck();
+  }
 }
 
 export interface HoveredCommentNote {
@@ -2432,6 +2730,34 @@ export interface HoveredCommentNote {
   lineToX: number;
   lineToY: number;
   arrowPoints: string;
+}
+
+export interface DragMoveState {
+  sourceRange: string;
+  sourceStartRow: number;
+  sourceStartCol: number;
+  sourceEndRow: number;
+  sourceEndCol: number;
+  numRows: number;
+  numCols: number;
+  grabRowOffset: number;
+  grabColOffset: number;
+  targetStartRow: number;
+  targetStartCol: number;
+  targetEndRow: number;
+  targetEndCol: number;
+  targetTopLeft: string;
+  targetRangeStr: string;
+  isCopy: boolean;
+  mouseX: number;
+  mouseY: number;
+}
+
+export interface PendingMoveReplace {
+  sourceRange: string;
+  targetTopLeft: string;
+  targetRangeStr: string;
+  isCopy: boolean;
 }
 
 export interface ChartSeriesData {

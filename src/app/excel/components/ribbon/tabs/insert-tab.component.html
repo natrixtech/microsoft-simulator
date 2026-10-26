@@ -151,8 +151,14 @@
           <app-excel-icon name="chartWaterfall" [size]="16"></app-excel-icon>
           <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon>
         </button>
-        <button type="button" class="ribbon-btn btn-chart-tile disabled" disabled title="Insert Combo Chart" tabindex="-1">
-          <app-excel-icon name="chartCombo" [size]="16"></app-excel-icon>
+        <button
+          type="button"
+          class="ribbon-btn btn-chart-tile"
+          (click)="openChartDialog.emit('bar')"
+          title="Insert Bar Chart"
+          data-demo-target="insert-chart-bar-btn"
+        >
+          <app-excel-icon name="chartBar" [size]="16"></app-excel-icon>
           <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon>
         </button>
 
@@ -171,9 +177,8 @@
           type="button"
           class="ribbon-btn btn-chart-tile disabled"
           disabled
-          title="Insert Scatter or Bar Chart"
+          title="Insert Scatter Chart"
           tabindex="-1"
-          data-demo-target="insert-chart-bar-btn"
         >
           <app-excel-icon name="chartScatter" [size]="16"></app-excel-icon>
           <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon>

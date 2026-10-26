@@ -1749,4 +1749,145 @@ export class ExcelStateService {
 
     this.restoreSheetOnly(snap);
   }
+
+  /**
+   * Moves or copies a range of cells to a new location.
+   * If copy is false (MOVE): source cells, formats, and comments are cleared; formulas keep original cell references.
+   * If copy is true (COPY): source remains intact; formulas shift relative references via formulaEngine.shiftFormula.
+   */
+  moveOrCopyRange(sourceRange: string, targetTopLeft: string, copy: boolean): void {
+    const parsedSource = parseRange(sourceRange);
+    if (!parsedSource) return;
+
+    const parsedTarget = parseAddress(targetTopLeft);
+    if (!parsedTarget) return;
+
+    const numRows = parsedSource.endRow - parsedSource.startRow + 1;
+    const numCols = parsedSource.endCol - parsedSource.startCol + 1;
+    const targetStartRow = parsedTarget.row;
+    const targetStartCol = parsedTarget.col;
+    const rowDelta = targetStartRow - parsedSource.startRow;
+    const colDelta = targetStartCol - parsedSource.startCol;
+
+    if (rowDelta === 0 && colDelta === 0) return;
+
+    // 1. Gather all items from the source range
+    interface SourceItem {
+      rOffset: number;
+      cOffset: number;
+      cell?: CellData;
+      format?: CellFormat;
+      comment?: string;
+    }
+
+    const items: SourceItem[] = [];
+    const curCells = new Map(this.cells());
+    const curFormats = new Map(this.cellFormats());
+    const curComments = new Map(this.comments());
+
+    for (let r = 0; r < numRows; r++) {
+      for (let c = 0; c < numCols; c++) {
+        const srcRow = parsedSource.startRow + r;
+        const srcCol = parsedSource.startCol + c;
+        const srcAddr = formatAddress({ row: srcRow, col: srcCol });
+
+        const cell = curCells.get(srcAddr);
+        const fmt = curFormats.get(srcAddr);
+        const comm = curComments.get(srcAddr);
+
+        items.push({
+          rOffset: r,
+          cOffset: c,
+          cell: cell ? { ...cell } : undefined,
+          format: fmt ? { ...fmt, border: fmt.border ? { ...fmt.border } : undefined } : undefined,
+          comment: comm,
+        });
+      }
+    }
+
+    // 2. If MOVE (!copy), clear the source cells, formats, and comments
+    if (!copy) {
+      for (let r = 0; r < numRows; r++) {
+        for (let c = 0; c < numCols; c++) {
+          const srcRow = parsedSource.startRow + r;
+          const srcCol = parsedSource.startCol + c;
+          const srcAddr = formatAddress({ row: srcRow, col: srcCol });
+          curCells.delete(srcAddr);
+          curFormats.delete(srcAddr);
+          curComments.delete(srcAddr);
+        }
+      }
+    }
+
+    // 3. Clear destination rectangle to replace existing destination cells
+    for (let r = 0; r < numRows; r++) {
+      for (let c = 0; c < numCols; c++) {
+        const destRow = targetStartRow + r;
+        const destCol = targetStartCol + c;
+        if (destRow < this.maxRows && destCol < this.maxCols) {
+          const destAddr = formatAddress({ row: destRow, col: destCol });
+          curCells.delete(destAddr);
+          curFormats.delete(destAddr);
+          curComments.delete(destAddr);
+        }
+      }
+    }
+
+    // 4. Write source items to destination
+    for (const item of items) {
+      const destRow = targetStartRow + item.rOffset;
+      const destCol = targetStartCol + item.cOffset;
+      if (destRow >= this.maxRows || destCol >= this.maxCols) continue;
+
+      const destAddr = formatAddress({ row: destRow, col: destCol });
+
+      if (item.cell) {
+        let rawToSet: string | number = item.cell.raw;
+        let formulaToSet: string | undefined = item.cell.formula;
+
+        if (item.cell.formula) {
+          if (copy) {
+            formulaToSet = this.formulaEngine.shiftFormula(item.cell.formula, rowDelta, colDelta);
+            rawToSet = formulaToSet;
+          } else {
+            formulaToSet = item.cell.formula;
+            rawToSet = item.cell.raw;
+          }
+        }
+
+        if (formulaToSet) {
+          curCells.set(destAddr, {
+            raw: rawToSet,
+            formula: formulaToSet,
+            value: '',
+            displayValue: '',
+            format: item.format,
+          });
+        } else {
+          curCells.set(destAddr, {
+            raw: rawToSet,
+            value: item.cell.value,
+            displayValue: item.cell.displayValue,
+            format: item.format,
+          });
+        }
+      }
+
+      if (item.format) {
+        curFormats.set(destAddr, {
+          ...item.format,
+          border: item.format.border ? { ...item.format.border } : undefined,
+        });
+      }
+
+      if (item.comment) {
+        curComments.set(destAddr, item.comment);
+      }
+    }
+
+    this.cells.set(curCells);
+    this.cellFormats.set(curFormats);
+    this.comments.set(curComments);
+    this.recalculateAll();
+  }
 }

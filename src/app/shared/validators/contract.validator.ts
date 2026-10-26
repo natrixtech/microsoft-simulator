@@ -30,6 +30,7 @@ export const GOAL_TYPES: Record<AppKind, string[]> = {
     'dataValidation',
     'noDuplicates',
     'action',
+    'sheets',
   ],
   powerpoint: [
     'slideText',
@@ -306,6 +307,26 @@ export function validateActivity(kind: AppKind, data: unknown): ActivityPayload 
           const allowedConditions = ['equals', 'greaterThan', 'lessThan', 'between', 'contains', 'isEmpty'];
           if (!allowedConditions.includes(g['condition'])) {
             throw new Error(`${goalType}.condition must be one of: ${allowedConditions.join(', ')}.`);
+          }
+        }
+
+        if (goalType === 'sheets') {
+          if (g['contains'] === undefined && g['count'] === undefined && g['names'] === undefined) {
+            throw new Error('sheets needs contains, count or names.');
+          }
+          if (g['contains'] !== undefined && (typeof g['contains'] !== 'string' || !g['contains'].trim())) {
+            throw new Error('sheets.contains must be a non-empty string.');
+          }
+          if (g['count'] !== undefined && (!Number.isInteger(g['count']) || g['count'] <= 0)) {
+            throw new Error('sheets.count must be a positive integer.');
+          }
+          if (
+            g['names'] !== undefined &&
+            (!Array.isArray(g['names']) ||
+              g['names'].length === 0 ||
+              g['names'].some((n: unknown) => typeof n !== 'string' || !n.trim()))
+          ) {
+            throw new Error('sheets.names must be a non-empty array of non-empty strings.');
           }
         }
       }

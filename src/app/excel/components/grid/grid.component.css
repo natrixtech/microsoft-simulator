@@ -902,3 +902,254 @@
   box-shadow: inset -1px 0 0 0 #107c41;
 }
 
+/* Selection Edge Hit Zones for Drag Move / Copy */
+.selection-edge {
+  position: absolute;
+  pointer-events: auto;
+  cursor: move;
+  z-index: 2;
+  background: transparent;
+}
+
+.selection-edge.edge-top {
+  top: -2px;
+  left: 0;
+  right: 0;
+  height: 5px;
+}
+
+.selection-edge.edge-bottom {
+  bottom: -2px;
+  left: 0;
+  right: 8px;
+  height: 5px;
+}
+
+.selection-edge.edge-left {
+  left: -2px;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+}
+
+.selection-edge.edge-right {
+  right: -2px;
+  top: 0;
+  bottom: 8px;
+  width: 5px;
+}
+
+/* Drag Outline for Cells */
+.excel-drag-outline {
+  position: absolute;
+  border: 2px dashed #107c41;
+  background: rgba(16, 124, 65, 0.08);
+  pointer-events: none;
+  box-sizing: border-box;
+  z-index: 25;
+}
+
+:host-context([data-theme="dark"]) .excel-drag-outline,
+:host-context([data-theme="DARK"]) .excel-drag-outline,
+:host-context(.dark-theme) .excel-drag-outline {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.12);
+}
+
+/* Drag Cursor Tooltip */
+.excel-drag-tooltip {
+  position: fixed;
+  pointer-events: none;
+  background: #323130;
+  color: #ffffff;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 2px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  z-index: 999;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.excel-drag-copy-plus {
+  font-weight: bold;
+  font-size: 12px;
+  color: #6fd29a;
+}
+
+:host-context([data-theme="dark"]) .excel-drag-tooltip,
+:host-context([data-theme="DARK"]) .excel-drag-tooltip,
+:host-context(.dark-theme) .excel-drag-tooltip {
+  background: #484644;
+  color: #ffffff;
+  border: 1px solid #605e5c;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* Replace Confirmation In-App Modal Dialog */
+.excel-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.excel-confirm-dialog {
+  background: var(--surface, #ffffff);
+  border: 1px solid #d1d1d1;
+  border-radius: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  min-width: 340px;
+  max-width: 420px;
+  font-family: "Segoe UI", Arial, sans-serif;
+  color: var(--text, #323130);
+  overflow: hidden;
+  animation: excelModalPop 0.15s ease-out;
+}
+
+@keyframes excelModalPop {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.confirm-dialog-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: var(--soft, #f3f2f1);
+  border-bottom: 1px solid var(--line, #e1dfdd);
+  font-size: 12px;
+  font-weight: 600;
+  user-select: none;
+}
+
+.confirm-dialog-close {
+  background: transparent;
+  border: none;
+  font-size: 12px;
+  color: var(--muted, #605e5c);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+.confirm-dialog-close:hover {
+  background: #e81123;
+  color: #ffffff;
+}
+
+.confirm-dialog-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 16px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.confirm-dialog-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.confirm-dialog-text {
+  flex: 1;
+}
+
+.confirm-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 8px 16px 14px;
+  background: transparent;
+}
+
+.confirm-dialog-btn {
+  min-width: 74px;
+  height: 28px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-family: inherit;
+  border-radius: 2px;
+  border: 1px solid var(--line, #8a8886);
+  background: var(--surface, #ffffff);
+  color: var(--text, #323130);
+  cursor: pointer;
+}
+
+.confirm-dialog-btn:hover {
+  background: var(--soft, #f3f2f1);
+}
+
+.confirm-dialog-btn-primary {
+  background: #107c41;
+  color: #ffffff;
+  border-color: #107c41;
+}
+
+.confirm-dialog-btn-primary:hover {
+  background: #0e6b37;
+  border-color: #0e6b37;
+}
+
+:host-context([data-theme="dark"]) .excel-confirm-dialog,
+:host-context([data-theme="DARK"]) .excel-confirm-dialog,
+:host-context(.dark-theme) .excel-confirm-dialog {
+  background: #2b2b2b;
+  border-color: #484644;
+  color: #f3f2f1;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+}
+
+:host-context([data-theme="dark"]) .confirm-dialog-titlebar,
+:host-context([data-theme="DARK"]) .confirm-dialog-titlebar,
+:host-context(.dark-theme) .confirm-dialog-titlebar {
+  background: #1f1f1f;
+  border-bottom-color: #3b3a39;
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .confirm-dialog-btn,
+:host-context([data-theme="DARK"]) .confirm-dialog-btn,
+:host-context(.dark-theme) .confirm-dialog-btn {
+  background: #3b3a39;
+  border-color: #605e5c;
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .confirm-dialog-btn:hover,
+:host-context([data-theme="DARK"]) .confirm-dialog-btn:hover,
+:host-context(.dark-theme) .confirm-dialog-btn:hover {
+  background: #484644;
+}
+
+:host-context([data-theme="dark"]) .confirm-dialog-btn-primary,
+:host-context([data-theme="DARK"]) .confirm-dialog-btn-primary,
+:host-context(.dark-theme) .confirm-dialog-btn-primary {
+  background: #107c41;
+  border-color: #107c41;
+  color: #ffffff;
+}
+
+:host-context([data-theme="dark"]) .confirm-dialog-btn-primary:hover,
+:host-context([data-theme="DARK"]) .confirm-dialog-btn-primary:hover,
+:host-context(.dark-theme) .confirm-dialog-btn-primary:hover {
+  background: #0e6b37;
+  border-color: #0e6b37;
+}
+
+

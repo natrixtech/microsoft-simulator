@@ -587,7 +587,7 @@
           </button>
 
           <!-- 4x2 Grid of Chart Buttons -->
-          <div class="charts-categories-grid">
+          <div class="charts-categories-grid" style="grid-template-columns: repeat(4, 24px);">
             <button
               type="button"
               class="ribbon-btn btn-chart-tile"
@@ -614,6 +614,19 @@
               <app-excel-icon name="chartStatistic" [size]="16"></app-excel-icon>
               <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon>
             </button>
+            <button type="button" class="ribbon-btn btn-chart-tile disabled" disabled title="Insert Waterfall or Stock Chart">
+              <app-excel-icon name="chartWaterfall" [size]="16"></app-excel-icon>
+              <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon>
+            </button>
+            <button
+              type="button"
+              class="ribbon-btn btn-chart-tile"
+              title="Insert Bar Chart"
+              data-demo-target="insert-chart-bar-btn"
+            >
+              <app-excel-icon name="chartBar" [size]="16"></app-excel-icon>
+              <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon>
+            </button>
             <button
               type="button"
               class="ribbon-btn btn-chart-tile"
@@ -625,9 +638,9 @@
             </button>
             <button
               type="button"
-              class="ribbon-btn btn-chart-tile"
-              title="Insert Scatter or Bar Chart"
-              data-demo-target="insert-chart-bar-btn"
+              class="ribbon-btn btn-chart-tile disabled"
+              disabled
+              title="Insert Scatter Chart"
             >
               <app-excel-icon name="chartScatter" [size]="16"></app-excel-icon>
               <app-excel-icon name="dropdownArrow" [size]="6"></app-excel-icon>
