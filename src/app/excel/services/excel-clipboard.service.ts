@@ -26,12 +26,17 @@ export class ExcelClipboardService {
   private cutRange: string | null = null;
   private sourceRow = 0;
   private sourceCol = 0;
+  lastCopiedText: string | null = null;
 
   constructor(
     private state: ExcelStateService,
     private formulaEngine: FormulaEngineService,
     private actionLogger: ExcelActionLoggerService
   ) {}
+
+  hasData(): boolean {
+    return this.clipboardData.length > 0;
+  }
 
   copy(rangeStr: string): void {
     const parsed = parseRange(rangeStr);
@@ -122,6 +127,7 @@ export class ExcelClipboardService {
       this.isCutMode = false;
       this.cutRange = null;
       this.clipboardData = [];
+      this.lastCopiedText = null;
     }
 
     this.actionLogger.log('paste', targetAddr);

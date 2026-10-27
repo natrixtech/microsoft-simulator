@@ -459,6 +459,14 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
     if (event.button !== 0) return; // only left click
 
     if (this.state.isEditing()) {
+      const addr = formatAddress({ row, col });
+      const target = event.target as HTMLElement | null;
+      if (
+        addr === this.state.editingAddress() ||
+        (target && (target.classList.contains('inline-cell-editor') || target.closest('.inline-cell-editor')))
+      ) {
+        return;
+      }
       this.commitEdit(0, 0);
     }
 
@@ -864,13 +872,12 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
         return;
       }
       if (key === 'c') {
-        event.preventDefault();
         this.clipboard.copy(this.state.selectedRange());
         return;
       }
       if (key === 'x') {
-        event.preventDefault();
         if (this.isPivotBlocked()) {
+          event.preventDefault();
           this.showPivotMessage('Cannot change this part of a PivotTable report.');
           return;
         }
@@ -878,13 +885,6 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
         return;
       }
       if (key === 'v') {
-        event.preventDefault();
-        if (this.isPivotBlocked()) {
-          this.showPivotMessage('Cannot change this part of a PivotTable report.');
-          return;
-        }
-        this.history.push(this.state.getSnapshot());
-        this.clipboard.paste(this.state.activeCell());
         return;
       }
       if (key === 'b') {
@@ -1066,6 +1066,100 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
       }
       this.startEditing(this.state.activeCell(), event.key, 'type');
     }
+  }
+
+  @HostListener('copy', ['$event'])
+  onCopy(event: ClipboardEvent): void {
+    if (this.state.isEditing()) return;
+    if (this.bridge.isPaused() || this.isCompleted) return;
+    if (!event.clipboardData) return;
+    const text = this.getSelectedRangeText();
+    event.preventDefault();
+    event.clipboardData.setData('text/plain', text);
+    this.clipboard.lastCopiedText = text;
+  }
+
+  @HostListener('cut', ['$event'])
+  onCut(event: ClipboardEvent): void {
+    if (this.state.isEditing()) return;
+    if (this.bridge.isPaused() || this.isCompleted) return;
+    if (!event.clipboardData) return;
+    if (this.isPivotBlocked()) {
+      event.preventDefault();
+      this.showPivotMessage('Cannot change this part of a PivotTable report.');
+      return;
+    }
+    const text = this.getSelectedRangeText();
+    event.preventDefault();
+    event.clipboardData.setData('text/plain', text);
+    this.clipboard.lastCopiedText = text;
+  }
+
+  @HostListener('paste', ['$event'])
+  onPaste(event: ClipboardEvent): void {
+    if (this.state.isEditing()) return;
+    if (this.bridge.isPaused() || this.isCompleted) return;
+    if (!event.clipboardData) return;
+
+    const rawText = event.clipboardData.getData('text/plain');
+    if (rawText === undefined || rawText === null) return;
+    event.preventDefault();
+
+    const normalize = (s: string) => s.replace(/\r\n/g, '\n').replace(/\n$/, '');
+    const text = rawText;
+    const lastCopied = this.clipboard.lastCopiedText;
+
+    if (this.clipboard.hasData() && lastCopied !== null && normalize(text) === normalize(lastCopied)) {
+      if (this.isPivotBlocked()) {
+        this.showPivotMessage('Cannot change this part of a PivotTable report.');
+        return;
+      }
+      this.history.push(this.state.getSnapshot());
+      this.clipboard.paste(this.state.activeCell());
+      this.cdr.markForCheck();
+      return;
+    }
+
+    if (text !== '') {
+      if (this.isPivotBlocked()) {
+        this.showPivotMessage('Cannot change this part of a PivotTable report.');
+        return;
+      }
+      this.history.push(this.state.getSnapshot());
+      const cur = parseAddress(this.state.activeCell());
+      if (!cur) return;
+
+      const normalized = normalize(text);
+      const rows = normalized.split('\n');
+      for (let rIdx = 0; rIdx < rows.length; rIdx++) {
+        const row = cur.row + rIdx;
+        if (row >= this.state.maxRows) break;
+        const cols = rows[rIdx].split('\t');
+        for (let cIdx = 0; cIdx < cols.length; cIdx++) {
+          const col = cur.col + cIdx;
+          if (col >= this.state.maxCols) break;
+          const destAddr = formatAddress({ row, col });
+          this.state.setCellValue(destAddr, cols[cIdx]);
+        }
+      }
+      this.actionLogger.log('paste', this.state.activeCell());
+      this.cdr.markForCheck();
+    }
+  }
+
+  private getSelectedRangeText(): string {
+    const range = this.state.selectedRange();
+    const parsed = parseRange(range);
+    if (!parsed) return '';
+    const lines: string[] = [];
+    for (let r = parsed.startRow; r <= parsed.endRow; r++) {
+      const rowVals: string[] = [];
+      for (let c = parsed.startCol; c <= parsed.endCol; c++) {
+        rowVals.push(this.getCellDisplay(r, c));
+      }
+      lines.push(rowVals.join('\t'));
+    }
+    return lines.join('\n');
   }
 
   private handleArrowKey(dRow: number, dCol: number, isShift: boolean): void {
