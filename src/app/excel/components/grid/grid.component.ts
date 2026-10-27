@@ -135,6 +135,7 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly hoveredComment = signal<HoveredCommentNote | null>(null);
 
   private wheelListener = (event: WheelEvent) => this.onGridWheel(event);
+  private pastePending = false;
 
   constructor(
     public state: ExcelStateService,
@@ -885,6 +886,19 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
         return;
       }
       if (key === 'v') {
+        this.pastePending = true;
+        setTimeout(() => {
+          if (this.pastePending) {
+            this.pastePending = false;
+            if (this.isPivotBlocked()) {
+              this.showPivotMessage('Cannot change this part of a PivotTable report.');
+              return;
+            }
+            this.history.push(this.state.getSnapshot());
+            this.clipboard.paste(this.state.activeCell());
+            this.cdr.markForCheck();
+          }
+        }, 0);
         return;
       }
       if (key === 'b') {
@@ -1097,12 +1111,25 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @HostListener('paste', ['$event'])
   onPaste(event: ClipboardEvent): void {
+    this.pastePending = false;
     if (this.state.isEditing()) return;
     if (this.bridge.isPaused() || this.isCompleted) return;
-    if (!event.clipboardData) return;
 
-    const rawText = event.clipboardData.getData('text/plain');
-    if (rawText === undefined || rawText === null) return;
+    const rawText = event.clipboardData ? event.clipboardData.getData('text/plain') : '';
+    if (!event.clipboardData || !rawText) {
+      if (this.clipboard.hasData()) {
+        event.preventDefault();
+        if (this.isPivotBlocked()) {
+          this.showPivotMessage('Cannot change this part of a PivotTable report.');
+          return;
+        }
+        this.history.push(this.state.getSnapshot());
+        this.clipboard.paste(this.state.activeCell());
+        this.cdr.markForCheck();
+      }
+      return;
+    }
+
     event.preventDefault();
 
     const normalize = (s: string) => s.replace(/\r\n/g, '\n').replace(/\n$/, '');

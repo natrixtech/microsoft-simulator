@@ -32,9 +32,10 @@
         <ol class="steps">
           <li
             class="step"
+            [class.plain-step]="plainSingleStep && instructions.length === 1"
             *ngFor="let step of instructions; let i = index"
           >
-            <span class="n">{{ i + 1 }}</span>
+            <span class="n" *ngIf="!(plainSingleStep && instructions.length === 1)">{{ i + 1 }}</span>
             <span class="t">
               <ng-container *ngFor="let token of parseInstruction(step)">
                 <b *ngIf="token.type === 'code'">{{ token.content }}</b>

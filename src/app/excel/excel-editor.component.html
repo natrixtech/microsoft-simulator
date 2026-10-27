@@ -1,4 +1,18 @@
 <div class="excel-simulator-root" [class.dark-theme]="isDarkTheme" [class.paused]="bridge.isPaused()" #editorContainer>
+  <!-- Microsoft 365 Excel Title Bar -->
+  <header class="app-titlebar">
+    <div class="titlebar-left">
+      <span class="excel-app-icon" aria-hidden="true" title="Microsoft Excel">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+          <path d="M19.5 3h-15C3.67 3 3 3.67 3 4.5v15c0 .83.67 1.5 1.5 1.5h15c.83 0 1.5-.67 1.5-1.5v-15c0-.83-.67-1.5-1.5-1.5zm-5.75 14h-1.63l-2.06-4.22-2.06 4.22H6.38L9.5 12l-2.9-5h1.63l1.87 3.93L11.97 7h1.63l-2.9 5 3.05 5z"/>
+        </svg>
+      </span>
+      <div class="document-name-display">
+        <strong id="doc-title-text">{{ currentActivity()?.title || 'Book1' }} - Excel</strong>
+      </div>
+    </div>
+  </header>
+
   <!-- 1. Ribbon Bar (Topmost Row) -->
   <app-excel-ribbon
     [attr.inert]="isFrozen ? '' : null"
@@ -88,6 +102,7 @@
     >
       <lib-task-card
         [appKind]="'excel'"
+        [plainSingleStep]="true"
         [title]="currentTask?.title || ''"
         [explanation]="currentTask?.explanation || ''"
         [instructions]="currentTask?.instructions || []"

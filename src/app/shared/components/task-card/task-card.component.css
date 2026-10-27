@@ -263,6 +263,10 @@
   transition: background 0.25s, border-color 0.25s, box-shadow 0.25s;
 }
 
+.step.plain-step {
+  display: block;
+}
+
 .n {
   width: 26px;
   height: 26px;

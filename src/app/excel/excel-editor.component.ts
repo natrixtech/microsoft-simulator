@@ -515,9 +515,14 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         if (!isLast) {
           // Auto-advance in assessment after ~1s
           if (this.advanceTimer) clearTimeout(this.advanceTimer);
-          this.advanceTimer = setTimeout(() => {
+          const advance = () => {
+            if (this.bridge.isPaused()) {
+              this.advanceTimer = setTimeout(advance, 300);
+              return;
+            }
             this.setupTask(this.taskIndex() + 1, false);
-          }, 1100);
+          };
+          this.advanceTimer = setTimeout(advance, 1100);
         } else {
           // Completed all assessment tasks
           this.isCompleted.set(true);
@@ -531,9 +536,14 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         if (total > 1 && !isLast) {
           // Lesson mode with more than one task: show "Well done!" for ~1.5s, then move to next task automatically
           if (this.advanceTimer) clearTimeout(this.advanceTimer);
-          this.advanceTimer = setTimeout(() => {
+          const advance = () => {
+            if (this.bridge.isPaused()) {
+              this.advanceTimer = setTimeout(advance, 300);
+              return;
+            }
             this.setupTask(this.taskIndex() + 1, false);
-          }, 1500);
+          };
+          this.advanceTimer = setTimeout(advance, 1500);
         } else {
           // Single-task lesson or last task: complete immediately!
           this.isCompleted.set(true);

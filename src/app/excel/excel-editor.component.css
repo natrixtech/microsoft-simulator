@@ -19,6 +19,54 @@
   overflow: hidden;
 }
 
+/* -------------------------------------------------------------
+   Microsoft 365 Excel Title Bar (#107c41)
+   ------------------------------------------------------------- */
+.app-titlebar {
+  background: #107c41;
+  color: #ffffff;
+  padding: 4px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12.5px;
+  user-select: none;
+  flex-shrink: 0;
+  height: 38px;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 50;
+}
+
+.titlebar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.excel-app-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  padding: 2px;
+}
+
+.document-name-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.document-name-display strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
 /* Main Work Area */
 
 /* 4. Main Work Area */
@@ -396,6 +444,20 @@
   --line: #3b3a39;
   --soft: #242424;
   --canvas: #1f1f1f;
+}
+
+:host-context([data-theme="dark"]) .app-titlebar,
+:host-context(.dark-theme) .app-titlebar,
+.dark-theme .app-titlebar {
+  background: #1f1f1f;
+  border-bottom: 1px solid #3b3a39;
+  color: #f3f2f1;
+}
+
+:host-context([data-theme="dark"]) .excel-app-icon,
+:host-context(.dark-theme) .excel-app-icon,
+.dark-theme .excel-app-icon {
+  color: #107c41;
 }
 
 :host-context([data-theme="dark"]) .excel-statusbar-strip,

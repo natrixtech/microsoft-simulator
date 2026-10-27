@@ -73,6 +73,7 @@ export class TaskCardComponent implements OnChanges, OnDestroy {
   @Input() totalTasks: number = 1;
   @Input() isAssessment: boolean = false;
   @Input() assetBaseUrl: string = './assets/';
+  @Input() plainSingleStep: boolean = false;
 
   @Output() readonly checkWork = new EventEmitter<void>();
   @Output() readonly continueNext = new EventEmitter<void>();

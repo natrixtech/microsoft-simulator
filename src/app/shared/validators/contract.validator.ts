@@ -264,45 +264,6 @@ export function validateActivity(kind: AppKind, data: unknown): ActivityPayload 
       }
 
       if (kind === 'excel') {
-        const allowedKeys: Record<string, string[]> = {
-          cellValue: ['type', 'cells'],
-          cellFormula: ['type', 'cell', 'function', 'references', 'equals', 'absolute'],
-          cellFormat: [
-            'type',
-            'range',
-            'cell',
-            'bold',
-            'italic',
-            'underline',
-            'fontSize',
-            'fontFamily',
-            'numberFormat',
-            'align',
-            'textColor',
-            'fillColor',
-            'color',
-          ],
-          sorted: ['type', 'range', 'byColumn', 'order', 'hasHeader'],
-          filter: ['type', 'range', 'column', 'condition', 'value', 'value2'],
-          chart: ['type', 'chartType', 'range', 'title', 'count'],
-          pivotTable: ['type', 'range', 'rowsField', 'valuesField', 'summarize'],
-          comment: ['type', 'cell', 'contains'],
-          conditionalFormat: ['type', 'range', 'condition', 'value', 'value2', 'fillColor'],
-          dataValidation: ['type', 'range', 'allowed'],
-          noDuplicates: ['type', 'range'],
-          action: ['type', 'action', 'range', 'cell'],
-          sheets: ['type', 'contains', 'count', 'names'],
-        };
-
-        const allowed = allowedKeys[goalType];
-        if (allowed) {
-          for (const key of Object.keys(g)) {
-            if (!allowed.includes(key)) {
-              throw new Error(`Unknown setting "${key}" in ${goalType} goal.`);
-            }
-          }
-        }
-
         for (const key of ['cell', 'range']) {
           if (g[key]) validateCellRange(g[key]);
         }
