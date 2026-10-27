@@ -105,6 +105,7 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
   private chartDragStartY = 0;
   private chartInitialX = 0;
   private chartInitialY = 0;
+  private chartMoveSnapshot: SheetSnapshot | null = null;
 
   // PivotTable dragging & notification state
   readonly isDraggingPivot = signal<boolean>(false);
@@ -474,6 +475,7 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
       this.selectionLead = { row, col };
       this.rangeAnchorCoord = { row, col };
       this.isSelectingRange = true;
+      this.actionLogger.log('goToCell', addr);
       this.actionLogger.log('selectRange', addr);
     }
 
@@ -485,7 +487,6 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
       this.selectionLead = { row, col };
       const range = this.formatBoundingRange(this.rangeAnchorCoord, { row, col });
       this.state.selectRange(range);
-      this.actionLogger.log('selectRange', range);
       this.hoveredCommentAddr.set(null);
       this.hoveredComment.set(null);
       return;
@@ -556,9 +557,24 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
       this.rowResizeSnapshot = null;
     }
 
-    this.isSelectingRange = false;
-    this.isDraggingChart = false;
-    this.draggedChartId = null;
+    if (this.isSelectingRange) {
+      this.isSelectingRange = false;
+      const curRange = this.state.selectedRange();
+      if (curRange && curRange.includes(':')) {
+        this.actionLogger.log('selectRange', curRange);
+      }
+    }
+    if (this.isDraggingChart) {
+      this.isDraggingChart = false;
+      if (this.draggedChartId) {
+        const chart = this.state.charts().find((c) => c.id === this.draggedChartId);
+        if (chart && (chart.x !== this.chartInitialX || chart.y !== this.chartInitialY) && this.chartMoveSnapshot) {
+          this.history.push(this.chartMoveSnapshot);
+        }
+      }
+      this.draggedChartId = null;
+      this.chartMoveSnapshot = null;
+    }
 
     if (this.isDraggingSelectionBorder) {
       const drag = this.dragMoveState();
@@ -687,6 +703,7 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
         this.state.selectCell(nextAddr);
         this.selectionAnchor = { row: nextR, col: nextC };
         this.selectionLead = { row: nextR, col: nextC };
+        this.actionLogger.log('goToCell', nextAddr);
       }
     } else {
       const p = parseAddress(addr);
@@ -829,12 +846,19 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
       }
       if (key === 'z') {
         event.preventDefault();
-        const prev = this.history.undo(this.state.getSnapshot());
-        if (prev) this.state.restoreSnapshot(prev);
+        event.stopPropagation();
+        if (event.shiftKey) {
+          const next = this.history.redo(this.state.getSnapshot());
+          if (next) this.state.restoreSnapshot(next);
+        } else {
+          const prev = this.history.undo(this.state.getSnapshot());
+          if (prev) this.state.restoreSnapshot(prev);
+        }
         return;
       }
       if (key === 'y') {
         event.preventDefault();
+        event.stopPropagation();
         const next = this.history.redo(this.state.getSnapshot());
         if (next) this.state.restoreSnapshot(next);
         return;
@@ -865,18 +889,21 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
       }
       if (key === 'b') {
         event.preventDefault();
+        this.history.push(this.state.getSnapshot());
         const fmt = this.state.cellFormats().get(this.state.activeCell());
         this.state.formatSelection({ bold: !fmt?.bold });
         return;
       }
       if (key === 'i') {
         event.preventDefault();
+        this.history.push(this.state.getSnapshot());
         const fmt = this.state.cellFormats().get(this.state.activeCell());
         this.state.formatSelection({ italic: !fmt?.italic });
         return;
       }
       if (key === 'u') {
         event.preventDefault();
+        this.history.push(this.state.getSnapshot());
         const fmt = this.state.cellFormats().get(this.state.activeCell());
         this.state.formatSelection({ underline: !fmt?.underline });
         return;
@@ -927,6 +954,7 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
           this.state.selectCell(nextAddr);
           this.selectionAnchor = { ...target };
           this.selectionLead = { ...target };
+          this.actionLogger.log('goToCell', nextAddr);
           this.scrollToActiveCell();
         }
         return;
@@ -942,6 +970,7 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
         this.state.selectCell(nextAddr);
         this.selectionAnchor = { row: cur.row, col: 0 };
         this.selectionLead = { row: cur.row, col: 0 };
+        this.actionLogger.log('goToCell', nextAddr);
         this.scrollToActiveCell();
       }
       return;
@@ -958,6 +987,7 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
         this.state.selectCell(nextAddr);
         this.selectionAnchor = { row: targetRow, col: cur.col };
         this.selectionLead = { row: targetRow, col: cur.col };
+        this.actionLogger.log('goToCell', nextAddr);
         this.scrollToActiveCell();
       }
       return;
@@ -974,6 +1004,7 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
         this.state.selectCell(nextAddr);
         this.selectionAnchor = { row: targetRow, col: cur.col };
         this.selectionLead = { row: targetRow, col: cur.col };
+        this.actionLogger.log('goToCell', nextAddr);
         this.scrollToActiveCell();
       }
       return;
@@ -1013,6 +1044,7 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
         return;
       }
       if (this.state.selectedChartId()) {
+        this.history.push(this.state.getSnapshot());
         this.state.deleteChart(this.state.selectedChartId()!);
         return;
       }
@@ -1060,6 +1092,7 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
     this.state.selectCell(nextAddr);
     this.selectionAnchor = { row: r, col: c };
     this.selectionLead = { row: r, col: c };
+    this.actionLogger.log('goToCell', nextAddr);
     this.scrollToActiveCell();
   }
 
@@ -1204,7 +1237,8 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
     if (ctx) {
       ctx.font = '500 11px "Segoe UI", Arial, sans-serif';
       let headerWidth = ctx.measureText(letter).width + 16;
-      if (this.isHeaderCellWithFilter(0, colIndex)) {
+      const filterHeaderRow = this.state.filter()?.headerRow ?? 0;
+      if (this.isHeaderCellWithFilter(filterHeaderRow, colIndex)) {
         headerWidth += 26; // filter button width + spacing
       }
       maxContentWidth = Math.max(maxContentWidth, headerWidth);
@@ -1230,6 +1264,7 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
         let cellWidth = ctx.measureText(text).width + 18;
         if (cell?.comment) cellWidth += 6;
         if (this.hasValidation(r, colIndex)) cellWidth += 18;
+        if (this.isHeaderCellWithFilter(r, colIndex)) cellWidth += 26;
         maxContentWidth = Math.max(maxContentWidth, cellWidth);
       }
     }
@@ -1243,6 +1278,7 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
         if (span && span.scrollWidth > 0) {
           let cellWidth = span.scrollWidth + 16;
           if (this.hasValidation(r, colIndex)) cellWidth += 18;
+          if (this.isHeaderCellWithFilter(r, colIndex)) cellWidth += 26;
           maxContentWidth = Math.max(maxContentWidth, cellWidth);
         }
       }
@@ -1434,12 +1470,19 @@ export class GridComponent implements OnInit, AfterViewInit, OnDestroy {
   onChartMouseDown(chart: ChartItem, event: MouseEvent): void {
     event.stopPropagation();
     this.state.selectedChartId.set(chart.id);
+    this.chartMoveSnapshot = this.state.getSnapshot();
     this.isDraggingChart = true;
     this.draggedChartId = chart.id;
     this.chartDragStartX = event.clientX;
     this.chartDragStartY = event.clientY;
     this.chartInitialX = chart.x;
     this.chartInitialY = chart.y;
+  }
+
+  deleteChartWithHistory(chartId: string, event: MouseEvent): void {
+    event.stopPropagation();
+    this.history.push(this.state.getSnapshot());
+    this.state.deleteChart(chartId);
   }
 
   readonly chartColors: string[] = [

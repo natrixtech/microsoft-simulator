@@ -1,6 +1,6 @@
-# Word Processing Simulator
+# Word and Excel Simulators
 
-A Microsoft Word simulator that runs one activity at a time inside an iframe and communicates with the host through `window.postMessage`. Built with Angular 16.
+Microsoft Word and Microsoft Excel simulators that run one activity at a time inside an iframe and communicate with the host through `window.postMessage`. Built with Angular 16.
 
 ## Requirements
 
@@ -14,11 +14,15 @@ npm install
 npm start
 ```
 
-Open the test harness: http://localhost:4200/test-harness.html
+Open the test harnesses:
 
-The harness loads the app in an iframe, sends sample Input objects (one lesson per goal type, plus a 3-task assessment) and shows the `activityCompleted` result it receives. It also has Light/Dark, Pause/Resume and Force Finish controls, and a box for sending custom Input JSON.
+- Word: http://localhost:4200/word-test-harness.html
+- Excel: http://localhost:4200/excel-test-harness.html
+- Both (links page): http://localhost:4200/test-harness.html
 
-Opening http://localhost:4200/ directly only shows "Waiting for an activity", because the app waits for the host to send `PLUGIN_DATA_IN`. The editor is chosen by the top-level `"app"` field of the Input object (currently `"word"`).
+Each harness loads the app in an iframe, sends sample Input objects and shows the `activityCompleted` result it receives. The Word harness has one lesson per goal type plus a 3-task assessment. The Excel harness has 32 lessons covering every goal type. Both have Light/Dark, Pause/Resume and Force Finish controls, and a box for sending custom Input JSON.
+
+Opening http://localhost:4200/ directly only shows "Waiting for an activity", because the app waits for the host to send `PLUGIN_DATA_IN`. The editor is chosen by the top-level `"app"` field of the Input object: `"word"` or `"excel"`.
 
 ## Build
 
@@ -27,6 +31,10 @@ npm run build
 ```
 
 The production build is written to `dist`: a folder with `index.html` and its files, loadable from any URL path. All code, fonts and images are bundled; nothing is loaded from external CDNs at runtime. `dist/3rdpartylicenses.txt` contains the license notices of all bundled libraries.
+
+## Spreadsheet and formula engine
+
+The Excel simulator does not use any third-party spreadsheet or formula library. The grid, the formula parser and all supported functions are written as part of this project, so no extra license applies.
 
 ## Libraries and licenses
 

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ExcelStateService } from '../../services/excel-state.service';
+import { ExcelHistoryService } from '../../services/excel-history.service';
 
 @Component({
   selector: 'app-remove-duplicates-dialog',
@@ -20,7 +21,10 @@ export class RemoveDuplicatesDialogComponent implements OnInit {
   readonly hasHeader = signal<boolean>(true);
   readonly resultMessage = signal<string | null>(null);
 
-  constructor(private state: ExcelStateService) {}
+  constructor(
+    private state: ExcelStateService,
+    private history: ExcelHistoryService
+  ) {}
 
   ngOnInit(): void {
     if (this.initialRange) {
@@ -29,6 +33,7 @@ export class RemoveDuplicatesDialogComponent implements OnInit {
   }
 
   onRemove(): void {
+    this.history.push(this.state.getSnapshot());
     const res = this.state.removeDuplicates(this.range().toUpperCase(), this.hasHeader());
     this.resultMessage.set(
       `${res.removedCount} duplicate values found and removed; ${res.remainingCount} unique values remain.`

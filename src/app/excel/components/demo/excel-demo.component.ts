@@ -58,6 +58,7 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() goals: TaskGoal[] = [];
   @Input() startingSheetSnapshot: SheetSnapshot | null = null;
   @Input() showMeHow?: boolean | { description?: string; sampleSheet?: any };
+  @Input() instructions?: string[] | string;
   @Input() isPaused: boolean = false;
 
   get description(): string {
@@ -181,7 +182,7 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly hiddenRows = signal<Set<number>>(new Set());
 
   // Grid structure
-  readonly columns = ['A', 'B', 'C', 'D', 'E'];
+  columns: string[] = ['A', 'B', 'C', 'D', 'E'];
   rows: number[] = Array.from({ length: 26 }, (_, i) => i + 1);
 
   private formulaEngine = new FormulaEngineService();
@@ -194,6 +195,7 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.updateLessonColumns();
     this.resetReplicaState();
     this.setupSteps();
   }
@@ -408,6 +410,7 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private resetReplicaState(): void {
+    this.updateLessonColumns();
     this.isCancelled = false;
     this.showToast.set(false);
     this.hasChartObject.set(null);
@@ -486,11 +489,11 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
     const getVal = (addr: string): any => {
       const norm = addr.toUpperCase().replace(/\$/g, '');
       const c = cur.get(norm);
-      if (!c) return 0;
+      if (!c || c.value === undefined || c.value === null || c.value === '') return '';
       if (typeof c.value === 'string' && c.value.startsWith('=')) {
-        return c.calculatedValue ?? 0;
+        return c.calculatedValue ?? '';
       }
-      return c.value ?? 0;
+      return c.value;
     };
 
     const getRange = (rangeStr: string): any[][] => {
@@ -748,8 +751,17 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
       if (cells) {
         for (const [addr, val] of Object.entries(cells)) {
           const curCell = this.replicaCells().get(addr);
-          if (curCell !== undefined && (curCell.value === val || String(curCell.value) === String(val))) {
-            continue;
+          if (curCell !== undefined) {
+            const isFormula =
+              (typeof curCell.value === 'string' && curCell.value.startsWith('=')) ||
+              !!(curCell as any).formula;
+            if (isFormula) {
+              continue;
+            }
+            const calcVal = curCell.calculatedValue !== undefined ? curCell.calculatedValue : curCell.value;
+            if (this.valuesEqual(calcVal, val)) {
+              continue;
+            }
           }
           this.replicaActiveCell.set(addr);
           this.replicaSelectedRange.set(addr);
@@ -2134,6 +2146,12 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private evaluateDemoCondition(val: any, condition: string, targetVal?: any, targetVal2?: any): boolean {
+    if (condition === 'isEmpty') {
+      return val === '' || val === null || val === undefined;
+    }
+
+    const isBlank = val === undefined || val === null || val === '' || String(val).trim() === '';
+
     const d1 = parseDateParts(val);
     const d2 = parseDateParts(targetVal);
     if (d1 && d2) {
@@ -2149,35 +2167,47 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     const str = String(val ?? '').trim().toLowerCase();
-    const num = Number(val);
+    const num = isBlank ? NaN : Number(val);
+    const isTargetValNumeric =
+      targetVal !== undefined &&
+      targetVal !== null &&
+      targetVal !== '' &&
+      String(targetVal).trim() !== '' &&
+      !isNaN(Number(targetVal));
 
     switch (condition) {
       case 'equals':
-        if (!isNaN(num) && targetVal !== undefined && !isNaN(Number(targetVal))) {
-          return Math.abs(num - Number(targetVal)) < 0.0001;
+        if (isTargetValNumeric) {
+          if (isBlank) return false;
+          return !isNaN(num) && Math.abs(num - Number(targetVal)) < 0.0001;
         }
         return str === String(targetVal ?? '').trim().toLowerCase();
 
       case 'greaterThan':
-        return !isNaN(num) && targetVal !== undefined && num > Number(targetVal);
+        if (isBlank || !isTargetValNumeric) return false;
+        return !isNaN(num) && num > Number(targetVal);
 
       case 'lessThan':
-        return !isNaN(num) && targetVal !== undefined && num < Number(targetVal);
+        if (isBlank || !isTargetValNumeric) return false;
+        return !isNaN(num) && num < Number(targetVal);
 
-      case 'between':
+      case 'between': {
+        const isTargetVal2Numeric =
+          targetVal2 !== undefined &&
+          targetVal2 !== null &&
+          targetVal2 !== '' &&
+          String(targetVal2).trim() !== '' &&
+          !isNaN(Number(targetVal2));
+        if (isBlank || !isTargetValNumeric || !isTargetVal2Numeric) return false;
         return (
           !isNaN(num) &&
-          targetVal !== undefined &&
-          targetVal2 !== undefined &&
           num >= Math.min(Number(targetVal), Number(targetVal2)) &&
           num <= Math.max(Number(targetVal), Number(targetVal2))
         );
+      }
 
       case 'contains':
         return str.includes(String(targetVal ?? '').trim().toLowerCase());
-
-      case 'isEmpty':
-        return val === '' || val === null || val === undefined;
 
       default:
         return true;
@@ -2527,5 +2557,181 @@ export class ExcelDemoComponent implements OnInit, AfterViewInit, OnDestroy {
     const t = (this.title || '').trim();
     if (!t) return 'complete this task';
     return t.toLowerCase();
+  }
+
+  private valuesEqual(a: any, b: any): boolean {
+    if (a === undefined || a === null) a = '';
+    if (b === undefined || b === null) b = '';
+
+    const d1 = parseDateParts(a);
+    const d2 = parseDateParts(b);
+    if (d1 && d2) {
+      return d1.utcTime === d2.utcTime;
+    }
+
+    const n1 = Number(a);
+    const n2 = Number(b);
+    if (!isNaN(n1) && !isNaN(n2) && a !== '' && b !== '') {
+      return Math.abs(n1 - n2) <= 0.001; // ±0.001 tolerance
+    }
+
+    return String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+  }
+
+  private updateLessonColumns(): void {
+    let maxCol = 4; // default minimum is 'E' (index 4)
+
+    const considerColLetter = (letter: string) => {
+      if (!letter || typeof letter !== 'string') return;
+      const clean = letter.trim().toUpperCase();
+      if (/^[A-Z]+$/.test(clean)) {
+        const idx = colLetterToIndex(clean);
+        if (idx >= 0 && idx < 26) {
+          if (idx > maxCol) {
+            maxCol = idx;
+          }
+        }
+      }
+    };
+
+    const considerAddress = (addr: string) => {
+      if (!addr || typeof addr !== 'string') return;
+      const p = parseAddress(addr.trim());
+      if (p) {
+        if (p.col > maxCol) {
+          maxCol = p.col;
+        }
+      } else {
+        const m = addr.toUpperCase().match(/([A-Z]+)[1-9]\d*/);
+        if (m && m[1]) {
+          considerColLetter(m[1]);
+        }
+      }
+    };
+
+    const considerRange = (rangeStr: string) => {
+      if (!rangeStr || typeof rangeStr !== 'string') return;
+      const parsed = parseRange(rangeStr.trim());
+      if (parsed) {
+        if (parsed.startCol > maxCol) maxCol = parsed.startCol;
+        if (parsed.endCol > maxCol) maxCol = parsed.endCol;
+      } else {
+        const matches = rangeStr.toUpperCase().match(/[A-Z]+[1-9]\d*/g);
+        if (matches) {
+          for (const m of matches) considerAddress(m);
+        }
+      }
+    };
+
+    const considerText = (text: string) => {
+      if (!text || typeof text !== 'string') return;
+      const cellMatches = text.match(/\b([A-Za-z]+)([1-9]\d*)\b/g);
+      if (cellMatches) {
+        for (const m of cellMatches) considerAddress(m);
+      }
+      const colMatches = text.match(/\bcol(?:umn)?\s+([A-Za-z]+)\b/gi);
+      if (colMatches) {
+        for (const m of colMatches) {
+          const l = m.trim().split(/\s+/).pop();
+          if (l) considerColLetter(l);
+        }
+      }
+    };
+
+    // 1. Starting data and sampleSheet
+    const sampleSheet =
+      typeof this.showMeHow === 'object' && this.showMeHow?.sampleSheet
+        ? this.showMeHow.sampleSheet
+        : null;
+
+    const snapshot = sampleSheet
+      ? this.convertSampleSheet(sampleSheet)
+      : this.startingSheetSnapshot;
+
+    if (snapshot) {
+      if (snapshot.cells) {
+        for (const addr of Object.keys(snapshot.cells)) {
+          considerAddress(addr);
+        }
+      }
+      if (snapshot.formats) {
+        for (const rangeKey of Object.keys(snapshot.formats)) {
+          considerRange(rangeKey);
+        }
+      }
+    }
+
+    if (sampleSheet) {
+      if (sampleSheet.cells) {
+        for (const addr of Object.keys(sampleSheet.cells)) {
+          considerAddress(addr);
+        }
+      }
+      if (sampleSheet.formats) {
+        for (const rangeKey of Object.keys(sampleSheet.formats)) {
+          considerRange(rangeKey);
+        }
+      }
+      if (sampleSheet.columnWidths) {
+        for (const col of Object.keys(sampleSheet.columnWidths)) {
+          considerColLetter(col);
+        }
+      }
+    }
+
+    // 2. Goals
+    let hasInsertColumn = false;
+    for (const g of this.goals || []) {
+      if (typeof g['cell'] === 'string') considerAddress(g['cell']);
+      if (typeof g['range'] === 'string') considerRange(g['range']);
+      if (g['cells'] && typeof g['cells'] === 'object') {
+        for (const addr of Object.keys(g['cells'] as Record<string, unknown>)) {
+          considerAddress(addr);
+        }
+      }
+      if (typeof g['byColumn'] === 'string') considerColLetter(g['byColumn']);
+      if (typeof g['column'] === 'string') considerColLetter(g['column']);
+      if (typeof g['references'] === 'string') considerRange(g['references']);
+      if (typeof g['equals'] === 'string') considerText(g['equals']);
+      if (g['type'] === 'action' && (g['action'] === 'insertColumn' || g['action'] === 'insertSheetColumns')) {
+        hasInsertColumn = true;
+      }
+    }
+
+    // 3. Instructions
+    if (this.instructions) {
+      if (Array.isArray(this.instructions)) {
+        for (const ins of this.instructions) considerText(ins);
+      } else if (typeof this.instructions === 'string') {
+        considerText(this.instructions);
+      }
+    }
+    if (typeof this.showMeHow === 'object') {
+      const smh = this.showMeHow as any;
+      if (smh.instructions) {
+        if (Array.isArray(smh.instructions)) {
+          for (const ins of smh.instructions) considerText(ins);
+        } else if (typeof smh.instructions === 'string') {
+          considerText(smh.instructions);
+        }
+      }
+      if (smh.description) {
+        considerText(smh.description);
+      }
+    }
+
+    // 4. Add one extra column if any goal is an insertColumn action
+    if (hasInsertColumn) {
+      maxCol += 1;
+    }
+
+    // 5. Minimum A-E (index 4), Maximum 10 columns (A-J, index 9)
+    maxCol = Math.max(4, Math.min(9, maxCol));
+
+    const cols: string[] = [];
+    for (let i = 0; i <= maxCol; i++) {
+      cols.push(indexToColLetter(i));
+    }
+    this.columns = cols;
   }
 }

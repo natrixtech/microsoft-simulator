@@ -552,6 +552,7 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onStartAgain(): void {
+    if (this.bridge.isCompleted()) return;
     this.commitPendingEdit();
     if (this.advanceTimer) {
       clearTimeout(this.advanceTimer);
@@ -564,7 +565,6 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.feedbackMsg.set('');
     this.passedTasks.set(new Set());
     this.taskIndex.set(0);
-    this.bridge.resetCompleted();
 
     // Clear selection and cursor
     this.state.isEditing.set(false);
@@ -593,6 +593,8 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     this.isDemoOpen.set(false);
     this.isCompleted.set(true);
+    this.feedbackMsg.set('');
+    this.isPassed.set(false);
     this.closeAllDialogs();
     const passedCount = this.passedTasks().size;
     const allPassed = passedCount === this.totalTasks;
@@ -606,7 +608,6 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const clean = ref.trim().toUpperCase();
     if (clean.includes(':')) {
       this.state.selectRange(clean);
-      this.actionLogger.log('selectRange', clean);
     } else {
       this.state.selectCell(clean);
       this.actionLogger.log('goToCell', clean);
@@ -645,7 +646,9 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       if (p) {
         const r = Math.max(0, Math.min(this.state.maxRows - 1, p.row + dRow));
         const c = Math.max(0, Math.min(this.state.maxCols - 1, p.col + dCol));
-        this.state.selectCell(formatAddress({ row: r, col: c }));
+        const nextAddr = formatAddress({ row: r, col: c });
+        this.state.selectCell(nextAddr);
+        this.actionLogger.log('goToCell', nextAddr);
       }
     }
 
@@ -721,8 +724,9 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   onInsertRow(): void {
     this.commitPendingEdit();
     this.history.push(this.state.getSnapshot());
+    const cell = this.state.activeCell();
     this.state.insertRow();
-    this.actionLogger.log('insertRow', this.state.activeCell());
+    this.actionLogger.log('insertRow', cell);
     this.focusGrid();
     this.cdr.markForCheck();
   }
@@ -730,8 +734,9 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   onInsertColumn(): void {
     this.commitPendingEdit();
     this.history.push(this.state.getSnapshot());
+    const cell = this.state.activeCell();
     this.state.insertColumn();
-    this.actionLogger.log('insertColumn', this.state.activeCell());
+    this.actionLogger.log('insertColumn', cell);
     this.focusGrid();
     this.cdr.markForCheck();
   }
@@ -739,8 +744,9 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   onDeleteRow(): void {
     this.commitPendingEdit();
     this.history.push(this.state.getSnapshot());
+    const cell = this.state.activeCell();
     this.state.deleteRow();
-    this.actionLogger.log('deleteRow', this.state.activeCell());
+    this.actionLogger.log('deleteRow', cell);
     this.focusGrid();
     this.cdr.markForCheck();
   }
@@ -748,8 +754,9 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   onDeleteColumn(): void {
     this.commitPendingEdit();
     this.history.push(this.state.getSnapshot());
+    const cell = this.state.activeCell();
     this.state.deleteColumn();
-    this.actionLogger.log('deleteColumn', this.state.activeCell());
+    this.actionLogger.log('deleteColumn', cell);
     this.focusGrid();
     this.cdr.markForCheck();
   }
@@ -1035,6 +1042,7 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onToggleFilter(): void {
     this.commitPendingEdit();
+    this.history.push(this.state.getSnapshot());
     const curFilter = this.state.filter();
     if (curFilter) {
       this.state.setFilter(null);
@@ -1064,6 +1072,7 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.commitPendingEdit();
     const f = this.state.filter();
     if (!f) return;
+    this.history.push(this.state.getSnapshot());
     const updated = { ...f, columnFilters: { ...f.columnFilters } };
     updated.columnFilters[data.colIndex] = {
       colIndex: data.colIndex,
@@ -1373,6 +1382,7 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     }
     if ((event.ctrlKey || event.metaKey) && !this.state.isEditing()) {
+      if (event.defaultPrevented) return;
       const target = event.target as HTMLElement | null;
       if (
         target &&

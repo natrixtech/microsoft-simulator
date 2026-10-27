@@ -404,6 +404,7 @@ export class ExcelEvaluatorService {
       }
       if (goal.condition !== undefined && r.condition !== goal.condition) return false;
       if (goal.value !== undefined && !this.valuesEqual(r.value, goal.value)) return false;
+      if (goal.value2 !== undefined && !this.valuesEqual(r.value2, goal.value2)) return false;
       if (goal.fillColor !== undefined && !this.colorsEqual(r.fillColor, goal.fillColor)) {
         return false;
       }

@@ -209,7 +209,7 @@ export class ExcelStateService {
 
     const evaluateCell = (normAddr: string): any => {
       const cell = curCells.get(normAddr);
-      if (!cell) return 0;
+      if (!cell) return '';
       if (!cell.formula) {
         return cell.value;
       }
@@ -246,7 +246,7 @@ export class ExcelStateService {
     const getCellValue = (addr: string): any => {
       const normAddr = addr.toUpperCase().replace(/\$/g, '');
       const cell = curCells.get(normAddr);
-      if (!cell) return 0;
+      if (!cell) return '';
       if (cell.formula) {
         if (evaluating.has(normAddr)) {
           cell.value = '#REF!';
@@ -732,19 +732,23 @@ export class ExcelStateService {
       sortKey: any;
       cells: Map<number, CellData | undefined>;
       formats: Map<number, CellFormat | undefined>;
+      comments: Map<number, string | undefined>;
     }
 
     const rows: RowData[] = [];
     const curCells = this.cells();
     const curFormats = this.cellFormats();
+    const curComments = this.comments();
 
     for (let r = startRow; r <= parsed.endRow; r++) {
       const cellMap = new Map<number, CellData | undefined>();
       const fmtMap = new Map<number, CellFormat | undefined>();
+      const commMap = new Map<number, string | undefined>();
       for (let c = parsed.startCol; c <= parsed.endCol; c++) {
         const addr = formatAddress({ row: r, col: c });
         cellMap.set(c, curCells.get(addr));
         fmtMap.set(c, curFormats.get(addr));
+        commMap.set(c, curComments.get(addr));
       }
 
       const sortAddr = formatAddress({ row: r, col: targetCol });
@@ -756,6 +760,7 @@ export class ExcelStateService {
         sortKey,
         cells: cellMap,
         formats: fmtMap,
+        comments: commMap,
       });
     }
 
@@ -787,17 +792,26 @@ export class ExcelStateService {
     // Write back sorted rows
     const newCells = new Map(curCells);
     const newFormats = new Map(curFormats);
+    const newComments = new Map(curComments);
 
     for (let i = 0; i < rows.length; i++) {
       const targetRow = startRow + i;
       const rowData = rows[i];
+      const rowDelta = targetRow - rowData.rowIdx;
+
       for (let c = parsed.startCol; c <= parsed.endCol; c++) {
         const targetAddr = formatAddress({ row: targetRow, col: c });
         const cell = rowData.cells.get(c);
         const fmt = rowData.formats.get(c);
+        const comm = rowData.comments.get(c);
 
         if (cell) {
-          newCells.set(targetAddr, { ...cell });
+          const updatedCell = { ...cell };
+          if (updatedCell.formula && rowDelta !== 0) {
+            updatedCell.formula = this.formulaEngine.shiftFormula(updatedCell.formula, rowDelta, 0);
+            updatedCell.raw = updatedCell.formula;
+          }
+          newCells.set(targetAddr, updatedCell);
         } else {
           newCells.delete(targetAddr);
         }
@@ -807,11 +821,18 @@ export class ExcelStateService {
         } else {
           newFormats.delete(targetAddr);
         }
+
+        if (comm !== undefined && comm !== null && comm !== '') {
+          newComments.set(targetAddr, comm);
+        } else {
+          newComments.delete(targetAddr);
+        }
       }
     }
 
     this.cells.set(newCells);
     this.cellFormats.set(newFormats);
+    this.comments.set(newComments);
     this.recalculateAll();
   }
 
@@ -825,21 +846,29 @@ export class ExcelStateService {
     const startRow = hasHeader ? parsed.startRow + 1 : parsed.startRow;
     const curCells = this.cells();
     const curFormats = this.cellFormats();
+    const curComments = this.comments();
 
     const seenRows = new Set<string>();
-    const uniqueRows: Array<{ cells: Map<number, CellData | undefined>; formats: Map<number, CellFormat | undefined> }> = [];
+    const uniqueRows: Array<{
+      oldRow: number;
+      cells: Map<number, CellData | undefined>;
+      formats: Map<number, CellFormat | undefined>;
+      comments: Map<number, string | undefined>;
+    }> = [];
     let removedCount = 0;
 
     for (let r = startRow; r <= parsed.endRow; r++) {
       const rowKeyParts: string[] = [];
       const rowCells = new Map<number, CellData | undefined>();
       const rowFmts = new Map<number, CellFormat | undefined>();
+      const rowComms = new Map<number, string | undefined>();
 
       for (let c = parsed.startCol; c <= parsed.endCol; c++) {
         const addr = formatAddress({ row: r, col: c });
         const cell = curCells.get(addr);
         rowCells.set(c, cell);
         rowFmts.set(c, curFormats.get(addr));
+        rowComms.set(c, curComments.get(addr));
         rowKeyParts.push(String(cell?.value ?? '').trim().toLowerCase());
       }
 
@@ -848,7 +877,7 @@ export class ExcelStateService {
         removedCount++;
       } else {
         seenRows.add(rowKey);
-        uniqueRows.push({ cells: rowCells, formats: rowFmts });
+        uniqueRows.push({ oldRow: r, cells: rowCells, formats: rowFmts, comments: rowComms });
       }
     }
 
@@ -858,18 +887,27 @@ export class ExcelStateService {
 
     const newCells = new Map(curCells);
     const newFormats = new Map(curFormats);
+    const newComments = new Map(curComments);
 
     // Write back unique rows
     for (let i = 0; i < uniqueRows.length; i++) {
       const targetRow = startRow + i;
       const u = uniqueRows[i];
+      const rowDelta = targetRow - u.oldRow;
+
       for (let c = parsed.startCol; c <= parsed.endCol; c++) {
         const targetAddr = formatAddress({ row: targetRow, col: c });
         const cell = u.cells.get(c);
         const fmt = u.formats.get(c);
+        const comm = u.comments.get(c);
 
         if (cell) {
-          newCells.set(targetAddr, { ...cell });
+          const updatedCell = { ...cell };
+          if (updatedCell.formula && rowDelta !== 0) {
+            updatedCell.formula = this.formulaEngine.shiftFormula(updatedCell.formula, rowDelta, 0);
+            updatedCell.raw = updatedCell.formula;
+          }
+          newCells.set(targetAddr, updatedCell);
         } else {
           newCells.delete(targetAddr);
         }
@@ -878,6 +916,12 @@ export class ExcelStateService {
           newFormats.set(targetAddr, { ...fmt });
         } else {
           newFormats.delete(targetAddr);
+        }
+
+        if (comm !== undefined && comm !== null && comm !== '') {
+          newComments.set(targetAddr, comm);
+        } else {
+          newComments.delete(targetAddr);
         }
       }
     }
@@ -888,11 +932,13 @@ export class ExcelStateService {
         const targetAddr = formatAddress({ row: r, col: c });
         newCells.delete(targetAddr);
         newFormats.delete(targetAddr);
+        newComments.delete(targetAddr);
       }
     }
 
     this.cells.set(newCells);
     this.cellFormats.set(newFormats);
+    this.comments.set(newComments);
     this.recalculateAll();
 
     return { removedCount, remainingCount: uniqueRows.length };
@@ -902,6 +948,22 @@ export class ExcelStateService {
    * Filter handling.
    */
   setFilter(filter: SheetFilter | null): void {
+    if (filter && filter.startRow === filter.endRow && filter.startCol === filter.endCol) {
+      const startAddr = formatAddress({ row: filter.startRow, col: filter.startCol });
+      const expanded = this.getCurrentRegion(startAddr);
+      const p = parseRange(expanded);
+      if (p) {
+        filter = {
+          ...filter,
+          range: expanded,
+          headerRow: p.startRow,
+          startRow: p.startRow,
+          endRow: p.endRow,
+          startCol: p.startCol,
+          endCol: p.endCol,
+        };
+      }
+    }
     this.filter.set(filter);
   }
 
@@ -937,6 +999,12 @@ export class ExcelStateService {
   }
 
   evaluateFilterCondition(val: any, cond: { type: string; value?: any; value2?: any }): boolean {
+    if (cond.type === 'isEmpty') {
+      return val === '' || val === null || val === undefined;
+    }
+
+    const isBlank = val === undefined || val === null || val === '' || String(val).trim() === '';
+
     const d1 = parseDateParts(val);
     const d2 = parseDateParts(cond.value);
     if (d1 && d2) {
@@ -952,35 +1020,47 @@ export class ExcelStateService {
     }
 
     const str = String(val ?? '').trim().toLowerCase();
-    const num = Number(val);
+    const num = isBlank ? NaN : Number(val);
+    const isTargetValNumeric =
+      cond.value !== undefined &&
+      cond.value !== null &&
+      cond.value !== '' &&
+      String(cond.value).trim() !== '' &&
+      !isNaN(Number(cond.value));
 
     switch (cond.type) {
       case 'equals':
-        if (!isNaN(num) && cond.value !== undefined && !isNaN(Number(cond.value))) {
-          return Math.abs(num - Number(cond.value)) < 0.0001;
+        if (isTargetValNumeric) {
+          if (isBlank) return false;
+          return !isNaN(num) && Math.abs(num - Number(cond.value)) < 0.0001;
         }
         return str === String(cond.value ?? '').trim().toLowerCase();
 
       case 'greaterThan':
-        return !isNaN(num) && cond.value !== undefined && num > Number(cond.value);
+        if (isBlank || !isTargetValNumeric) return false;
+        return !isNaN(num) && num > Number(cond.value);
 
       case 'lessThan':
-        return !isNaN(num) && cond.value !== undefined && num < Number(cond.value);
+        if (isBlank || !isTargetValNumeric) return false;
+        return !isNaN(num) && num < Number(cond.value);
 
-      case 'between':
+      case 'between': {
+        const isTargetVal2Numeric =
+          cond.value2 !== undefined &&
+          cond.value2 !== null &&
+          cond.value2 !== '' &&
+          String(cond.value2).trim() !== '' &&
+          !isNaN(Number(cond.value2));
+        if (isBlank || !isTargetValNumeric || !isTargetVal2Numeric) return false;
         return (
           !isNaN(num) &&
-          cond.value !== undefined &&
-          cond.value2 !== undefined &&
           num >= Math.min(Number(cond.value), Number(cond.value2)) &&
           num <= Math.max(Number(cond.value), Number(cond.value2))
         );
+      }
 
       case 'contains':
         return str.includes(String(cond.value ?? '').trim().toLowerCase());
-
-      case 'isEmpty':
-        return val === '' || val === null || val === undefined;
 
       default:
         return true;

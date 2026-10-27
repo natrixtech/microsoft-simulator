@@ -187,12 +187,16 @@ export class FormulaEngineService {
         return getCellValue(cleanAddr);
       }, getRangeValues);
 
-      const result = parser.parse();
+      let result = parser.parse();
       if (typeof result === 'number' && !isFinite(result)) {
         return { value: '#DIV/0!', error: '#DIV/0!' };
       }
       if (typeof result === 'string' && ['#REF!', '#DIV/0!', '#NAME?', '#VALUE!', '#N/A'].includes(result)) {
         return { value: result, error: result };
+      }
+      const nonParenTokens = tokens.filter((t) => t.type !== 'LPAREN' && t.type !== 'RPAREN');
+      if (result === '' && nonParenTokens.length === 1 && nonParenTokens[0].type === 'CELL') {
+        result = 0;
       }
       return { value: result };
     } catch (err: any) {
@@ -684,6 +688,24 @@ class FormulaParser {
     return cur;
   }
 
+  private skipToArgEnd(): void {
+    let depth = 0;
+    while (this.pos < this.tokens.length) {
+      const cur = this.tokens[this.pos];
+      if (cur.type === 'LPAREN') {
+        depth++;
+      } else if (cur.type === 'RPAREN') {
+        if (depth === 0) {
+          break;
+        }
+        depth--;
+      } else if (cur.type === 'COMMA' && depth === 0) {
+        break;
+      }
+      this.pos++;
+    }
+  }
+
   // Precedence levels:
   // 1. Comparison: =, <>, <, <=, >, >=
   // 2. Concatenation: &
@@ -908,7 +930,7 @@ class FormulaParser {
         throw new Error(val);
       }
       if (typeof val === 'number') return val;
-      if (val === undefined || val === null || val === '') return 0;
+      if (val === undefined || val === null || val === '') return '';
       if (!isNaN(Number(val))) return Number(val);
       return val;
     }
@@ -931,6 +953,51 @@ class FormulaParser {
         throw new Error('#NAME?');
       }
       this.consume('(');
+
+      if (fnName === 'IF') {
+        const cond = this.parseExpression();
+        let val1: any;
+        let err1: any = null;
+        if (this.peek()?.type === 'COMMA') {
+          this.consume(',');
+          try {
+            val1 = this.parseExpression();
+          } catch (e) {
+            err1 = e;
+            this.skipToArgEnd();
+          }
+        } else {
+          throw new Error('#VALUE!');
+        }
+
+        let val2: any = false;
+        let err2: any = null;
+        let hasBranch2 = false;
+        if (this.peek()?.type === 'COMMA') {
+          this.consume(',');
+          hasBranch2 = true;
+          try {
+            val2 = this.parseExpression();
+          } catch (e) {
+            err2 = e;
+            this.skipToArgEnd();
+          }
+        }
+        this.consume(')');
+
+        const condition = typeof cond === 'string' && cond.toUpperCase() === 'FALSE' ? false : !!cond;
+        if (condition) {
+          if (err1) throw err1;
+          return val1;
+        } else {
+          if (hasBranch2) {
+            if (err2) throw err2;
+            return val2;
+          }
+          return false;
+        }
+      }
+
       const args: any[] = [];
       if (this.peek()?.type !== 'RPAREN') {
         while (true) {

@@ -84,6 +84,16 @@
   outline: 2px solid #107c41;
 }
 
+.text-input.input-error {
+  border-color: #d13438;
+}
+
+.error-msg {
+  color: #d13438;
+  font-size: 11px;
+  line-height: 14px;
+}
+
 .color-palette {
   display: flex;
   gap: 8px;
@@ -133,8 +143,16 @@
   border: 1px solid #107c41;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
   background: #0e6b38;
+}
+
+.btn-primary:disabled {
+  background: var(--line, #e0e0e0);
+  border-color: var(--line, #d1d1d1);
+  color: var(--muted, #8a8886);
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .btn-secondary {
@@ -216,4 +234,21 @@
 :host-context([data-theme="dark"]) .btn-secondary:hover,
 :host-context(.dark-theme) .btn-secondary:hover {
   background: #323130;
+}
+
+:host-context([data-theme="dark"]) .text-input.input-error,
+:host-context(.dark-theme) .text-input.input-error {
+  border-color: #f1707b;
+}
+
+:host-context([data-theme="dark"]) .error-msg,
+:host-context(.dark-theme) .error-msg {
+  color: #f1707b;
+}
+
+:host-context([data-theme="dark"]) .btn-primary:disabled,
+:host-context(.dark-theme) .btn-primary:disabled {
+  background: #3b3a39;
+  border-color: #3b3a39;
+  color: #797775;
 }
