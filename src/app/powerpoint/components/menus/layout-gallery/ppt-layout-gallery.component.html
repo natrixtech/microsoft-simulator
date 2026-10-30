@@ -1,0 +1,67 @@
+<div
+  *ngIf="isOpen"
+  class="ppt-layout-gallery-popup"
+  [style.position]="'fixed'"
+  [style.left.px]="popupPos.left"
+  [style.top.px]="popupPos.top"
+  [style.zIndex]="2000"
+  (click)="$event.stopPropagation()"
+>
+  <div class="gallery-header">
+    <span>{{ headerTitle }}</span>
+  </div>
+
+  <div class="gallery-grid">
+    <button
+      *ngFor="let layout of layoutList"
+      type="button"
+      class="layout-tile"
+      [class.active]="activeLayout === layout.id"
+      [attr.data-demo-target]="'layout-choice-' + layout.id"
+      [title]="layout.name"
+      (click)="onPickLayout(layout.id, $event)"
+    >
+      <!-- Mini layout preview card -->
+      <div class="mini-slide-preview">
+        <ng-container [ngSwitch]="layout.id">
+          <!-- Title Slide -->
+          <div *ngSwitchCase="'title'" class="preview-layout-title">
+            <div class="box title-box-centered"></div>
+            <div class="box sub-box-centered"></div>
+          </div>
+
+          <!-- Title and Content -->
+          <div *ngSwitchCase="'titleAndBody'" class="preview-layout-title-body">
+            <div class="box title-box-top"></div>
+            <div class="box body-box-main"></div>
+          </div>
+
+          <!-- Section Header -->
+          <div *ngSwitchCase="'sectionHeader'" class="preview-layout-section">
+            <div class="box section-title-box"></div>
+            <div class="box section-sub-box"></div>
+          </div>
+
+          <!-- Two Content -->
+          <div *ngSwitchCase="'twoColumns'" class="preview-layout-two-col">
+            <div class="box title-box-top"></div>
+            <div class="cols-row">
+              <div class="box col-box"></div>
+              <div class="box col-box"></div>
+            </div>
+          </div>
+
+          <!-- Title Only -->
+          <div *ngSwitchCase="'titleOnly'" class="preview-layout-title-only">
+            <div class="box title-box-top"></div>
+          </div>
+
+          <!-- Blank -->
+          <div *ngSwitchCase="'blank'" class="preview-layout-blank"></div>
+        </ng-container>
+      </div>
+
+      <span class="layout-name">{{ layout.name }}</span>
+    </button>
+  </div>
+</div>

@@ -1,0 +1,67 @@
+:host {
+  display: block;
+  flex-shrink: 0;
+}
+
+.ppt-titlebar {
+  height: 38px;
+  background-color: #c43e1c;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  user-select: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+:host-context([data-theme='DARK']) .ppt-titlebar,
+:host-context([data-theme='dark']) .ppt-titlebar,
+:host-context(.dark-theme) .ppt-titlebar,
+:host(.dark-theme) .ppt-titlebar,
+:host([data-theme='DARK']) .ppt-titlebar,
+:host([data-theme='dark']) .ppt-titlebar,
+.dark-theme .ppt-titlebar {
+  background-color: #1f1f1f;
+  border-bottom-color: #333333;
+}
+
+:host-context([data-theme='DARK']) .ppt-app-icon path,
+:host-context([data-theme='dark']) .ppt-app-icon path,
+:host-context(.dark-theme) .ppt-app-icon path,
+:host(.dark-theme) .ppt-app-icon path,
+:host([data-theme='DARK']) .ppt-app-icon path,
+:host([data-theme='dark']) .ppt-app-icon path,
+.dark-theme .ppt-app-icon path {
+  fill: #1f1f1f;
+}
+
+.titlebar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ppt-app-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+}
+
+.document-name-display {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.document-name-display strong {
+  font-weight: 600;
+  letter-spacing: 0.1px;
+}

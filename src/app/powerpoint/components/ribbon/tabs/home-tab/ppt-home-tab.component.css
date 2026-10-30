@@ -1,0 +1,636 @@
+:host {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+}
+
+.ppt-tab-content {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+}
+
+/* Button styles */
+.ppt-large-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  padding: 3px 6px;
+  cursor: pointer;
+  height: 58px;
+  min-width: 44px;
+  gap: 2px;
+  color: #323130;
+  box-sizing: border-box;
+}
+
+.ppt-large-btn:hover:not(:disabled) {
+  background: #f3f2f1;
+  border-color: #e1dfdd;
+}
+
+.btn-label {
+  font-size: 11px;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  white-space: nowrap;
+}
+
+.ppt-btn-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.ppt-small-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  padding: 2px 5px;
+  cursor: pointer;
+  height: 22px;
+  color: #323130;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.ppt-small-btn:hover:not(:disabled) {
+  background: #f3f2f1;
+}
+
+.btn-text {
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+}
+
+.ppt-btn-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.ppt-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  color: #323130;
+  padding: 0;
+}
+
+.ppt-icon-btn:hover:not(:disabled) {
+  background: #f3f2f1;
+}
+
+/* Split button */
+.ppt-split-button-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.split-top {
+  height: 44px;
+  padding-bottom: 0;
+}
+
+.ppt-split-dropdown-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: pointer;
+  color: #323130;
+  padding: 0;
+}
+
+.ppt-split-dropdown-arrow:hover:not(:disabled) {
+  background: #f3f2f1;
+}
+
+/* Font and Paragraph clusters */
+.ppt-font-cluster,
+.ppt-paragraph-cluster {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+
+.ppt-ribbon-select {
+  height: 22px;
+  font-size: 11px;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  border: 1px solid #c8c6c4;
+  border-radius: 2px;
+  background: #ffffff;
+  color: #323130;
+  padding: 0 4px;
+  outline: none;
+}
+
+.font-family-select {
+  width: 100px;
+}
+
+.font-size-select {
+  width: 44px;
+}
+
+/* Drawing mini shapes */
+.ppt-shapes-mini-gallery {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  padding: 0;
+  gap: 0;
+  background: #ffffff;
+  border: 1px solid #c8c6c4;
+  border-radius: 0;
+}
+
+.shapes-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 2px;
+}
+
+.shapes-row {
+  display: flex;
+  gap: 0;
+}
+
+.shape-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 0;
+  cursor: pointer;
+  color: #444444;
+  padding: 0;
+}
+
+.shape-icon-btn:hover:not(:disabled) {
+  background: #e1dfdd;
+  border-color: #c8c6c4;
+}
+
+.shape-icon-btn svg rect,
+.shape-icon-btn svg ellipse,
+.shape-icon-btn svg polygon,
+.shape-icon-btn svg path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.shapes-scroll {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #c8c6c4;
+  width: 14px;
+}
+
+.shape-scroll-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  min-height: 14px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #a19f9d;
+  cursor: default;
+}
+
+.shape-scroll-btn + .shape-scroll-btn {
+  border-top: 1px solid #e1dfdd;
+}
+
+:host-context([data-theme='DARK']) .ppt-shapes-mini-gallery,
+:host-context(.dark-theme) .ppt-shapes-mini-gallery {
+  background: #1f1f1f;
+  border-color: #5c5c5c;
+}
+
+:host-context([data-theme='DARK']) .shape-icon-btn,
+:host-context(.dark-theme) .shape-icon-btn {
+  color: #d6d6d6;
+}
+
+:host-context([data-theme='DARK']) .shape-icon-btn:hover:not(:disabled),
+:host-context(.dark-theme) .shape-icon-btn:hover:not(:disabled) {
+  background: #3b3b3b;
+  border-color: #5c5c5c;
+}
+
+:host-context([data-theme='DARK']) .shape-icon-btn svg rect,
+:host-context([data-theme='DARK']) .shape-icon-btn svg ellipse,
+:host-context([data-theme='DARK']) .shape-icon-btn svg polygon,
+:host-context([data-theme='DARK']) .shape-icon-btn svg path,
+:host-context(.dark-theme) .shape-icon-btn svg rect,
+:host-context(.dark-theme) .shape-icon-btn svg ellipse,
+:host-context(.dark-theme) .shape-icon-btn svg polygon,
+:host-context(.dark-theme) .shape-icon-btn svg path {
+  fill: none;
+  stroke: currentColor;
+}
+
+:host-context([data-theme='DARK']) .shapes-scroll,
+:host-context(.dark-theme) .shapes-scroll {
+  border-left-color: #5c5c5c;
+}
+
+:host-context([data-theme='DARK']) .shape-scroll-btn,
+:host-context(.dark-theme) .shape-scroll-btn {
+  color: #7a7a7a;
+}
+
+:host-context([data-theme='DARK']) .shape-scroll-btn + .shape-scroll-btn,
+:host-context(.dark-theme) .shape-scroll-btn + .shape-scroll-btn {
+  border-top-color: #5c5c5c;
+}
+
+.relative-menu-anchor {
+  position: relative;
+}
+
+/* Disabled ribbon controls (light mode) */
+.ppt-large-btn:disabled,
+.ppt-small-btn:disabled,
+.ppt-icon-btn:disabled,
+.ppt-split-dropdown-arrow:disabled,
+.ppt-split-arrow:disabled,
+.shape-icon-btn:disabled,
+.ppt-ribbon-select:disabled,
+button:disabled,
+select:disabled {
+  opacity: 1;
+  color: #a19f9d;
+  cursor: default;
+}
+
+.ppt-large-btn:disabled .btn-label,
+.ppt-small-btn:disabled .btn-text,
+.ppt-icon-btn:disabled .btn-text,
+button:disabled .btn-label,
+button:disabled .btn-text {
+  color: #a19f9d;
+}
+
+.ppt-large-btn:disabled app-ppt-icon,
+.ppt-small-btn:disabled app-ppt-icon,
+.ppt-icon-btn:disabled app-ppt-icon,
+.ppt-split-dropdown-arrow:disabled app-ppt-icon,
+.ppt-split-arrow:disabled app-ppt-icon,
+.shape-icon-btn:disabled app-ppt-icon,
+button:disabled app-ppt-icon,
+select:disabled app-ppt-icon {
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+
+.font-color-main-btn:disabled .font-color-bar {
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+
+/* Dark mode overrides */
+:host-context([data-theme='DARK']),
+:host-context(.dark-theme) {
+  color: #f3f2f1;
+}
+
+:host-context([data-theme='DARK']) .ppt-large-btn,
+:host-context(.dark-theme) .ppt-large-btn,
+:host-context([data-theme='DARK']) .ppt-small-btn,
+:host-context(.dark-theme) .ppt-small-btn,
+:host-context([data-theme='DARK']) .ppt-icon-btn,
+:host-context(.dark-theme) .ppt-icon-btn,
+:host-context([data-theme='DARK']) .ppt-split-dropdown-arrow,
+:host-context(.dark-theme) .ppt-split-dropdown-arrow,
+:host-context([data-theme='DARK']) .shape-icon-btn,
+:host-context(.dark-theme) .shape-icon-btn {
+  color: #f3f2f1;
+}
+
+:host-context([data-theme='DARK']) .ppt-large-btn:hover:not(:disabled),
+:host-context(.dark-theme) .ppt-large-btn:hover:not(:disabled),
+:host-context([data-theme='DARK']) .ppt-small-btn:hover:not(:disabled),
+:host-context(.dark-theme) .ppt-small-btn:hover:not(:disabled),
+:host-context([data-theme='DARK']) .ppt-icon-btn:hover:not(:disabled),
+:host-context(.dark-theme) .ppt-icon-btn:hover:not(:disabled) {
+  background: #3b3a39;
+  border-color: #484644;
+}
+
+:host-context([data-theme='DARK']) .ppt-ribbon-select,
+:host-context(.dark-theme) .ppt-ribbon-select {
+  background: #252423;
+  color: #f3f2f1;
+  border-color: #484644;
+}
+
+:host-context([data-theme='DARK']) .ppt-shapes-mini-gallery,
+:host-context(.dark-theme) .ppt-shapes-mini-gallery {
+  background: #252423;
+  border-color: #484644;
+}
+
+/* Disabled ribbon controls (dark mode) */
+:host-context([data-theme='DARK']) .ppt-large-btn:disabled,
+:host-context(.dark-theme) .ppt-large-btn:disabled,
+:host-context([data-theme='DARK']) .ppt-small-btn:disabled,
+:host-context(.dark-theme) .ppt-small-btn:disabled,
+:host-context([data-theme='DARK']) .ppt-icon-btn:disabled,
+:host-context(.dark-theme) .ppt-icon-btn:disabled,
+:host-context([data-theme='DARK']) .ppt-split-dropdown-arrow:disabled,
+:host-context(.dark-theme) .ppt-split-dropdown-arrow:disabled,
+:host-context([data-theme='DARK']) .ppt-split-arrow:disabled,
+:host-context(.dark-theme) .ppt-split-arrow:disabled,
+:host-context([data-theme='DARK']) .shape-icon-btn:disabled,
+:host-context(.dark-theme) .shape-icon-btn:disabled,
+:host-context([data-theme='DARK']) .ppt-ribbon-select:disabled,
+:host-context(.dark-theme) .ppt-ribbon-select:disabled,
+:host-context([data-theme='DARK']) button:disabled,
+:host-context(.dark-theme) button:disabled,
+:host-context([data-theme='DARK']) select:disabled,
+:host-context(.dark-theme) select:disabled {
+  color: #8a8886;
+}
+
+:host-context([data-theme='DARK']) .ppt-large-btn:disabled .btn-label,
+:host-context(.dark-theme) .ppt-large-btn:disabled .btn-label,
+:host-context([data-theme='DARK']) .ppt-small-btn:disabled .btn-text,
+:host-context(.dark-theme) .ppt-small-btn:disabled .btn-text,
+:host-context([data-theme='DARK']) .ppt-icon-btn:disabled .btn-text,
+:host-context(.dark-theme) .ppt-icon-btn:disabled .btn-text,
+:host-context([data-theme='DARK']) button:disabled .btn-label,
+:host-context(.dark-theme) button:disabled .btn-label,
+:host-context([data-theme='DARK']) button:disabled .btn-text,
+:host-context(.dark-theme) button:disabled .btn-text {
+  color: #8a8886;
+}
+
+:host-context([data-theme='DARK']) .ppt-large-btn:disabled app-ppt-icon,
+:host-context(.dark-theme) .ppt-large-btn:disabled app-ppt-icon,
+:host-context([data-theme='DARK']) .ppt-small-btn:disabled app-ppt-icon,
+:host-context(.dark-theme) .ppt-small-btn:disabled app-ppt-icon,
+:host-context([data-theme='DARK']) .ppt-icon-btn:disabled app-ppt-icon,
+:host-context(.dark-theme) .ppt-icon-btn:disabled app-ppt-icon,
+:host-context([data-theme='DARK']) .ppt-split-dropdown-arrow:disabled app-ppt-icon,
+:host-context(.dark-theme) .ppt-split-dropdown-arrow:disabled app-ppt-icon,
+:host-context([data-theme='DARK']) .ppt-split-arrow:disabled app-ppt-icon,
+:host-context(.dark-theme) .ppt-split-arrow:disabled app-ppt-icon,
+:host-context([data-theme='DARK']) .shape-icon-btn:disabled app-ppt-icon,
+:host-context(.dark-theme) .shape-icon-btn:disabled app-ppt-icon,
+:host-context([data-theme='DARK']) button:disabled app-ppt-icon,
+:host-context(.dark-theme) button:disabled app-ppt-icon,
+:host-context([data-theme='DARK']) select:disabled app-ppt-icon,
+:host-context(.dark-theme) select:disabled app-ppt-icon {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
+:host-context([data-theme='DARK']) .font-color-main-btn:disabled .font-color-bar,
+:host-context(.dark-theme) .font-color-main-btn:disabled .font-color-bar {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
+/* Active / pressed state for formatting buttons (like Excel's .btn-neutral-toggle) */
+.ppt-icon-btn.active {
+  background-color: #d0d0d0 !important;
+  border-color: #a6a6a6 !important;
+  color: #c43e1c !important;
+}
+
+:host-context([data-theme='DARK']) .ppt-icon-btn.active,
+:host-context(.dark-theme) .ppt-icon-btn.active {
+  background-color: #3f3f3f !important;
+  border-color: #555555 !important;
+  color: #f7630c !important;
+}
+
+/* Font color split button */
+.font-color-split {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+}
+
+.ppt-split-arrow {
+  width: 12px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #605e5c;
+  font-size: 8px;
+  line-height: 22px;
+  cursor: pointer;
+  border-radius: 0 2px 2px 0;
+}
+
+.ppt-split-arrow:hover:not(:disabled) {
+  background: #f3f2f1;
+}
+
+.font-color-split:hover .font-color-main-btn:not(:disabled),
+.font-color-split:hover .ppt-split-arrow:not(:disabled) {
+  background: #f3f2f1;
+}
+
+:host-context([data-theme='DARK']) .ppt-split-arrow,
+:host-context(.dark-theme) .ppt-split-arrow {
+  color: #c8c6c4;
+}
+
+:host-context([data-theme='DARK']) .ppt-split-arrow:hover:not(:disabled),
+:host-context(.dark-theme) .ppt-split-arrow:hover:not(:disabled),
+:host-context([data-theme='DARK']) .font-color-split:hover .font-color-main-btn:not(:disabled),
+:host-context(.dark-theme) .font-color-split:hover .font-color-main-btn:not(:disabled),
+:host-context([data-theme='DARK']) .font-color-split:hover .ppt-split-arrow:not(:disabled),
+:host-context(.dark-theme) .font-color-split:hover .ppt-split-arrow:not(:disabled) {
+  background: #3b3a39;
+}
+
+.font-color-main-btn {
+  padding: 2px 3px !important;
+}
+
+.font-color-btn-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.font-color-bar {
+  display: block;
+  width: 13px;
+  height: 3px;
+  margin-top: 1px;
+  border-radius: 1px;
+}
+
+/* Line spacing dropdown */
+.ppt-spacing-dropdown {
+  background-color: #ffffff;
+  border: 1px solid #d2d0ce;
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 4px 0;
+  min-width: 100px;
+  box-sizing: border-box;
+}
+
+:host-context([data-theme='DARK']) .ppt-spacing-dropdown,
+:host-context(.dark-theme) .ppt-spacing-dropdown {
+  background-color: #2b2b2b;
+  border-color: #3f3f3f;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.spacing-option-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 4px 10px;
+  background: transparent;
+  border: none;
+  font-size: 12px;
+  color: #323130;
+  cursor: pointer;
+  text-align: left;
+}
+
+.spacing-option-item:hover {
+  background-color: #f3f2f1;
+}
+
+:host-context([data-theme='DARK']) .spacing-option-item {
+  color: #f3f2f1;
+}
+
+:host-context([data-theme='DARK']) .spacing-option-item:hover {
+  background-color: #383838;
+}
+
+.spacing-check {
+  width: 16px;
+  font-weight: bold;
+  color: #c43e1c;
+}
+
+.spacing-value {
+  flex: 1;
+}
+
+/* Stage 1 Compact: small buttons drop their text, icons only, stacked vertically */
+/* Home: Undo/Redo, Cut/Copy/Format Painter, Layout/Reset/Section. Find/Replace keep text */
+.ppt-tab-content.compact app-ppt-ribbon-group:not([groupId="editing"]) .ppt-small-btn .btn-text {
+  display: none !important;
+}
+.ppt-tab-content.compact app-ppt-ribbon-group:not([groupId="editing"]) .ppt-small-btn {
+  padding: 2px 4px !important;
+  min-width: 22px !important;
+  justify-content: center !important;
+}
+
+/* Select dropdown */
+.ppt-select-dropdown {
+  background-color: #ffffff;
+  border: 1px solid #d2d0ce;
+  border-radius: 2px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 4px 0;
+  min-width: 170px;
+  box-sizing: border-box;
+}
+
+:host-context([data-theme='DARK']) .ppt-select-dropdown,
+:host-context(.dark-theme) .ppt-select-dropdown {
+  background-color: #2b2b2b;
+  border-color: #3f3f3f;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.select-option-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 6px 12px;
+  background: transparent;
+  border: none;
+  font-size: 12px;
+  color: #323130;
+  cursor: pointer;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.select-option-item:hover:not(:disabled) {
+  background-color: #f3f2f1;
+}
+
+:host-context([data-theme='DARK']) .select-option-item,
+:host-context(.dark-theme) .select-option-item {
+  color: #f3f2f1;
+}
+
+:host-context([data-theme='DARK']) .select-option-item:hover:not(:disabled),
+:host-context(.dark-theme) .select-option-item:hover:not(:disabled) {
+  background-color: #383838;
+}
+
+.select-option-item:disabled {
+  color: #a19f9d;
+  cursor: default;
+  opacity: 0.6;
+}
+
+:host-context([data-theme='DARK']) .select-option-item:disabled,
+:host-context(.dark-theme) .select-option-item:disabled {
+  color: #797775;
+}
+
+.select-option-label {
+  flex: 1;
+}
+
+.select-option-shortcut {
+  font-size: 11px;
+  color: #605e5c;
+  margin-left: 12px;
+}
+
+:host-context([data-theme='DARK']) .select-option-shortcut,
+:host-context(.dark-theme) .select-option-shortcut {
+  color: #8a8886;
+}

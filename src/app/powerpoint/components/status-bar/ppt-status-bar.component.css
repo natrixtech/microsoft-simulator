@@ -1,0 +1,150 @@
+:host {
+  display: block;
+  flex-shrink: 0;
+}
+
+.ppt-statusbar {
+  height: 24px;
+  background-color: #faf9f8;
+  border-top: 1px solid #edebe9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  font-size: 11px;
+  color: #605e5c;
+  user-select: none;
+}
+
+:host-context([data-theme='DARK']) .ppt-statusbar,
+:host-context(.dark-theme) .ppt-statusbar {
+  background-color: #1f1f1f;
+  border-top-color: #3b3a39;
+  color: #a19f9d;
+}
+
+.statusbar-left {
+  display: flex;
+  align-items: center;
+}
+
+.slide-count-indicator {
+  white-space: nowrap;
+}
+
+.statusbar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 11px;
+  color: inherit;
+  cursor: default;
+  padding: 0 4px;
+  opacity: 0.7;
+}
+
+.status-separator {
+  width: 1px;
+  height: 14px;
+  background-color: #d2d0ce;
+  margin: 0 2px;
+}
+
+:host-context([data-theme='DARK']) .status-separator,
+:host-context(.dark-theme) .status-separator {
+  background-color: #3b3a39;
+}
+
+.status-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  width: 20px;
+  height: 20px;
+  color: #605e5c;
+  cursor: pointer;
+  padding: 0;
+}
+
+:host-context([data-theme='DARK']) .status-icon-btn,
+:host-context(.dark-theme) .status-icon-btn {
+  color: #a19f9d;
+}
+
+.status-icon-btn.active {
+  background-color: #edebe9;
+  border-color: #c8c6c4;
+  color: #323130;
+}
+
+:host-context([data-theme='DARK']) .status-icon-btn.active,
+:host-context(.dark-theme) .status-icon-btn.active {
+  background-color: #3b3a39;
+  border-color: #484644;
+  color: #f3f2f1;
+}
+
+.status-icon-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.status-icon-btn.fit-btn:hover {
+  background-color: #edebe9;
+  color: #c43e1c;
+}
+
+:host-context([data-theme='DARK']) .status-icon-btn.fit-btn:hover,
+:host-context(.dark-theme) .status-icon-btn.fit-btn:hover {
+  background-color: #3b3a39;
+  color: #ffffff;
+}
+
+.zoom-btn {
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.zoom-slider-track {
+  width: 60px;
+  height: 2px;
+  background-color: #c8c6c4;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+:host-context([data-theme='DARK']) .zoom-slider-track,
+:host-context(.dark-theme) .zoom-slider-track {
+  background-color: #484644;
+}
+
+.zoom-slider-thumb {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #605e5c;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.zoom-percent-text {
+  min-width: 32px;
+  text-align: right;
+  font-size: 11px;
+}
+

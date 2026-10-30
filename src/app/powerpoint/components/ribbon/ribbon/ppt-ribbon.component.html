@@ -1,0 +1,183 @@
+<div class="ppt-ribbon-container">
+  <!-- Tab Strip -->
+  <nav class="ppt-tab-strip" #tabStrip role="tablist" aria-label="Ribbon Tabs">
+    <div class="tab-buttons-container">
+      <button
+        *ngFor="let tab of visibleTabs"
+        type="button"
+        role="tab"
+        class="ppt-tab-btn"
+        [class.active]="activeTab === tab.id"
+        [class.disabled]="!tab.enabled"
+        [attr.aria-selected]="activeTab === tab.id"
+        [attr.data-demo-target]="tab.id + '-tab'"
+        [disabled]="!tab.enabled"
+        (click)="onSelectTab(tab)"
+      >
+        {{ tab.label }}
+      </button>
+    
+      <!-- Tab strip overflow button ("⌄") right after last visible tab -->
+      <button
+        *ngIf="hiddenTabs.length > 0"
+        #tabOverflowBtn
+        type="button"
+        class="ppt-tab-btn ppt-tab-overflow-btn"
+        [class.active]="isTabOverflowOpen"
+        (click)="onToggleTabOverflow($event)"
+        aria-label="More tabs"
+        title="More tabs"
+      >
+        <app-ppt-icon name="chevron-down" [size]="12"></app-ppt-icon>
+      </button>
+
+      <!-- Hidden tabs dropdown menu (fixed outside clipping) -->
+      <div
+        *ngIf="isTabOverflowOpen && hiddenTabs.length > 0"
+        class="ppt-tab-overflow-menu"
+        [style.position]="'fixed'"
+        [style.left.px]="tabOverflowPos.left"
+        [style.top.px]="tabOverflowPos.top"
+        [style.zIndex]="2000"
+      >
+        <button
+          *ngFor="let tab of hiddenTabs"
+          type="button"
+          class="ppt-tab-overflow-item"
+          [class.active]="activeTab === tab.id"
+          [class.disabled]="!tab.enabled"
+          [disabled]="!tab.enabled"
+          (click)="onSelectHiddenTab(tab)"
+        >
+          <span>{{ tab.label }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Right Side of Tab Strip: Search box + Present button -->
+    <div class="tab-strip-right" #tabStripRight>
+      <!-- Search Box -->
+      <div class="ppt-search-box-wrapper">
+        <app-ppt-icon name="search" [size]="14" class="search-magnifier"></app-ppt-icon>
+        <input
+          #searchInput
+          type="text"
+          class="ppt-search-input"
+          placeholder="Search"
+          [(ngModel)]="searchQuery"
+          (focus)="onSearchFocus($event)"
+          (input)="onSearchInput()"
+          data-demo-target="ribbon-search-input"
+        />
+
+        <!-- Search Results Dropdown (rendered fixed) -->
+        <div
+          *ngIf="isSearchDropdownOpen && filteredCommands.length > 0"
+          class="search-results-dropdown"
+          [style.position]="'fixed'"
+          [style.left.px]="searchPos.left"
+          [style.top.px]="searchPos.top"
+          [style.zIndex]="2000"
+        >
+          <button
+            *ngFor="let cmd of filteredCommands"
+            type="button"
+            class="search-result-item"
+            [attr.data-demo-target]="'search-cmd-' + cmd.id"
+            (click)="executeSearchCommand(cmd)"
+          >
+            <app-ppt-icon [name]="cmd.icon" [size]="14"></app-ppt-icon>
+            <div class="cmd-info">
+              <span class="cmd-label">{{ cmd.label }}</span>
+              <span class="cmd-group">{{ cmd.group }}</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Present button (disabled) -->
+      <button
+        type="button"
+        class="ppt-present-btn"
+        disabled
+        title="Present (disabled)"
+        data-demo-target="ribbon-present-button"
+      >
+        <app-ppt-icon name="present" [size]="16"></app-ppt-icon>
+        <span>Present</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Ribbon Body (Groups for active tab) -->
+  <div class="ppt-ribbon-body" #ribbonBody>
+    <ng-container [ngSwitch]="activeTab">
+      <app-ppt-home-tab
+        *ngSwitchCase="'home'"
+        [canUndo]="canUndo"
+        [canRedo]="canRedo"
+        [canPaste]="canPaste"
+        [currentLayout]="currentLayout"
+        [isTextActive]="isTextActive"
+        [isBold]="isBold"
+        [isItalic]="isItalic"
+        [isUnderline]="isUnderline"
+        [currentFont]="currentFont"
+        [currentFontSize]="currentFontSize"
+        [currentAlign]="currentAlign"
+        [currentLineSpacing]="currentLineSpacing"
+        [lastFontColor]="lastFontColor"
+        [hasBullets]="hasBullets"
+        [hasNumbering]="hasNumbering"
+        (undo)="undo.emit()"
+        (redo)="redo.emit()"
+        (paste)="paste.emit()"
+        (copy)="copy.emit()"
+        (newSlide)="newSlide.emit($event)"
+        (changeLayout)="changeLayout.emit($event)"
+        (toggleBold)="toggleBold.emit()"
+        (toggleItalic)="toggleItalic.emit()"
+        (toggleUnderline)="toggleUnderline.emit()"
+        (changeFont)="changeFont.emit($event)"
+        (changeFontSize)="changeFontSize.emit($event)"
+        (increaseFontSize)="increaseFontSize.emit()"
+        (decreaseFontSize)="decreaseFontSize.emit()"
+        (setFontColor)="setFontColor.emit($event)"
+        (setBullets)="setBullets.emit()"
+        (setNumbering)="setNumbering.emit()"
+        (setAlign)="setAlign.emit($event)"
+        (setLineSpacing)="setLineSpacing.emit($event)"
+        (insertShape)="insertShape.emit($event)"
+        (selectAll)="selectAll.emit()"
+        (selectObjects)="selectObjects.emit()"
+      ></app-ppt-home-tab>
+
+      <app-ppt-insert-tab
+        *ngSwitchCase="'insert'"
+        [currentLayout]="currentLayout"
+        (newSlide)="newSlide.emit($event)"
+        (insertTable)="insertTable.emit($event)"
+        (openPictures)="openPictures.emit()"
+        (insertShape)="insertShape.emit($event)"
+        (insertTextBox)="insertTextBox.emit()"
+      ></app-ppt-insert-tab>
+
+      <app-ppt-design-tab
+        *ngSwitchCase="'design'"
+        [currentTheme]="currentTheme"
+        [currentLayout]="currentLayout"
+        (selectTheme)="selectTheme.emit($event)"
+        (changeLayout)="changeLayout.emit($event)"
+        (formatBackground)="formatBackground.emit()"
+        (resetBackground)="resetBackground.emit()"
+      ></app-ppt-design-tab>
+
+      <app-ppt-transitions-tab
+        *ngSwitchCase="'transitions'"
+        [currentTransition]="currentTransition"
+        (selectTransition)="selectTransition.emit($event)"
+        (previewTransition)="previewTransition.emit()"
+      ></app-ppt-transitions-tab>
+    </ng-container>
+  </div>
+</div>

@@ -1,0 +1,130 @@
+<div class="ppt-tab-content" [class.compact]="isCompact" role="region" aria-label="Transitions tab">
+  <!-- 1. Preview Group -->
+  <app-ppt-ribbon-group
+    label="Preview"
+    groupId="preview"
+    [isOverflow]="isOverflow('preview')"
+    [isCompact]="isCompact"
+    icon="present"
+    [isFolded]="isFolded('preview')"
+    [isOpen]="isFoldOpen('preview')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <button type="button" class="ppt-large-btn" [disabled]="!canPreview" title="Preview Transition" data-demo-target="transitions-preview" (click)="previewTransition.emit()">
+      <svg viewBox="0 0 16 16" width="22" height="22" fill="currentColor"><polygon points="4,2 14,8 4,14"/></svg>
+      <span class="btn-label">Preview</span>
+    </button>
+  </app-ppt-ribbon-group>
+
+  <!-- 2. Transition to This Slide Group -->
+  <app-ppt-ribbon-group
+    label="Transition to This Slide"
+    groupId="gallery"
+    [isOverflow]="isOverflow('gallery')"
+    [isCompact]="isCompact"
+    icon="transition"
+    [isFolded]="isFolded('gallery')"
+    [isOpen]="isFoldOpen('gallery')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <div class="transitions-gallery-container">
+      <div class="transitions-tiles-row">
+        <button
+          *ngFor="let t of primaryTiles"
+          type="button"
+          class="transition-tile"
+          [class.active]="currentTransition.type === t.id"
+          [disabled]="!t.enabled"
+          [title]="t.label"
+          [attr.data-demo-target]="'transitions-' + t.id"
+          (click)="onPickTransition(t.id, t.enabled)"
+        >
+          <div class="transition-tile-icon">
+            <app-ppt-icon name="transition" [size]="16"></app-ppt-icon>
+          </div>
+          <span class="transition-tile-label">{{ t.label }}</span>
+        </button>
+      </div>
+
+      <!-- More button -->
+      <button
+        type="button"
+        class="transition-more-btn"
+        disabled
+        title="More Transitions"
+        data-demo-target="transitions-more"
+      >
+        <app-ppt-icon name="chevron-down" [size]="10"></app-ppt-icon>
+      </button>
+    </div>
+
+    <!-- Effect Options (ENABLED only when Push is selected) -->
+    <div class="relative-menu-anchor">
+      <button
+        type="button"
+        class="ppt-large-btn"
+        [disabled]="currentTransition.type !== 'push'"
+        title="Effect Options"
+        data-demo-target="transitions-effect-options"
+        (click)="onToggleEffectOptions($event)"
+      >
+        <svg viewBox="0 0 16 16" width="22" height="22" fill="currentColor">
+          <rect x="2" y="2" width="12" height="12" rx="1" fill="none" stroke="currentColor"/>
+          <path d="M5 8h6M8 5l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+        <span class="btn-label">Effect Options ▾</span>
+      </button>
+
+      <!-- Effect options dropdown -->
+      <div *ngIf="isEffectOptionsOpen" class="effect-options-popup" [style.position]="'fixed'" [style.left.px]="effectPos.left" [style.top.px]="effectPos.top" [style.zIndex]="2000" (click)="$event.stopPropagation()">
+        <button
+          type="button"
+          class="effect-option-item"
+          data-demo-target="transitions-effect-from-right"
+          (click)="onSelectDirection('fromRight')"
+        >
+          From Right
+        </button>
+        <button
+          type="button"
+          class="effect-option-item"
+          data-demo-target="transitions-effect-from-left"
+          (click)="onSelectDirection('fromLeft')"
+        >
+          From Left
+        </button>
+      </div>
+    </div>
+  </app-ppt-ribbon-group>
+
+  <!-- 3. Timing Group (disabled) -->
+  <app-ppt-ribbon-group
+    label="Timing"
+    groupId="timing"
+    [isOverflow]="isOverflow('timing')"
+    [isCompact]="isCompact"
+    icon="sound"
+    [isFolded]="isFolded('timing')"
+    [isOpen]="isFoldOpen('timing')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <div class="timing-controls-cluster">
+      <div class="timing-row">
+        <span class="timing-label">Sound: [No Sound]</span>
+      </div>
+      <div class="timing-row">
+        <span class="timing-label">Duration: 02.00</span>
+      </div>
+      <div class="timing-row">
+        <button type="button" class="ppt-small-btn" disabled title="Apply To All" data-demo-target="transitions-apply-all">
+          <app-ppt-icon name="transition" [size]="14"></app-ppt-icon>
+          <span class="btn-text">Apply To All</span>
+        </button>
+      </div>
+    </div>
+  </app-ppt-ribbon-group>
+</div>
+

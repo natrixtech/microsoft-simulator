@@ -1,0 +1,366 @@
+:host {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+}
+
+.ppt-tab-content {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+}
+
+.ppt-large-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  padding: 3px 6px;
+  cursor: pointer;
+  height: 58px;
+  min-width: 44px;
+  gap: 2px;
+  color: #323130;
+  box-sizing: border-box;
+}
+
+.ppt-large-btn:hover:not(:disabled) {
+  background: #f3f2f1;
+  border-color: #e1dfdd;
+}
+
+.btn-label {
+  font-size: 11px;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  white-space: nowrap;
+}
+
+.ppt-btn-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.ppt-small-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  padding: 2px 5px;
+  cursor: pointer;
+  height: 20px;
+  color: #323130;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.ppt-small-btn:hover:not(:disabled) {
+  background: #f3f2f1;
+}
+
+.btn-text {
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+}
+
+.ppt-split-button-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.split-top {
+  height: 44px;
+  padding-bottom: 0;
+}
+
+.ppt-split-dropdown-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: pointer;
+  color: #323130;
+  padding: 0;
+}
+
+.ppt-split-dropdown-arrow:hover:not(:disabled) {
+  background: #f3f2f1;
+}
+
+.relative-menu-anchor {
+  position: relative;
+}
+
+/* Disabled ribbon controls (light mode) */
+.ppt-large-btn:disabled,
+.ppt-small-btn:disabled,
+.ppt-split-dropdown-arrow:disabled,
+.shape-popup-item:disabled,
+button:disabled {
+  opacity: 1;
+  color: #a19f9d;
+  cursor: default;
+}
+
+.ppt-large-btn:disabled .btn-label,
+.ppt-small-btn:disabled .btn-text,
+button:disabled .btn-label,
+button:disabled .btn-text {
+  color: #a19f9d;
+}
+
+.ppt-large-btn:disabled app-ppt-icon,
+.ppt-small-btn:disabled app-ppt-icon,
+.ppt-split-dropdown-arrow:disabled app-ppt-icon,
+.shape-popup-item:disabled app-ppt-icon,
+button:disabled app-ppt-icon {
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+
+/* Table picker popup */
+.table-picker-popup {
+  position: fixed;
+  z-index: 2000;
+  background: #ffffff;
+  border: 1px solid #c8c6c4;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.picker-header {
+  font-size: 11px;
+  font-weight: 600;
+  color: #616161;
+  margin-bottom: 6px;
+  text-align: center;
+  min-height: 16px;
+}
+
+.picker-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.picker-row {
+  display: flex;
+  gap: 3px;
+}
+
+.picker-cell {
+  width: 18px;
+  height: 18px;
+  border: 1px solid #8a8886;
+  background: #ffffff;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.picker-cell.highlighted {
+  background: #cfe2f3;
+  border-color: #0078d4;
+}
+
+/* Shapes dropdown gallery */
+.shapes-gallery-popup {
+  position: fixed;
+  z-index: 2000;
+  background: #ffffff;
+  border: 1px solid #c8c6c4;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  padding: 8px 10px;
+  min-width: 170px;
+  max-width: 220px;
+}
+
+.shapes-category {
+  margin-bottom: 8px;
+}
+
+.shapes-category:last-child {
+  margin-bottom: 0;
+}
+
+.shapes-category-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #605e5c;
+  margin-bottom: 4px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid #edebe9;
+}
+
+.shapes-category-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.shape-popup-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.shape-popup-item:hover:not(:disabled) {
+  background: #f3f2f1;
+  border-color: #c8c6c4;
+}
+
+.shape-popup-item svg rect,
+.shape-popup-item svg ellipse,
+.shape-popup-item svg polygon,
+.shape-popup-item svg path {
+  fill: #c7e0f4;
+  stroke: #0078d4;
+  stroke-width: 1.5;
+}
+
+:host-context([data-theme='DARK']) .shapes-category-title,
+:host-context(.dark-theme) .shapes-category-title {
+  color: #a19f9d;
+  border-bottom-color: #3b3a39;
+}
+
+:host-context([data-theme='DARK']) .shape-popup-item:hover:not(:disabled),
+:host-context(.dark-theme) .shape-popup-item:hover:not(:disabled) {
+  background: #323130;
+  border-color: #484644;
+}
+
+:host-context([data-theme='DARK']) .shape-popup-item svg rect,
+:host-context([data-theme='DARK']) .shape-popup-item svg ellipse,
+:host-context([data-theme='DARK']) .shape-popup-item svg polygon,
+:host-context([data-theme='DARK']) .shape-popup-item svg path,
+:host-context(.dark-theme) .shape-popup-item svg rect,
+:host-context(.dark-theme) .shape-popup-item svg ellipse,
+:host-context(.dark-theme) .shape-popup-item svg polygon,
+:host-context(.dark-theme) .shape-popup-item svg path {
+  fill: #2b579a;
+  stroke: #4f8cdb;
+}
+
+/* Dark mode */
+:host-context([data-theme='DARK']),
+:host-context(.dark-theme) {
+  color: #f3f2f1;
+}
+
+:host-context([data-theme='DARK']) .ppt-large-btn,
+:host-context(.dark-theme) .ppt-large-btn,
+:host-context([data-theme='DARK']) .ppt-small-btn,
+:host-context(.dark-theme) .ppt-small-btn,
+:host-context([data-theme='DARK']) .ppt-split-dropdown-arrow,
+:host-context(.dark-theme) .ppt-split-dropdown-arrow,
+:host-context([data-theme='DARK']) .shape-popup-item,
+:host-context(.dark-theme) .shape-popup-item {
+  color: #f3f2f1;
+}
+
+:host-context([data-theme='DARK']) .ppt-large-btn:hover:not(:disabled),
+:host-context(.dark-theme) .ppt-large-btn:hover:not(:disabled),
+:host-context([data-theme='DARK']) .ppt-small-btn:hover:not(:disabled),
+:host-context(.dark-theme) .ppt-small-btn:hover:not(:disabled),
+:host-context([data-theme='DARK']) .shape-popup-item:hover:not(:disabled),
+:host-context(.dark-theme) .shape-popup-item:hover:not(:disabled) {
+  background: #3b3a39;
+  border-color: #484644;
+}
+
+/* Disabled ribbon controls (dark mode) */
+:host-context([data-theme='DARK']) .ppt-large-btn:disabled,
+:host-context(.dark-theme) .ppt-large-btn:disabled,
+:host-context([data-theme='DARK']) .ppt-small-btn:disabled,
+:host-context(.dark-theme) .ppt-small-btn:disabled,
+:host-context([data-theme='DARK']) .ppt-split-dropdown-arrow:disabled,
+:host-context(.dark-theme) .ppt-split-dropdown-arrow:disabled,
+:host-context([data-theme='DARK']) .shape-popup-item:disabled,
+:host-context(.dark-theme) .shape-popup-item:disabled,
+:host-context([data-theme='DARK']) button:disabled,
+:host-context(.dark-theme) button:disabled {
+  color: #8a8886;
+}
+
+:host-context([data-theme='DARK']) .ppt-large-btn:disabled .btn-label,
+:host-context(.dark-theme) .ppt-large-btn:disabled .btn-label,
+:host-context([data-theme='DARK']) .ppt-small-btn:disabled .btn-text,
+:host-context(.dark-theme) .ppt-small-btn:disabled .btn-text,
+:host-context([data-theme='DARK']) button:disabled .btn-label,
+:host-context(.dark-theme) button:disabled .btn-label,
+:host-context([data-theme='DARK']) button:disabled .btn-text,
+:host-context(.dark-theme) button:disabled .btn-text {
+  color: #8a8886;
+}
+
+:host-context([data-theme='DARK']) .ppt-large-btn:disabled app-ppt-icon,
+:host-context(.dark-theme) .ppt-large-btn:disabled app-ppt-icon,
+:host-context([data-theme='DARK']) .ppt-small-btn:disabled app-ppt-icon,
+:host-context(.dark-theme) .ppt-small-btn:disabled app-ppt-icon,
+:host-context([data-theme='DARK']) .ppt-split-dropdown-arrow:disabled app-ppt-icon,
+:host-context(.dark-theme) .ppt-split-dropdown-arrow:disabled app-ppt-icon,
+:host-context([data-theme='DARK']) .shape-popup-item:disabled app-ppt-icon,
+:host-context(.dark-theme) .shape-popup-item:disabled app-ppt-icon,
+:host-context([data-theme='DARK']) button:disabled app-ppt-icon,
+:host-context(.dark-theme) button:disabled app-ppt-icon {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
+:host-context([data-theme='DARK']) .table-picker-popup,
+:host-context(.dark-theme) .table-picker-popup,
+:host-context([data-theme='DARK']) .shapes-gallery-popup,
+:host-context(.dark-theme) .shapes-gallery-popup {
+  background: #252423;
+  border-color: #3b3a39;
+}
+
+:host-context([data-theme='DARK']) .picker-header,
+:host-context(.dark-theme) .picker-header,
+:host-context([data-theme='DARK']) .shapes-popup-header,
+:host-context(.dark-theme) .shapes-popup-header {
+  color: #a6a6a6;
+  border-bottom-color: #3b3a39;
+}
+
+:host-context([data-theme='DARK']) .picker-cell,
+:host-context(.dark-theme) .picker-cell {
+  background: #1f1f1f;
+  border-color: #484644;
+}
+
+:host-context([data-theme='DARK']) .picker-cell.highlighted,
+:host-context(.dark-theme) .picker-cell.highlighted {
+  background: #004578;
+  border-color: #2899f5;
+}
+
+/* Stage 1 Compact: small buttons drop their text, icons only, stacked vertically */
+.ppt-tab-content.compact .ppt-small-btn .btn-text {
+  display: none !important;
+}
+.ppt-tab-content.compact .ppt-small-btn {
+  padding: 2px 4px !important;
+  min-width: 22px !important;
+  justify-content: center !important;
+}

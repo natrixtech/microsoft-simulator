@@ -1,0 +1,262 @@
+:host {
+  display: block;
+  width: 300px;
+  height: 100%;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+}
+
+.ppt-format-bg-pane {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background-color: #faf9f8;
+  border-left: 1px solid #edebe9;
+  box-sizing: border-box;
+  user-select: none;
+}
+
+:host-context([data-theme='DARK']) .ppt-format-bg-pane,
+:host-context(.dark-theme) .ppt-format-bg-pane {
+  background-color: #2b2b2b;
+  border-left-color: #3b3a39;
+}
+
+/* Header */
+.ppt-pane-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid #edebe9;
+  height: 40px;
+  box-sizing: border-box;
+}
+
+:host-context([data-theme='DARK']) .ppt-pane-header,
+:host-context(.dark-theme) .ppt-pane-header {
+  border-bottom-color: #3b3a39;
+}
+
+.ppt-pane-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #323130;
+}
+
+:host-context([data-theme='DARK']) .ppt-pane-title,
+:host-context(.dark-theme) .ppt-pane-title {
+  color: #f3f2f1;
+}
+
+.ppt-pane-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  line-height: 1;
+  color: #605e5c;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+.ppt-pane-close-btn:hover {
+  background-color: #f3f2f1;
+  color: #323130;
+}
+
+:host-context([data-theme='DARK']) .ppt-pane-close-btn {
+  color: #a19f9d;
+}
+
+:host-context([data-theme='DARK']) .ppt-pane-close-btn:hover {
+  background-color: #383838;
+  color: #f3f2f1;
+}
+
+/* Body */
+.ppt-pane-body {
+  flex: 1;
+  padding: 14px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ppt-pane-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #323130;
+}
+
+:host-context([data-theme='DARK']) .ppt-pane-section-title,
+:host-context(.dark-theme) .ppt-pane-section-title {
+  color: #f3f2f1;
+}
+
+.ppt-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.ppt-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #323130;
+  cursor: pointer;
+}
+
+:host-context([data-theme='DARK']) .ppt-radio-label,
+:host-context(.dark-theme) .ppt-radio-label {
+  color: #d2d0ce;
+}
+
+.ppt-fill-controls {
+  margin-top: 10px;
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ppt-control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.control-label {
+  font-size: 12px;
+  color: #605e5c;
+}
+
+:host-context([data-theme='DARK']) .control-label,
+:host-context(.dark-theme) .control-label {
+  color: #a19f9d;
+}
+
+.ppt-color-picker-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #ffffff;
+  border: 1px solid #d2d0ce;
+  border-radius: 3px;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+
+:host-context([data-theme='DARK']) .ppt-color-picker-trigger,
+:host-context(.dark-theme) .ppt-color-picker-trigger {
+  background-color: #333333;
+  border-color: #484644;
+}
+
+.color-sample {
+  width: 18px;
+  height: 18px;
+  border-radius: 2px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.dropdown-caret {
+  font-size: 10px;
+  color: #605e5c;
+}
+
+:host-context([data-theme='DARK']) .dropdown-caret,
+:host-context(.dark-theme) .dropdown-caret {
+  color: #a19f9d;
+}
+
+.ppt-btn-action {
+  background-color: #ffffff;
+  border: 1px solid #8a8886;
+  border-radius: 3px;
+  padding: 4px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #323130;
+}
+
+.ppt-btn-action:hover {
+  background-color: #f3f2f1;
+}
+
+:host-context([data-theme='DARK']) .ppt-btn-action,
+:host-context(.dark-theme) .ppt-btn-action {
+  background-color: #333333;
+  border-color: #484644;
+  color: #f3f2f1;
+}
+
+:host-context([data-theme='DARK']) .ppt-btn-action:hover,
+:host-context(.dark-theme) .ppt-btn-action:hover {
+  background-color: #3f3f3f;
+}
+
+.current-picture-info {
+  font-size: 11px;
+  color: #8a8886;
+  word-break: break-all;
+}
+
+/* Footer */
+.ppt-pane-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-top: 1px solid #edebe9;
+  background-color: #faf9f8;
+}
+
+:host-context([data-theme='DARK']) .ppt-pane-footer,
+:host-context(.dark-theme) .ppt-pane-footer {
+  border-top-color: #3b3a39;
+  background-color: #2b2b2b;
+}
+
+.ppt-pane-btn {
+  width: 100%;
+  padding: 6px 12px;
+  font-size: 12px;
+  background-color: #ffffff;
+  border: 1px solid #8a8886;
+  border-radius: 3px;
+  cursor: pointer;
+  color: #323130;
+  text-align: center;
+}
+
+.ppt-pane-btn:hover:not(:disabled) {
+  background-color: #f3f2f1;
+}
+
+.ppt-pane-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+:host-context([data-theme='DARK']) .ppt-pane-btn,
+:host-context(.dark-theme) .ppt-pane-btn {
+  background-color: #333333;
+  border-color: #484644;
+  color: #f3f2f1;
+}
+
+:host-context([data-theme='DARK']) .ppt-pane-btn:disabled,
+:host-context(.dark-theme) .ppt-pane-btn:disabled {
+  background-color: #262626;
+  border-color: #333333;
+  color: #737373;
+}
+

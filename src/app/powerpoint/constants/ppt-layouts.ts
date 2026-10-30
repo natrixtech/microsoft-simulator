@@ -1,0 +1,152 @@
+import { LayoutDef, SlideLayout } from '../models/ppt.types';
+
+export const PPT_LAYOUTS: Record<SlideLayout, LayoutDef> = {
+  title: {
+    id: 'title',
+    name: 'Title Slide',
+    placeholders: [
+      {
+        type: 'title',
+        x: 80,
+        y: 150,
+        w: 800,
+        h: 120,
+        fontSize: 60,
+        promptText: 'Click to add title',
+        align: 'center',
+      },
+      {
+        type: 'subtitle',
+        x: 160,
+        y: 300,
+        w: 640,
+        h: 80,
+        fontSize: 24,
+        promptText: 'Click to add subtitle',
+        align: 'center',
+      },
+    ],
+  },
+  titleAndBody: {
+    id: 'titleAndBody',
+    name: 'Title and Content',
+    placeholders: [
+      {
+        type: 'title',
+        x: 80,
+        y: 40,
+        w: 800,
+        h: 60,
+        fontSize: 44,
+        promptText: 'Click to add title',
+        align: 'left',
+      },
+      {
+        type: 'body',
+        x: 80,
+        y: 130,
+        w: 800,
+        h: 350,
+        fontSize: 28,
+        promptText: 'Click to add text',
+        align: 'left',
+        isBullet: true,
+      },
+    ],
+  },
+  titleOnly: {
+    id: 'titleOnly',
+    name: 'Title Only',
+    placeholders: [
+      {
+        type: 'title',
+        x: 80,
+        y: 40,
+        w: 800,
+        h: 60,
+        fontSize: 44,
+        promptText: 'Click to add title',
+        align: 'left',
+      },
+    ],
+  },
+  sectionHeader: {
+    id: 'sectionHeader',
+    name: 'Section Header',
+    placeholders: [
+      {
+        type: 'title',
+        x: 80,
+        y: 220,
+        w: 800,
+        h: 90,
+        fontSize: 54,
+        promptText: 'Click to add title',
+        align: 'left',
+      },
+      {
+        type: 'body',
+        x: 80,
+        y: 330,
+        w: 800,
+        h: 100,
+        fontSize: 24,
+        promptText: 'Click to add text',
+        align: 'left',
+      },
+    ],
+  },
+  twoColumns: {
+    id: 'twoColumns',
+    name: 'Two Content',
+    placeholders: [
+      {
+        type: 'title',
+        x: 80,
+        y: 40,
+        w: 800,
+        h: 60,
+        fontSize: 44,
+        promptText: 'Click to add title',
+        align: 'left',
+      },
+      {
+        type: 'body',
+        x: 80,
+        y: 130,
+        w: 380,
+        h: 350,
+        fontSize: 28,
+        promptText: 'Click to add text',
+        align: 'left',
+        isBullet: true,
+      },
+      {
+        type: 'body2',
+        x: 500,
+        y: 130,
+        w: 380,
+        h: 350,
+        fontSize: 28,
+        promptText: 'Click to add text',
+        align: 'left',
+        isBullet: true,
+      },
+    ],
+  },
+  blank: {
+    id: 'blank',
+    name: 'Blank',
+    placeholders: [],
+  },
+};
+
+export const LAYOUT_ORDER: SlideLayout[] = [
+  'title',
+  'titleAndBody',
+  'sectionHeader',
+  'twoColumns',
+  'titleOnly',
+  'blank',
+];
+

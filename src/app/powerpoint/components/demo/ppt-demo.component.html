@@ -1,0 +1,106 @@
+<div class="demo-modal-backdrop" (click)="onClose()">
+  <div
+    class="demo-dialog-window"
+    [class.dark-theme]="isDarkTheme"
+    (click)="$event.stopPropagation()"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="demoTitle"
+  >
+    <!-- Header -->
+    <header class="demo-header">
+      <div class="header-titles">
+        <h2 id="demoTitle" class="demo-task-title">{{ task.title }}</h2>
+        <span class="demo-subtitle" [innerHTML]="formattedFirstInstruction | pptSafeHtml"></span>
+      </div>
+      <button
+        type="button"
+        class="demo-close-btn"
+        (click)="onClose()"
+        aria-label="Close demo"
+        title="Close (Esc)"
+      >
+        ✕
+      </button>
+    </header>
+
+    <!-- Body: Left Column (Steps) + Right Area (PowerPoint Replica) -->
+    <div class="demo-body">
+      <!-- Left Column: Steps -->
+      <div class="demo-steps-column">
+        <ol class="demo-steps-list">
+          <li
+            *ngFor="let step of steps(); let idx = index"
+            class="demo-step-row"
+            [class.active]="step.state === 'active'"
+            [class.done]="step.state === 'done'"
+          >
+            <span class="step-num-circle">
+              <ng-container *ngIf="step.state !== 'done'">{{ idx + 1 }}</ng-container>
+              <ng-container *ngIf="step.state === 'done'">✓</ng-container>
+            </span>
+            <span class="step-label-text">{{ step.label }}</span>
+          </li>
+        </ol>
+
+        <button type="button" class="demo-replay-btn" (click)="replay()">
+          <span>↺</span> Replay
+        </button>
+      </div>
+
+      <!-- Right Area: Scaled Replica with Animated Cursor -->
+      <div class="demo-replica-area" #demoReplicaArea>
+        <!-- Completion Toast -->
+        <div class="demo-completion-toast" *ngIf="showToast()">
+          ✨ That's how you {{ getToastTitle() }}!
+        </div>
+
+        <!-- Scaler container for fixed 1280x760 replica -->
+        <div
+          class="replica-scaler"
+          [style.transform]="scaleTransform()"
+          [style.height.px]="replicaHeight()"
+          [class.replica-hidden]="!replicaReady()"
+        >
+          <ng-container *ngIf="replicaAlive()">
+            <app-ppt-demo-host
+              #demoHost
+              [demoDeck]="currentDemoDeck"
+              [demoActivity]="demoActivity"
+              [height]="replicaHeight()"
+            ></app-ppt-demo-host>
+          </ng-container>
+        </div>
+
+        <!-- Animated Cursor -->
+        <div
+          class="demo-cursor"
+          *ngIf="isCursorVisible()"
+          [class.clicking]="isClicking()"
+          [style.left.px]="cursorPixelX()"
+          [style.top.px]="cursorPixelY()"
+        >
+          <!-- Windows Arrow Cursor SVG -->
+          <svg
+            class="cursor-icon"
+            viewBox="0 0 24 24"
+            width="28"
+            height="28"
+            fill="none"
+          >
+            <!-- Drop shadow and outline -->
+            <path
+              d="M3 2L10 20L13.5 13.5L20 10L3 2Z"
+              fill="#000000"
+              stroke="#ffffff"
+              stroke-width="1.8"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <!-- Click ripple pulse ring -->
+          <div class="click-pulse-ring"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

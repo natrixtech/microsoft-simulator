@@ -1,0 +1,68 @@
+:host {
+  display: contents;
+}
+
+.ppt-placeholder-box {
+  position: absolute;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  cursor: text;
+  line-height: 1.25;
+  user-select: text;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  border: 1px dashed transparent;
+  transition: border-color 0.15s ease;
+}
+
+.ppt-placeholder-box.non-interactive {
+  cursor: default;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Empty placeholder shows dashed grey border */
+.ppt-placeholder-box.empty {
+  border-color: #a6a6a6;
+}
+
+.ppt-placeholder-box:hover:not(.non-interactive) {
+  border-color: #808080;
+}
+
+.ppt-placeholder-box.editing {
+  border-color: #c43e1c;
+  outline: none;
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.ppt-prompt-text {
+  color: #737373;
+  user-select: none;
+  pointer-events: none;
+  font-style: normal;
+}
+
+.ppt-editable-text,
+.ppt-rendered-text {
+  width: 100%;
+  height: 100%;
+  outline: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+  box-sizing: border-box;
+}
+
+.ppt-editable-text ul,
+.ppt-editable-text ol,
+.ppt-rendered-text ul,
+.ppt-rendered-text ol {
+  margin: 0;
+  padding-left: 1.2em;
+}
+
+.ppt-editable-text li,
+.ppt-rendered-text li {
+  margin-bottom: 2px;
+}

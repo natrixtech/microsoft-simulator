@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <linearGradient id="bgArt" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff4ce"/>
+      <stop offset="100%" stop-color="#fef0d1"/>
+    </linearGradient>
+    <linearGradient id="paletteGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fce8be"/>
+      <stop offset="100%" stop-color="#f3c483"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" rx="16" fill="url(#bgArt)"/>
+  
+  <!-- Artist Palette Shadow -->
+  <path d="M 215 75 C 305 75, 335 155, 305 215 C 275 255, 175 255, 125 215 C 75 165, 105 75, 215 75 Z" fill="#d2d0ce" opacity="0.4" transform="translate(4, 6)"/>
+
+  <!-- Artist Palette -->
+  <path d="M 215 75 C 305 75, 335 155, 305 215 C 285 245, 255 245, 240 225 C 225 205, 195 205, 180 225 C 165 245, 135 245, 115 215 C 75 165, 105 75, 215 75 Z" fill="url(#paletteGrad)" stroke="#d8a45f" stroke-width="3"/>
+  
+  <!-- Thumb Hole -->
+  <ellipse cx="270" cy="185" rx="16" ry="22" fill="#fff4ce" stroke="#d8a45f" stroke-width="2"/>
+
+  <!-- Paint Swatches -->
+  <circle cx="140" cy="120" r="14" fill="#d83b01"/>
+  <circle cx="175" cy="98" r="14" fill="#ffb900"/>
+  <circle cx="225" cy="95" r="14" fill="#107c41"/>
+  <circle cx="275" cy="115" r="14" fill="#0078d4"/>
+  <circle cx="125" cy="165" r="14" fill="#881798"/>
+
+  <!-- Paint Brush -->
+  <g transform="rotate(42, 210, 150)">
+    <rect x="204" y="50" width="12" height="130" rx="4" fill="#8a5327"/>
+    <rect x="202" y="180" width="16" height="26" fill="#a19f9d"/>
+    <path d="M 202 206 C 202 225, 210 235, 210 235 C 210 235, 218 225, 218 206 Z" fill="#0078d4"/>
+  </g>
+</svg>
+

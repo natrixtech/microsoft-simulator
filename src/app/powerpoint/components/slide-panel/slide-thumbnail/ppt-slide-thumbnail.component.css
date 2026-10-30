@@ -1,0 +1,65 @@
+:host {
+  display: block;
+}
+
+.ppt-thumbnail-wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  cursor: grab;
+  touch-action: none;
+  padding: 4px 6px;
+  border-radius: 4px;
+  user-select: none;
+}
+
+.slide-number {
+  font-size: 11px;
+  font-weight: 600;
+  color: #605e5c;
+  min-width: 14px;
+  text-align: right;
+  padding-top: 2px;
+}
+
+:host-context([data-theme='DARK']) .slide-number,
+:host-context(.dark-theme) .slide-number {
+  color: #a19f9d;
+}
+
+.thumb-frame {
+  width: 144px;
+  height: 81px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #d2d0ce;
+  border-radius: 2px;
+  background-color: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.thumb-frame:hover {
+  border-color: #8a8886;
+}
+
+.thumb-frame.selected {
+  border: 2.5px solid #c43e1c;
+  border-radius: 3px;
+  box-shadow: 0 2px 8px rgba(196, 62, 28, 0.25);
+}
+
+.scaled-slide-wrapper {
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+
+.ppt-thumbnail-wrapper:active {
+  cursor: grabbing;
+}
+
+.ppt-thumbnail-wrapper.is-dragging {
+  opacity: 0.4;
+}

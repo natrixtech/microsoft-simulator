@@ -1,0 +1,121 @@
+:host {
+  display: block;
+  user-select: none;
+}
+
+.ppt-color-picker-panel {
+  background-color: #ffffff;
+  border: 1px solid #d2d0ce;
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 8px;
+  width: 176px;
+  box-sizing: border-box;
+}
+
+:host-context([data-theme='DARK']) .ppt-color-picker-panel,
+:host-context(.dark-theme) .ppt-color-picker-panel {
+  background-color: #2b2b2b;
+  border-color: #3f3f3f;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.transparent-swatch-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 6px;
+  margin-bottom: 6px;
+  background: transparent;
+  border: 1px solid #edebe9;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 11px;
+  color: #323130;
+  box-sizing: border-box;
+}
+
+:host-context([data-theme='DARK']) .transparent-swatch-btn,
+:host-context(.dark-theme) .transparent-swatch-btn {
+  border-color: #3f3f3f;
+  color: #f3f2f1;
+}
+
+.transparent-swatch-btn:hover {
+  background-color: #f3f2f1;
+}
+
+:host-context([data-theme='DARK']) .transparent-swatch-btn:hover,
+:host-context(.dark-theme) .transparent-swatch-btn:hover {
+  background-color: #383838;
+}
+
+.no-fill-slash {
+  width: 14px;
+  height: 14px;
+  border: 1px solid #a19f9d;
+  border-radius: 2px;
+  position: relative;
+  background: #ffffff;
+}
+
+.no-fill-slash::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1.5px;
+  background: #c43e1c;
+  transform: rotate(-45deg);
+}
+
+.color-picker-header {
+  font-size: 11px;
+  font-weight: 600;
+  color: #605e5c;
+  margin-bottom: 6px;
+  padding-left: 2px;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+}
+
+:host-context([data-theme='DARK']) .color-picker-header,
+:host-context(.dark-theme) .color-picker-header {
+  color: #a19f9d;
+}
+
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+}
+
+.color-swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 2px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  padding: 0;
+  box-sizing: border-box;
+  transition: transform 0.1s ease, border-color 0.1s ease;
+}
+
+.color-swatch:hover {
+  transform: scale(1.15);
+  border-color: #323130;
+  z-index: 2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+:host-context([data-theme='DARK']) .color-swatch:hover,
+:host-context(.dark-theme) .color-swatch:hover {
+  border-color: #ffffff;
+}
+
+.color-swatch.selected {
+  outline: 2px solid #c43e1c;
+  outline-offset: 1px;
+}
+

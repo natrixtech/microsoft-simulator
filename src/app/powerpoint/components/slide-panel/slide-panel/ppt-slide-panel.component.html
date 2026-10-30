@@ -1,0 +1,35 @@
+<aside
+  class="ppt-slide-strip"
+  role="region"
+  aria-label="Slide thumbnails"
+  tabindex="0"
+  style="outline: none"
+  (keydown)="onKeyDown($event)"
+>
+  <div class="thumbnails-list">
+    <ng-container *ngFor="let s of slides; let idx = index; trackBy: trackBySlideId">
+      <!-- Insertion line before this thumbnail -->
+      <div
+        class="insertion-line"
+        *ngIf="isDragging && dragTargetIndex === idx"
+      ></div>
+
+      <app-ppt-slide-thumbnail
+        [slide]="s"
+        [slideIndex]="idx"
+        [isSelected]="currentSlideIndex === idx"
+        [isDragging]="isDragging && dragSourceIndex === idx"
+        [theme]="theme"
+        [assetBaseUrl]="assetBaseUrl"
+        (pointerDownThumb)="onThumbPointerDown(idx, $event)"
+        (contextMenu)="openSlideContextMenu.emit($event)"
+      ></app-ppt-slide-thumbnail>
+    </ng-container>
+
+    <!-- Insertion line after the last thumbnail -->
+    <div
+      class="insertion-line"
+      *ngIf="isDragging && dragTargetIndex === slides.length"
+    ></div>
+  </div>
+</aside>

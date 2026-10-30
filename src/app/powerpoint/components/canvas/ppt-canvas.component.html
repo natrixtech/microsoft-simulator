@@ -1,0 +1,59 @@
+<div
+  #canvasContainer
+  class="ppt-canvas-area"
+  tabindex="-1"
+  style="outline: none"
+  [class.insert-drawing-mode]="pendingInsert !== null"
+  (click)="onCanvasClick($event)"
+>
+  <div
+    *ngIf="slide"
+    class="slide-transform-wrapper"
+    [class.is-previewing]="!!previewClass"
+    #slideWrapper
+    data-demo-target="slide-canvas"
+    [style.width.px]="960"
+    [style.height.px]="540"
+    [style.transform]="'translate(' + fit.offsetX + 'px, ' + fit.offsetY + 'px) scale(' + fit.scale + ')'"
+    (pointerdown)="onSlidePointerDown($event)"
+    (pointermove)="onSlidePointerMove($event)"
+    (pointerup)="onSlidePointerUp($event)"
+  >
+    <app-ppt-slide-view
+      [ngClass]="previewClass"
+      [slide]="slide"
+      [theme]="theme"
+      [isInteractive]="true"
+      [selectedElementId]="selectedElementId"
+      [selectedElementIds]="selectedElementIds"
+      [editingPlaceholderField]="editingPlaceholderField"
+      [assetBaseUrl]="assetBaseUrl"
+      (selectElement)="selectElement.emit($event)"
+      (deselectElement)="selectElement.emit(null)"
+      (updatePlaceholder)="updatePlaceholder.emit($event)"
+      (startEditPlaceholder)="startEditPlaceholder.emit($event)"
+      (stopEditPlaceholder)="stopEditPlaceholder.emit()"
+      (updateTableCellText)="updateTableCellText.emit($event)"
+      (updateTextBoxText)="updateTextBoxText.emit($event)"
+    ></app-ppt-slide-view>
+
+    <!-- Selection Frame (Handles) on main canvas -->
+    <ng-container *ngFor="let el of (selectedElements.length ? selectedElements : (selectedElement ? [selectedElement] : [])); trackBy: trackByElementId">
+      <app-ppt-selection-frame
+        [element]="el"
+        [scale]="fit.scale"
+        (updateBounds)="onUpdateBounds(el.id, $event)"
+      ></app-ppt-selection-frame>
+    </ng-container>
+
+    <!-- Drawing preview box when dragging to draw a shape or text box -->
+    <div
+      *ngIf="isDrawingNewElement && drawPreviewRect"
+      class="draw-preview-box"
+      [style.left.px]="drawPreviewRect.x"
+      [style.top.px]="drawPreviewRect.y"
+      [style.width.px]="drawPreviewRect.w"
+      [style.height.px]="drawPreviewRect.h"
+    ></div>
+  </div>
+</div>

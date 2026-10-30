@@ -1,0 +1,192 @@
+<div class="ppt-tab-content" [class.compact]="isCompact" role="region" aria-label="Design tab">
+  <!-- 1. Themes Group -->
+  <app-ppt-ribbon-group
+    label="Themes"
+    groupId="themes"
+    [isOverflow]="isOverflow('themes')"
+    [isCompact]="isCompact"
+    icon="themes"
+    [isFolded]="isFolded('themes')"
+    [isOpen]="isFoldOpen('themes')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <div class="themes-strip-container themes-gallery">
+      <div class="themes-visible-tiles">
+        <button
+          *ngFor="let th of themeList"
+          type="button"
+          class="ppt-theme-tile"
+          [class.active]="currentTheme === th.id"
+          [title]="th.name"
+          [attr.data-demo-target]="'design-theme-' + th.id"
+          (click)="onPickTheme(th.id)"
+        >
+          <div class="theme-tile-card" [style.background]="th.background">
+            <span class="theme-tile-text" [style.color]="th.titleColor" [style.font-family]="th.titleFont">Aa</span>
+            <div class="theme-tile-accents">
+              <span *ngFor="let acc of th.accentColors" class="accent-bar" [style.background]="acc"></span>
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <!-- More themes button -->
+      <button
+        type="button"
+        class="themes-more-btn"
+        title="More Themes"
+        data-demo-target="design-themes-more"
+        (click)="onToggleThemesDropdown($event)"
+      >
+        <app-ppt-icon name="chevron-down" [size]="10"></app-ppt-icon>
+      </button>
+
+      <!-- All Themes Dropdown Panel -->
+      <div *ngIf="isThemesDropdownOpen" class="themes-dropdown-popup" [style.position]="'fixed'" [style.left.px]="themesPos.left" [style.top.px]="themesPos.top" [style.zIndex]="2000" (click)="$event.stopPropagation()">
+        <div class="themes-dropdown-header">Themes</div>
+        <div class="themes-dropdown-grid">
+          <button
+            *ngFor="let th of themeList"
+            type="button"
+            class="theme-dropdown-item"
+            [class.active]="currentTheme === th.id"
+            [title]="th.name"
+            [attr.data-demo-target]="'design-theme-menu-' + th.id"
+            (click)="onPickTheme(th.id)"
+          >
+            <div class="theme-tile-card" [style.background]="th.background">
+              <span class="theme-tile-text" [style.color]="th.titleColor" [style.font-family]="th.titleFont">Aa</span>
+              <div class="theme-tile-accents">
+                <span *ngFor="let acc of th.accentColors" class="accent-bar" [style.background]="acc"></span>
+              </div>
+            </div>
+            <span class="theme-dropdown-label">{{ th.name }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </app-ppt-ribbon-group>
+
+  <!-- 2. Customize Group -->
+  <app-ppt-ribbon-group
+    label="Customize"
+    groupId="customize"
+    [isOverflow]="isOverflow('customize')"
+    [isCompact]="isCompact"
+    icon="background-styles"
+    [isFolded]="isFolded('customize')"
+    [isOpen]="isFoldOpen('customize')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <div class="ppt-btn-column">
+      <button type="button" class="ppt-small-btn" disabled title="Variants" data-demo-target="design-variants">
+        <app-ppt-icon name="themes" [size]="14"></app-ppt-icon>
+        <span class="btn-text">Variants ▾</span>
+      </button>
+      <button type="button" class="ppt-small-btn" disabled title="Colors" data-demo-target="design-colors">
+        <app-ppt-icon name="background-styles" [size]="14"></app-ppt-icon>
+        <span class="btn-text">Colors ▾</span>
+      </button>
+      <button type="button" class="ppt-small-btn" disabled title="Fonts" data-demo-target="design-fonts">
+        <app-ppt-icon name="text-box" [size]="14"></app-ppt-icon>
+        <span class="btn-text">Fonts ▾</span>
+      </button>
+    </div>
+
+    <!-- Background Styles (ENABLED) -->
+    <div class="relative-menu-anchor">
+      <button
+        type="button"
+        class="ppt-large-btn"
+        title="Background Styles"
+        data-demo-target="design-background-styles"
+        (click)="onToggleBackgroundMenu($event)"
+      >
+        <app-ppt-icon name="background-styles" [size]="24"></app-ppt-icon>
+        <span class="btn-label">Background Styles ▾</span>
+      </button>
+
+      <!-- Background menu -->
+      <div *ngIf="isBackgroundMenuOpen" class="bg-menu-popup" [style.position]="'fixed'" [style.left.px]="bgMenuPos.left" [style.top.px]="bgMenuPos.top" [style.zIndex]="2000" (click)="$event.stopPropagation()">
+        <button
+          type="button"
+          class="bg-menu-item"
+          data-demo-target="design-format-background"
+          (click)="isBackgroundMenuOpen = false; formatBackground.emit()"
+        >
+          Format Background…
+        </button>
+        <button
+          type="button"
+          class="bg-menu-item"
+          data-demo-target="design-reset-background"
+          (click)="isBackgroundMenuOpen = false; resetBackground.emit()"
+        >
+          Reset Slide Background
+        </button>
+      </div>
+    </div>
+  </app-ppt-ribbon-group>
+
+  <!-- 3. Slides Group -->
+  <app-ppt-ribbon-group
+    label="Slides"
+    groupId="slides"
+    [isOverflow]="isOverflow('slides')"
+    [isCompact]="isCompact"
+    icon="layout"
+    [isFolded]="isFolded('slides')"
+    [isOpen]="isFoldOpen('slides')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <div class="relative-menu-anchor">
+      <button #layoutBtn
+        type="button"
+        class="ppt-large-btn"
+        title="Slide Layout"
+        data-demo-target="design-layout"
+        (click)="onToggleLayoutGallery($event)"
+      >
+        <app-ppt-icon name="layout" [size]="24"></app-ppt-icon>
+        <span class="btn-label">Layout ▾</span>
+      </button>
+
+      <app-ppt-layout-gallery
+        [isOpen]="isLayoutGalleryOpen" [anchorEl]="layoutBtn"
+        [activeLayout]="currentLayout"
+        headerTitle="Slide Layout"
+        (selectLayout)="isLayoutGalleryOpen = false; changeLayout.emit($event)"
+        (close)="isLayoutGalleryOpen = false"
+      ></app-ppt-layout-gallery>
+    </div>
+
+    <div class="ppt-btn-column">
+      <button type="button" class="ppt-small-btn" disabled title="Slide Size" data-demo-target="design-slide-size">
+        <app-ppt-icon name="layout" [size]="14"></app-ppt-icon>
+        <span class="btn-text">Slide Size ▾</span>
+      </button>
+    </div>
+  </app-ppt-ribbon-group>
+
+  <!-- 4. Edit Group (disabled) -->
+  <app-ppt-ribbon-group
+    label="Edit"
+    groupId="edit"
+    [isOverflow]="isOverflow('edit')"
+    [isCompact]="isCompact"
+    icon="designer"
+    [isFolded]="isFolded('edit')"
+    [isOpen]="isFoldOpen('edit')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <button type="button" class="ppt-large-btn" disabled title="Design Suggestions" data-demo-target="design-suggestions">
+      <svg viewBox="0 0 16 16" width="22" height="22" fill="#e8a838"><path d="M8 1l1.5 4.5L14 7l-4.5 1.5L8 13l-1.5-4.5L2 7l4.5-1.5L8 1z"/></svg>
+      <span class="btn-label">Design Suggestions</span>
+    </button>
+  </app-ppt-ribbon-group>
+</div>
+

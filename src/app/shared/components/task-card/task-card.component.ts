@@ -103,7 +103,9 @@ export class TaskCardComponent implements OnChanges, OnDestroy {
   parseInstruction(text: string): MarkupToken[] {
     if (!text) return [];
     const tokens: MarkupToken[] = [];
-    const parts = text.split(/(`[^`]+`|\b[A-Z]{1,3}[1-9]\d*(?::[A-Z]{1,3}[1-9]\d*)?\b|slide \d+|\b\w+ > \w+\b)/gi);
+    const parts = this.appKind === 'powerpoint'
+      ? text.split(/(`[^`]+`|slide \d+|\b\w+(?: > [A-Z]\w*(?: [A-Z]\w*)*)+)/g)
+      : text.split(/(`[^`]+`|\b[A-Z]{1,3}[1-9]\d*(?::[A-Z]{1,3}[1-9]\d*)?\b|slide \d+|\b\w+ > \w+\b)/gi);
 
     for (const part of parts) {
       if (!part) continue;

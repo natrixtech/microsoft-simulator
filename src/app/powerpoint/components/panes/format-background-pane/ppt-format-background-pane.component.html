@@ -1,0 +1,120 @@
+<aside class="ppt-format-bg-pane" role="region" aria-label="Format Background">
+  <!-- Pane Header -->
+  <div class="ppt-pane-header">
+    <h2 class="ppt-pane-title">Format Background</h2>
+    <button
+      type="button"
+      class="ppt-pane-close-btn"
+      title="Close"
+      data-demo-target="format-bg-close"
+      (click)="close.emit()"
+    >
+      &times;
+    </button>
+  </div>
+
+  <!-- Pane Body -->
+  <div class="ppt-pane-body">
+    <div class="ppt-pane-section-title">Fill</div>
+
+    <!-- Fill Type Options -->
+    <div class="ppt-radio-group">
+      <label class="ppt-radio-label">
+        <input
+          type="radio"
+          name="bgFillType"
+          [checked]="fillType === 'solid'"
+          (change)="onSelectFillType('solid')"
+          data-demo-target="format-bg-radio-solid"
+        />
+        <span>Solid fill</span>
+      </label>
+
+      <label class="ppt-radio-label">
+        <input
+          type="radio"
+          name="bgFillType"
+          [checked]="fillType === 'picture'"
+          (change)="onSelectFillType('picture')"
+          data-demo-target="format-bg-radio-picture"
+        />
+        <span>Picture or texture fill</span>
+      </label>
+    </div>
+
+    <!-- Solid Fill Controls -->
+    <div *ngIf="fillType === 'solid'" class="ppt-fill-controls">
+      <div class="ppt-control-row">
+        <span class="control-label">Color</span>
+        <button
+          #colorBtn
+          type="button"
+          class="ppt-color-picker-trigger"
+          title="Choose Color"
+          data-demo-target="format-bg-color-btn"
+          (click)="onToggleColorPicker($event)"
+        >
+          <span
+            class="color-sample"
+            [style.background-color]="currentBackground || defaultBackground"
+          ></span>
+          <span class="dropdown-caret">▾</span>
+        </button>
+      </div>
+
+      <!-- Color picker fixed popup -->
+      <app-ppt-color-picker
+        *ngIf="isColorPickerOpen"
+        class="fixed-color-picker"
+        [allowTransparent]="true"
+        [selectedColor]="currentBackground || defaultBackground"
+        [style.position]="'fixed'"
+        [style.left.px]="colorPickerPos.left"
+        [style.top.px]="colorPickerPos.top"
+        [style.zIndex]="2200"
+        (selectColor)="onPickColor($event)"
+        (close)="isColorPickerOpen = false"
+      ></app-ppt-color-picker>
+    </div>
+
+    <!-- Picture Fill Controls -->
+    <div *ngIf="fillType === 'picture'" class="ppt-fill-controls">
+      <div class="ppt-control-row">
+        <span class="control-label">Picture source</span>
+        <button
+          type="button"
+          class="ppt-btn-action"
+          data-demo-target="format-bg-insert-pic"
+          (click)="onInsertPicture()"
+        >
+          Insert…
+        </button>
+      </div>
+      <div *ngIf="currentBackground" class="current-picture-info">
+        Current: {{ currentBackground }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Pane Footer Buttons -->
+  <div class="ppt-pane-footer">
+    <button
+      type="button"
+      class="ppt-pane-btn"
+      disabled
+      data-demo-target="format-bg-apply-all"
+    >
+      Apply to All
+    </button>
+
+    <button
+      type="button"
+      class="ppt-pane-btn"
+      data-demo-target="format-bg-reset"
+      (click)="onReset()"
+    >
+      Reset Background
+    </button>
+  </div>
+</aside>
+

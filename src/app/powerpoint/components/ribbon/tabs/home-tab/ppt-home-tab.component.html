@@ -1,0 +1,724 @@
+<div class="ppt-tab-content" [class.compact]="isCompact" role="region" aria-label="Home tab">
+  <!-- 1. Undo Group -->
+  <app-ppt-ribbon-group
+    label="Undo"
+    groupId="undo"
+    [isOverflow]="isOverflow('undo')"
+    [isCompact]="isCompact"
+    icon="undo"
+    [isFolded]="isFolded('undo')"
+    [isOpen]="isFoldOpen('undo')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <div class="ppt-btn-column">
+      <button
+        type="button"
+        class="ppt-small-btn"
+        [disabled]="!canUndo"
+        title="Undo (Ctrl+Z)"
+        data-demo-target="home-undo"
+        (click)="undo.emit()"
+      >
+        <app-ppt-icon name="undo" [size]="14"></app-ppt-icon>
+        <span class="btn-text">Undo</span>
+      </button>
+      <button
+        type="button"
+        class="ppt-small-btn"
+        [disabled]="!canRedo"
+        title="Redo (Ctrl+Y)"
+        data-demo-target="home-redo"
+        (click)="redo.emit()"
+      >
+        <app-ppt-icon name="redo" [size]="14"></app-ppt-icon>
+        <span class="btn-text">Redo</span>
+      </button>
+    </div>
+  </app-ppt-ribbon-group>
+
+  <!-- 2. Clipboard Group -->
+  <app-ppt-ribbon-group
+    label="Clipboard"
+    groupId="clipboard"
+    [isOverflow]="isOverflow('clipboard')"
+    [isCompact]="isCompact"
+    icon="paste"
+    [isFolded]="isFolded('clipboard')"
+    [isOpen]="isFoldOpen('clipboard')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <!-- Paste (Large split button) -->
+    <button
+      type="button"
+      class="ppt-large-btn"
+      [disabled]="!canPaste"
+      title="Paste Slide"
+      data-demo-target="home-paste"
+      (click)="paste.emit()"
+    >
+      <app-ppt-icon name="paste" [size]="24"></app-ppt-icon>
+      <span class="btn-label">Paste ▾</span>
+    </button>
+
+    <div class="ppt-btn-column">
+      <!-- Cut (disabled) -->
+      <button type="button" class="ppt-small-btn" disabled title="Cut" data-demo-target="home-cut">
+        <app-ppt-icon name="cut" [size]="14"></app-ppt-icon>
+        <span class="btn-text">Cut</span>
+      </button>
+      <!-- Copy (enabled) -->
+      <button
+        type="button"
+        class="ppt-small-btn"
+        title="Copy Slide"
+        data-demo-target="home-copy"
+        (click)="copy.emit()"
+      >
+        <app-ppt-icon name="copy" [size]="14"></app-ppt-icon>
+        <span class="btn-text">Copy ▾</span>
+      </button>
+      <!-- Format Painter (disabled) -->
+      <button type="button" class="ppt-small-btn" disabled title="Format Painter" data-demo-target="home-format-painter">
+        <app-ppt-icon name="format-painter" [size]="14"></app-ppt-icon>
+        <span class="btn-text">Format Painter</span>
+      </button>
+    </div>
+  </app-ppt-ribbon-group>
+
+  <!-- 3. Slides Group -->
+  <app-ppt-ribbon-group
+    label="Slides"
+    groupId="slides"
+    [isOverflow]="isOverflow('slides')"
+    [isCompact]="isCompact"
+    icon="new-slide"
+    [isFolded]="isFolded('slides')"
+    [isOpen]="isFoldOpen('slides')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <!-- New Slide (Split button) -->
+    <div class="ppt-split-button-container">
+      <button
+        type="button"
+        class="ppt-large-btn split-top"
+        title="New Slide (Title and Content)"
+        data-demo-target="home-new-slide"
+        (click)="onNewSlideBigClick()"
+      >
+        <app-ppt-icon name="new-slide" [size]="24"></app-ppt-icon>
+        <span class="btn-label">New Slide</span>
+      </button>
+      <button #newSlideArrow
+        type="button"
+        class="ppt-split-dropdown-arrow"
+        title="Office Theme layouts"
+        data-demo-target="home-new-slide-menu"
+        (click)="onToggleNewSlideGallery($event)"
+      >
+        <app-ppt-icon name="chevron-down" [size]="10"></app-ppt-icon>
+      </button>
+
+      <app-ppt-layout-gallery
+        [isOpen]="isNewSlideGalleryOpen" [anchorEl]="newSlideArrow"
+        [activeLayout]="currentLayout"
+        headerTitle="New Slide Layout"
+        (selectLayout)="onPickNewSlideLayout($event)"
+        (close)="isNewSlideGalleryOpen = false"
+      ></app-ppt-layout-gallery>
+    </div>
+
+    <div class="ppt-btn-column">
+      <!-- Layout button -->
+      <div class="relative-menu-anchor">
+        <button #layoutBtn
+          type="button"
+          class="ppt-small-btn"
+          title="Slide Layout"
+          data-demo-target="home-layout"
+          (click)="onToggleLayoutGallery($event)"
+        >
+          <app-ppt-icon name="layout" [size]="14"></app-ppt-icon>
+          <span class="btn-text">Layout ▾</span>
+        </button>
+
+        <app-ppt-layout-gallery
+          [isOpen]="isLayoutGalleryOpen" [anchorEl]="layoutBtn"
+          [activeLayout]="currentLayout"
+          headerTitle="Change Slide Layout"
+          (selectLayout)="onPickChangeLayout($event)"
+          (close)="isLayoutGalleryOpen = false"
+        ></app-ppt-layout-gallery>
+      </div>
+
+      <!-- Reset (disabled) -->
+      <button type="button" class="ppt-small-btn" disabled title="Reset" data-demo-target="home-reset">
+        <app-ppt-icon name="reset" [size]="14"></app-ppt-icon>
+        <span class="btn-text">Reset</span>
+      </button>
+      <!-- Section (disabled) -->
+      <button type="button" class="ppt-small-btn" disabled title="Section" data-demo-target="home-section">
+        <app-ppt-icon name="section" [size]="14"></app-ppt-icon>
+        <span class="btn-text">Section ▾</span>
+      </button>
+    </div>
+  </app-ppt-ribbon-group>
+
+  <!-- 4. Font Group -->
+  <app-ppt-ribbon-group
+    label="Font"
+    groupId="font"
+    [isOverflow]="isOverflow('font')"
+    [isCompact]="isCompact"
+    icon="bold"
+    [isFolded]="isFolded('font')"
+    [isOpen]="isFoldOpen('font')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <div class="ppt-font-cluster">
+      <!-- Top row: Font family, size, increase, decrease, clear -->
+      <div class="ppt-btn-row">
+        <select
+          class="ppt-ribbon-select font-family-select"
+          [disabled]="!isTextActive"
+          title="Font"
+          data-demo-target="home-font-family"
+          (change)="changeFont.emit($any($event.target).value)"
+        >
+          <option *ngFor="let f of fonts" [value]="f" [selected]="f === currentFont">{{ f }}</option>
+        </select>
+
+        <select
+          class="ppt-ribbon-select font-size-select"
+          [disabled]="!isTextActive"
+          title="Font Size"
+          data-demo-target="home-font-size"
+          (change)="changeFontSize.emit(+$any($event.target).value)"
+        >
+          <option *ngFor="let s of fontSizes" [value]="s" [selected]="s === currentFontSize">{{ s }}</option>
+        </select>
+
+        <button
+          type="button"
+          class="ppt-icon-btn"
+          [disabled]="!isTextActive"
+          title="Increase Font Size"
+          data-demo-target="home-font-grow"
+          (mousedown)="$event.preventDefault()"
+          (click)="increaseFontSize.emit()"
+        >
+          <span style="font-size: 13px; font-weight: bold;">A^</span>
+        </button>
+
+        <button
+          type="button"
+          class="ppt-icon-btn"
+          [disabled]="!isTextActive"
+          title="Decrease Font Size"
+          data-demo-target="home-font-shrink"
+          (mousedown)="$event.preventDefault()"
+          (click)="decreaseFontSize.emit()"
+        >
+          <span style="font-size: 11px; font-weight: bold;">Aˇ</span>
+        </button>
+
+        <button type="button" class="ppt-icon-btn" disabled title="Clear All Formatting" data-demo-target="home-clear-format" (mousedown)="$event.preventDefault()">
+          <span style="font-size: 11px;">A⌫</span>
+        </button>
+      </div>
+
+      <!-- Bottom row: Bold, Italic, Underline, Shadow, Strike, Char Spacing, Case, Highlight, Font Color -->
+      <div class="ppt-btn-row">
+        <button
+          type="button"
+          class="ppt-icon-btn"
+          [class.active]="isTextActive && isBold"
+          [disabled]="!isTextActive"
+          title="Bold (Ctrl+B)"
+          data-demo-target="home-bold"
+          (mousedown)="$event.preventDefault()"
+          (click)="toggleBold.emit()"
+        >
+          <app-ppt-icon name="bold" [size]="14"></app-ppt-icon>
+        </button>
+
+        <button
+          type="button"
+          class="ppt-icon-btn"
+          [class.active]="isTextActive && isItalic"
+          [disabled]="!isTextActive"
+          title="Italic (Ctrl+I)"
+          data-demo-target="home-italic"
+          (mousedown)="$event.preventDefault()"
+          (click)="toggleItalic.emit()"
+        >
+          <app-ppt-icon name="italic" [size]="14"></app-ppt-icon>
+        </button>
+
+        <button
+          type="button"
+          class="ppt-icon-btn"
+          [class.active]="isTextActive && isUnderline"
+          [disabled]="!isTextActive"
+          title="Underline (Ctrl+U)"
+          data-demo-target="home-underline"
+          (mousedown)="$event.preventDefault()"
+          (click)="toggleUnderline.emit()"
+        >
+          <app-ppt-icon name="underline" [size]="14"></app-ppt-icon>
+        </button>
+
+        <button type="button" class="ppt-icon-btn" disabled title="Text Shadow" data-demo-target="home-shadow" (mousedown)="$event.preventDefault()">
+          <app-ppt-icon name="text-shadow" [size]="14"></app-ppt-icon>
+        </button>
+
+        <button type="button" class="ppt-icon-btn" disabled title="Strikethrough" data-demo-target="home-strike" (mousedown)="$event.preventDefault()">
+          <app-ppt-icon name="strikethrough" [size]="14"></app-ppt-icon>
+        </button>
+
+        <button type="button" class="ppt-icon-btn" disabled title="Character Spacing" data-demo-target="home-char-spacing" (mousedown)="$event.preventDefault()">
+          <span style="font-size: 10px; font-weight: 600;">AV▾</span>
+        </button>
+
+        <button type="button" class="ppt-icon-btn" disabled title="Change Case" data-demo-target="home-change-case" (mousedown)="$event.preventDefault()">
+          <span style="font-size: 10px; font-weight: 600;">Aa▾</span>
+        </button>
+
+        <button type="button" class="ppt-icon-btn" disabled title="Text Highlight Color" data-demo-target="home-highlight" (mousedown)="$event.preventDefault()">
+          <app-ppt-icon name="highlight" [size]="14"></app-ppt-icon>
+        </button>
+
+        <!-- Font Color Split Button -->
+        <div class="ppt-split-button font-color-split">
+          <button
+            type="button"
+            class="ppt-icon-btn font-color-main-btn"
+            [disabled]="!isTextActive"
+            title="Font Color"
+            data-demo-target="home-font-color"
+            (mousedown)="$event.preventDefault()"
+            (click)="setFontColor.emit(lastFontColor)"
+          >
+            <div class="font-color-btn-content">
+              <app-ppt-icon name="font-color" [size]="14"></app-ppt-icon>
+              <span class="font-color-bar" [style.background-color]="lastFontColor"></span>
+            </div>
+          </button>
+          <button
+            type="button"
+            class="ppt-split-arrow"
+            [disabled]="!isTextActive"
+            title="Font Color Options"
+            data-demo-target="home-font-color-arrow"
+            (mousedown)="$event.preventDefault()"
+            (click)="onToggleColorPicker($event)"
+          >
+            ▾
+          </button>
+        </div>
+
+        <!-- Color Picker popup -->
+        <app-ppt-color-picker
+          *ngIf="isColorPickerOpen"
+          [style.position]="'fixed'"
+          [style.left.px]="colorPickerPos.left"
+          [style.top.px]="colorPickerPos.top"
+          [style.zIndex]="2200"
+          [selectedColor]="lastFontColor"
+          (selectColor)="onPickColor($event)"
+          (close)="isColorPickerOpen = false"
+        ></app-ppt-color-picker>
+      </div>
+    </div>
+  </app-ppt-ribbon-group>
+
+  <!-- 5. Paragraph Group -->
+  <app-ppt-ribbon-group
+    label="Paragraph"
+    groupId="paragraph"
+    [isOverflow]="isOverflow('paragraph')"
+    [isCompact]="isCompact"
+    icon="bullets"
+    [isFolded]="isFolded('paragraph')"
+    [isOpen]="isFoldOpen('paragraph')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <div class="ppt-paragraph-cluster">
+      <!-- Row 1: Bullets, Numbering, Decrease Indent, Increase Indent, Line Spacing -->
+      <div class="ppt-btn-row">
+        <button
+          type="button"
+          class="ppt-icon-btn"
+          [class.active]="isTextActive && hasBullets"
+          [disabled]="!isTextActive"
+          title="Bullets"
+          data-demo-target="home-bullets"
+          (mousedown)="$event.preventDefault()"
+          (click)="setBullets.emit()"
+        >
+          <app-ppt-icon name="bullets" [size]="14"></app-ppt-icon>
+        </button>
+
+        <button
+          type="button"
+          class="ppt-icon-btn"
+          [class.active]="isTextActive && hasNumbering"
+          [disabled]="!isTextActive"
+          title="Numbering"
+          data-demo-target="home-numbering"
+          (mousedown)="$event.preventDefault()"
+          (click)="setNumbering.emit()"
+        >
+          <app-ppt-icon name="numbering" [size]="14"></app-ppt-icon>
+        </button>
+
+        <button type="button" class="ppt-icon-btn" disabled title="Decrease List Level" data-demo-target="home-decrease-indent" (mousedown)="$event.preventDefault()">
+          <span style="font-size: 11px;">⇤</span>
+        </button>
+
+        <button type="button" class="ppt-icon-btn" disabled title="Increase List Level" data-demo-target="home-increase-indent" (mousedown)="$event.preventDefault()">
+          <span style="font-size: 11px;">⇥</span>
+        </button>
+
+        <!-- Line Spacing button + fixed dropdown -->
+        <div style="position: relative; display: inline-flex;">
+          <button
+            type="button"
+            class="ppt-icon-btn"
+            [disabled]="!isTextActive"
+            title="Line Spacing"
+            data-demo-target="home-line-spacing"
+            (mousedown)="$event.preventDefault()"
+            (click)="onToggleLineSpacing($event)"
+          >
+            <app-ppt-icon name="line-spacing" [size]="14"></app-ppt-icon>
+          </button>
+
+          <div
+            *ngIf="isLineSpacingOpen"
+            class="ppt-spacing-dropdown"
+            [style.position]="'fixed'"
+            [style.left.px]="lineSpacingPos.left"
+            [style.top.px]="lineSpacingPos.top"
+            [style.zIndex]="2200"
+            (click)="$event.stopPropagation()"
+          >
+            <button
+              *ngFor="let s of lineSpacingOptions"
+              type="button"
+              class="spacing-option-item"
+              (mousedown)="$event.preventDefault()"
+              [class.active]="currentLineSpacing === s"
+              [attr.data-demo-target]="'line-spacing-' + s"
+              (click)="onPickLineSpacing(s)"
+            >
+              <span class="spacing-check" [style.visibility]="currentLineSpacing === s ? 'visible' : 'hidden'">✓</span>
+              <span class="spacing-value">{{ s.toFixed(1) }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2: Align Left, Center, Align Right, Justify, Columns, Align Text, SmartArt -->
+      <div class="ppt-btn-row">
+        <button
+          type="button"
+          class="ppt-icon-btn"
+          [class.active]="isTextActive && currentAlign === 'left'"
+          [disabled]="!isTextActive"
+          title="Align Left (Ctrl+L)"
+          data-demo-target="home-align-left"
+          (mousedown)="$event.preventDefault()"
+          (click)="setAlign.emit('left')"
+        >
+          <app-ppt-icon name="align-left" [size]="14"></app-ppt-icon>
+        </button>
+
+        <button
+          type="button"
+          class="ppt-icon-btn"
+          [class.active]="isTextActive && currentAlign === 'center'"
+          [disabled]="!isTextActive"
+          title="Center (Ctrl+E)"
+          data-demo-target="home-align-center"
+          (mousedown)="$event.preventDefault()"
+          (click)="setAlign.emit('center')"
+        >
+          <app-ppt-icon name="align-center" [size]="14"></app-ppt-icon>
+        </button>
+
+        <button
+          type="button"
+          class="ppt-icon-btn"
+          [class.active]="isTextActive && currentAlign === 'right'"
+          [disabled]="!isTextActive"
+          title="Align Right (Ctrl+R)"
+          data-demo-target="home-align-right"
+          (mousedown)="$event.preventDefault()"
+          (click)="setAlign.emit('right')"
+        >
+          <app-ppt-icon name="align-right" [size]="14"></app-ppt-icon>
+        </button>
+
+        <button type="button" class="ppt-icon-btn" disabled title="Justify" data-demo-target="home-justify">
+          <span style="font-size: 11px;">≡</span>
+        </button>
+
+        <button type="button" class="ppt-icon-btn" disabled title="Columns" data-demo-target="home-columns">
+          <span style="font-size: 11px;">||</span>
+        </button>
+
+        <button type="button" class="ppt-icon-btn" disabled title="Align Text" data-demo-target="home-align-text">
+          <span style="font-size: 10px;">↕▾</span>
+        </button>
+
+        <button type="button" class="ppt-icon-btn" disabled title="Convert to SmartArt" data-demo-target="home-smartart">
+          <span style="font-size: 11px;">🗂▾</span>
+        </button>
+      </div>
+    </div>
+  </app-ppt-ribbon-group>
+
+  <!-- 6. Drawing Group -->
+  <app-ppt-ribbon-group
+    label="Drawing"
+    groupId="drawing"
+    [isOverflow]="isOverflow('drawing')"
+    [isCompact]="isCompact"
+    icon="shapes"
+    [isFolded]="isFolded('drawing')"
+    [isOpen]="isFoldOpen('drawing')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <!-- Shapes mini gallery -->
+    <div class="ppt-shapes-mini-gallery">
+      <div class="shapes-grid">
+        <div class="shapes-row">
+          <button
+            type="button"
+            class="shape-icon-btn"
+            title="Text Box"
+            data-demo-target="drawing-shape-textbox"
+            (click)="insertShape.emit('textBox')"
+          >
+            <app-ppt-icon name="text-box" [size]="16"></app-ppt-icon>
+          </button>
+          <button
+            type="button"
+            class="shape-icon-btn"
+            title="Rectangle"
+            data-demo-target="drawing-shape-rectangle"
+            (click)="insertShape.emit('rectangle')"
+          >
+            <svg viewBox="0 0 16 16" width="16" height="16"><rect x="2" y="4" width="12" height="8" fill="none" stroke="currentColor"/></svg>
+          </button>
+          <button
+            type="button"
+            class="shape-icon-btn"
+            title="Rounded Rectangle"
+            data-demo-target="drawing-shape-rounded-rectangle"
+            (click)="insertShape.emit('roundedRectangle')"
+          >
+            <svg viewBox="0 0 16 16" width="16" height="16"><rect x="2" y="4" width="12" height="8" rx="2" fill="none" stroke="currentColor"/></svg>
+          </button>
+          <button
+            type="button"
+            class="shape-icon-btn"
+            title="Oval"
+            data-demo-target="drawing-shape-oval"
+            (click)="insertShape.emit('ellipse')"
+          >
+            <svg viewBox="0 0 16 16" width="16" height="16"><ellipse cx="8" cy="8" rx="6" ry="4" fill="none" stroke="currentColor"/></svg>
+          </button>
+        </div>
+        <div class="shapes-row">
+          <button
+            type="button"
+            class="shape-icon-btn"
+            title="Triangle"
+            data-demo-target="drawing-shape-triangle"
+            (click)="insertShape.emit('triangle')"
+          >
+            <svg viewBox="0 0 16 16" width="16" height="16"><polygon points="8,3 14,13 2,13" fill="none" stroke="currentColor"/></svg>
+          </button>
+          <button
+            type="button"
+            class="shape-icon-btn"
+            title="Right Arrow"
+            data-demo-target="drawing-shape-arrow"
+            (click)="insertShape.emit('arrow')"
+          >
+            <svg viewBox="0 0 16 16" width="16" height="16"><path d="M2 6h7.5V3.5L14 8l-4.5 4.5V10H2z" fill="none" stroke="currentColor"/></svg>
+          </button>
+          <button
+            type="button"
+            class="shape-icon-btn"
+            title="5-Point Star"
+            data-demo-target="drawing-shape-star"
+            (click)="insertShape.emit('star')"
+          >
+            <svg viewBox="0 0 16 16" width="16" height="16"><polygon points="8,1 10,6 15,6 11,9 13,14 8,11 3,14 5,9 1,6 6,6" fill="none" stroke="currentColor"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="shapes-scroll">
+        <button type="button" class="shape-scroll-btn" disabled aria-hidden="true" tabindex="-1">
+          <svg viewBox="0 0 10 10" width="9" height="9"><path d="M2 6.5l3-3 3 3" fill="none" stroke="currentColor"/></svg>
+        </button>
+        <button type="button" class="shape-scroll-btn" disabled aria-hidden="true" tabindex="-1">
+          <svg viewBox="0 0 10 10" width="9" height="9"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor"/></svg>
+        </button>
+        <button type="button" class="shape-scroll-btn" disabled title="More Shapes" data-demo-target="drawing-shape-more">
+          <svg viewBox="0 0 10 10" width="9" height="9"><path d="M2 2h6M2 4.5l3 3 3-3" fill="none" stroke="currentColor"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Drawing sub-tools (disabled) -->
+    <div class="ppt-btn-column">
+      <button type="button" class="ppt-small-btn" disabled title="Arrange" data-demo-target="drawing-arrange">
+        <app-ppt-icon name="shapes" [size]="14"></app-ppt-icon>
+        <span class="btn-text">Arrange ▾</span>
+      </button>
+      <button type="button" class="ppt-small-btn" disabled title="Quick Styles" data-demo-target="drawing-quick-styles">
+        <app-ppt-icon name="shapes" [size]="14"></app-ppt-icon>
+        <span class="btn-text">Quick Styles ▾</span>
+      </button>
+      <button type="button" class="ppt-small-btn" disabled title="Shape Fill" data-demo-target="drawing-shape-fill">
+        <app-ppt-icon name="background-styles" [size]="14"></app-ppt-icon>
+        <span class="btn-text">Shape Fill ▾</span>
+      </button>
+    </div>
+  </app-ppt-ribbon-group>
+
+  <!-- 7. Editing Group (disabled) -->
+  <app-ppt-ribbon-group
+    label="Editing"
+    groupId="editing"
+    [isOverflow]="isOverflow('editing')"
+    [isCompact]="isCompact"
+    icon="search"
+    [isFolded]="isFolded('editing')"
+    [isOpen]="isFoldOpen('editing')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <div class="ppt-btn-column">
+      <button type="button" class="ppt-small-btn" disabled title="Find" data-demo-target="home-find">
+        <app-ppt-icon name="search" [size]="12"></app-ppt-icon>
+        <span class="btn-text">Find</span>
+      </button>
+      <button type="button" class="ppt-small-btn" disabled title="Replace" data-demo-target="home-replace">
+        <app-ppt-icon name="search" [size]="12"></app-ppt-icon>
+        <span class="btn-text">Replace ▾</span>
+      </button>
+      <div style="position: relative; display: inline-flex;">
+        <button
+          type="button"
+          class="ppt-small-btn"
+          title="Select"
+          data-demo-target="home-select"
+          (click)="onToggleSelectMenu($event)"
+        >
+          <app-ppt-icon name="action" [size]="12"></app-ppt-icon>
+          <span class="btn-text">Select ▾</span>
+        </button>
+
+        <div
+          *ngIf="isSelectMenuOpen"
+          class="ppt-select-dropdown"
+          [style.position]="'fixed'"
+          [style.left.px]="selectMenuPos.left"
+          [style.top.px]="selectMenuPos.top"
+          [style.zIndex]="2200"
+          (click)="$event.stopPropagation()"
+        >
+          <button
+            type="button"
+            class="select-option-item"
+            data-demo-target="select-all"
+            (click)="onPickSelectAll()"
+          >
+            <span class="select-option-label">Select All</span>
+            <span class="select-option-shortcut">Ctrl+A</span>
+          </button>
+          <button
+            type="button"
+            class="select-option-item"
+            data-demo-target="select-objects"
+            (click)="onPickSelectObjects()"
+          >
+            <span class="select-option-label">Select Objects</span>
+          </button>
+          <button
+            type="button"
+            class="select-option-item"
+            disabled
+            data-demo-target="selection-pane"
+          >
+            <span class="select-option-label">Selection Pane...</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </app-ppt-ribbon-group>
+
+  <!-- 8. Voice Group (disabled) -->
+  <app-ppt-ribbon-group
+    label="Voice"
+    groupId="voice"
+    [isOverflow]="isOverflow('voice')"
+    [isCompact]="isCompact"
+    icon="dictate"
+    [isFolded]="isFolded('voice')"
+    [isOpen]="isFoldOpen('voice')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <button type="button" class="ppt-large-btn" disabled title="Dictate" data-demo-target="home-dictate">
+      <svg viewBox="0 0 16 16" width="22" height="22" fill="currentColor"><path d="M8 1a2.5 2.5 0 0 0-2.5 2.5v5a2.5 2.5 0 0 0 5 0v-5A2.5 2.5 0 0 0 8 1zm4 7.5a4 4 0 0 1-8 0H3a5 5 0 0 0 4.5 4.95V15h1v-1.55A5 5 0 0 0 13 8.5h-1z"/></svg>
+      <span class="btn-label">Dictate</span>
+    </button>
+  </app-ppt-ribbon-group>
+
+  <!-- 9. Add-ins Group (disabled) -->
+  <app-ppt-ribbon-group
+    label="Add-ins"
+    groupId="addins"
+    [isOverflow]="isOverflow('addins')"
+    [isCompact]="isCompact"
+    icon="addins"
+    [isFolded]="isFolded('addins')"
+    [isOpen]="isFoldOpen('addins')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <button type="button" class="ppt-large-btn" disabled title="Add-ins" data-demo-target="home-addins">
+      <svg viewBox="0 0 16 16" width="22" height="22" fill="currentColor"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+      <span class="btn-label">Add-ins</span>
+    </button>
+  </app-ppt-ribbon-group>
+
+  <!-- 10. Designer Group (disabled) -->
+  <app-ppt-ribbon-group
+    label="Designer"
+    groupId="designer"
+    [isOverflow]="isOverflow('designer')"
+    [isCompact]="isCompact"
+    icon="designer"
+    [isFolded]="isFolded('designer')"
+    [isOpen]="isFoldOpen('designer')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <button type="button" class="ppt-large-btn" disabled title="Designer" data-demo-target="home-designer">
+      <svg viewBox="0 0 16 16" width="22" height="22" fill="#c43e1c"><path d="M8 1l1.5 4.5L14 7l-4.5 1.5L8 13l-1.5-4.5L2 7l4.5-1.5L8 1z"/></svg>
+      <span class="btn-label">Designer</span>
+    </button>
+  </app-ppt-ribbon-group>
+</div>

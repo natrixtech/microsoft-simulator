@@ -1,0 +1,43 @@
+<div
+  class="ppt-placeholder-box"
+  [attr.data-demo-target]="isInteractive ? 'placeholder-' + placeholder.type : null"
+  [class.empty]="isEmpty"
+  [class.editing]="isEditing"
+  [class.non-interactive]="!isInteractive"
+  [style.left.px]="placeholder.x"
+  [style.top.px]="placeholder.y"
+  [style.width.px]="placeholder.w"
+  [style.height.px]="placeholder.h"
+  [style.font-size.px]="placeholder.fontSize"
+  [style.text-align]="placeholder.align"
+  [style.font-family]="placeholder.type === 'title' ? theme.titleFont : theme.bodyFont"
+  [style.color]="placeholder.type === 'title' ? theme.titleColor : theme.bodyColor"
+  (click)="onPlaceholderClick($event)"
+>
+  <!-- Contenteditable text area when editing -->
+  <div
+    #editableRef
+    *ngIf="isEditing"
+    class="ppt-editable-text"
+    contenteditable="true"
+    [style.text-align]="placeholder.align"
+    (input)="onInput($event)"
+    (paste)="onPaste($event)"
+    (cut)="onCut($event)"
+    (drop)="onDrop($event)"
+    (blur)="onBlur($event)"
+    (keydown)="onKeyDown($event)"
+  ></div>
+
+  <!-- Prompt text when empty and not editing -->
+  <span *ngIf="!isEditing && isEmpty" class="ppt-prompt-text">
+    {{ placeholder.promptText }}
+  </span>
+
+  <!-- Rendered HTML display when not editing and not empty -->
+  <div
+    *ngIf="!isEditing && !isEmpty"
+    class="ppt-rendered-text"
+    [innerHTML]="renderedHtml | pptSafeHtml"
+  ></div>
+</div>

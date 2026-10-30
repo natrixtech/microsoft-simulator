@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <linearGradient id="bgSports" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f1fdf5"/>
+      <stop offset="100%" stop-color="#dff6dd"/>
+    </linearGradient>
+    <radialGradient id="bballGrad" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#ff8c00"/>
+      <stop offset="80%" stop-color="#d83b01"/>
+      <stop offset="100%" stop-color="#a82a00"/>
+    </radialGradient>
+    <radialGradient id="soccerGrad" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="85%" stop-color="#f3f2f1"/>
+      <stop offset="100%" stop-color="#d2d0ce"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" rx="16" fill="url(#bgSports)"/>
+  
+  <!-- Shadows -->
+  <ellipse cx="140" cy="225" rx="55" ry="12" fill="#c8c6c4" opacity="0.6"/>
+  <ellipse cx="255" cy="228" rx="60" ry="14" fill="#c8c6c4" opacity="0.6"/>
+  <ellipse cx="205" cy="245" rx="30" ry="8" fill="#c8c6c4" opacity="0.7"/>
+
+  <!-- Basketball (Back Right) -->
+  <g transform="translate(200, 75)">
+    <circle cx="60" cy="60" r="55" fill="url(#bballGrad)"/>
+    <path d="M 60 5 A 55 55 0 0 1 60 115" fill="none" stroke="#201f1e" stroke-width="3"/>
+    <path d="M 5 60 A 55 55 0 0 1 115 60" fill="none" stroke="#201f1e" stroke-width="3"/>
+    <path d="M 21 21 C 45 40, 45 80, 21 99" fill="none" stroke="#201f1e" stroke-width="3"/>
+    <path d="M 99 21 C 75 40, 75 80, 99 99" fill="none" stroke="#201f1e" stroke-width="3"/>
+  </g>
+
+  <!-- Soccer Ball (Front Left) -->
+  <g transform="translate(85, 85)">
+    <circle cx="55" cy="55" r="52" fill="url(#soccerGrad)" stroke="#323130" stroke-width="2"/>
+    <!-- Center pentagon -->
+    <polygon points="55,38 70,49 64,67 46,67 40,49" fill="#201f1e"/>
+    <!-- Radiating seams & outer patches -->
+    <line x1="55" y1="38" x2="55" y2="10" stroke="#323130" stroke-width="2.5"/>
+    <line x1="70" y1="49" x2="95" y2="38" stroke="#323130" stroke-width="2.5"/>
+    <line x1="64" y1="67" x2="84" y2="90" stroke="#323130" stroke-width="2.5"/>
+    <line x1="46" y1="67" x2="26" y2="90" stroke="#323130" stroke-width="2.5"/>
+    <line x1="40" y1="49" x2="15" y2="38" stroke="#323130" stroke-width="2.5"/>
+  </g>
+
+  <!-- Tennis Ball (Front Center) -->
+  <g transform="translate(180, 185)">
+    <circle cx="25" cy="25" r="24" fill="#a4d100" stroke="#7ea100" stroke-width="1.5"/>
+    <path d="M 8 10 C 18 16, 18 34, 8 40" fill="none" stroke="#ffffff" stroke-width="2.5"/>
+    <path d="M 42 10 C 32 16, 32 34, 42 40" fill="none" stroke="#ffffff" stroke-width="2.5"/>
+  </g>
+</svg>
+

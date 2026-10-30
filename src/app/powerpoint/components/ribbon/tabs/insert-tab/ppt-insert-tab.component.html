@@ -1,0 +1,429 @@
+<div class="ppt-tab-content" [class.compact]="isCompact" role="region" aria-label="Insert tab">
+  <!-- 1. Slides Group -->
+  <app-ppt-ribbon-group
+    label="Slides"
+    groupId="slides"
+    [isOverflow]="isOverflow('slides')"
+    [isCompact]="isCompact"
+    icon="new-slide"
+    [isFolded]="isFolded('slides')"
+    [isOpen]="isFoldOpen('slides')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <div class="ppt-split-button-container">
+      <button
+        type="button"
+        class="ppt-large-btn split-top"
+        title="New Slide (Title and Content)"
+        data-demo-target="insert-new-slide"
+        (click)="onNewSlideBigClick()"
+      >
+        <app-ppt-icon name="new-slide" [size]="24"></app-ppt-icon>
+        <span class="btn-label">New Slide</span>
+      </button>
+      <button #newSlideArrow
+        type="button"
+        class="ppt-split-dropdown-arrow"
+        title="Layouts"
+        data-demo-target="insert-new-slide-menu"
+        (click)="onToggleNewSlideGallery($event)"
+      >
+        <app-ppt-icon name="chevron-down" [size]="10"></app-ppt-icon>
+      </button>
+
+      <app-ppt-layout-gallery
+        [isOpen]="isNewSlideGalleryOpen" [anchorEl]="newSlideArrow"
+        [activeLayout]="currentLayout"
+        headerTitle="Insert Slide Layout"
+        (selectLayout)="isNewSlideGalleryOpen = false; newSlide.emit($event)"
+        (close)="isNewSlideGalleryOpen = false"
+      ></app-ppt-layout-gallery>
+    </div>
+  </app-ppt-ribbon-group>
+
+  <!-- 2. Tables Group -->
+  <app-ppt-ribbon-group
+    label="Tables"
+    groupId="tables"
+    [isOverflow]="isOverflow('tables')"
+    [isCompact]="isCompact"
+    icon="table"
+    [isFolded]="isFolded('tables')"
+    [isOpen]="isFoldOpen('tables')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <div class="relative-menu-anchor">
+      <button
+        type="button"
+        class="ppt-large-btn"
+        title="Table (max 6x6)"
+        data-demo-target="insert-table"
+        (click)="onToggleTablePicker($event)"
+      >
+        <app-ppt-icon name="table" [size]="24"></app-ppt-icon>
+        <span class="btn-label">Table ▾</span>
+      </button>
+
+      <!-- Table size picker dropdown (up to 6x6) -->
+      <div *ngIf="isTablePickerOpen" class="table-picker-popup" [style.position]="'fixed'" [style.left.px]="tablePos.left" [style.top.px]="tablePos.top" [style.zIndex]="2000" (click)="$event.stopPropagation()">
+        <div class="picker-header">
+          <span *ngIf="hoverRows > 0 && hoverCols > 0">{{ hoverCols }} x {{ hoverRows }} Table</span>
+          <span *ngIf="hoverRows === 0 || hoverCols === 0">Insert Table</span>
+        </div>
+        <div class="picker-grid" (mouseleave)="hoverRows = 0; hoverCols = 0">
+          <div *ngFor="let r of [1,2,3,4,5,6]" class="picker-row">
+            <div
+              *ngFor="let c of [1,2,3,4,5,6]"
+              class="picker-cell"
+              [class.highlighted]="r <= hoverRows && c <= hoverCols"
+              [attr.data-demo-target]="'table-cell-' + r + 'x' + c"
+              (mouseenter)="onTableHover(r, c)"
+              (click)="onSelectTableSize(r, c, $event)"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </app-ppt-ribbon-group>
+
+  <!-- 3. Images Group -->
+  <app-ppt-ribbon-group
+    label="Images"
+    groupId="images"
+    [isOverflow]="isOverflow('images')"
+    [isCompact]="isCompact"
+    icon="picture"
+    [isFolded]="isFolded('images')"
+    [isOpen]="isFoldOpen('images')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <button
+      type="button"
+      class="ppt-large-btn"
+      title="Pictures"
+      data-demo-target="insert-pictures"
+      (click)="openPictures.emit()"
+    >
+      <app-ppt-icon name="picture" [size]="24"></app-ppt-icon>
+      <span class="btn-label">Pictures ▾</span>
+    </button>
+
+    <div class="ppt-btn-column">
+      <button type="button" class="ppt-small-btn" disabled title="Screenshot" data-demo-target="insert-screenshot">
+        <app-ppt-icon name="picture" [size]="16"></app-ppt-icon>
+        <span class="btn-text">Screenshot ▾</span>
+      </button>
+      <button type="button" class="ppt-small-btn" disabled title="Photo Album" data-demo-target="insert-photo-album">
+        <app-ppt-icon name="picture" [size]="16"></app-ppt-icon>
+        <span class="btn-text">Photo Album ▾</span>
+      </button>
+    </div>
+  </app-ppt-ribbon-group>
+
+  <!-- 4. Camera Group (disabled) -->
+  <app-ppt-ribbon-group
+    label="Camera"
+    groupId="camera"
+    [isOverflow]="isOverflow('camera')"
+    [isCompact]="isCompact"
+    icon="cameo"
+    [isFolded]="isFolded('camera')"
+    [isOpen]="isFoldOpen('camera')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <button type="button" class="ppt-large-btn" disabled title="Cameo" data-demo-target="insert-cameo">
+      <svg viewBox="0 0 16 16" width="22" height="22" fill="currentColor"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor"/><circle cx="8" cy="6" r="2.5"/><path d="M4 13c0-2.2 1.8-4 4-4s4 1.8 4 4"/></svg>
+      <span class="btn-label">Cameo</span>
+    </button>
+  </app-ppt-ribbon-group>
+
+  <!-- 5. Illustrations Group -->
+  <app-ppt-ribbon-group
+    label="Illustrations"
+    groupId="illustrations"
+    [isOverflow]="isOverflow('illustrations')"
+    [isCompact]="isCompact"
+    icon="shapes"
+    [isFolded]="isFolded('illustrations')"
+    [isOpen]="isFoldOpen('illustrations')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <div class="relative-menu-anchor">
+      <button
+        type="button"
+        class="ppt-large-btn"
+        title="Shapes"
+        data-demo-target="insert-shapes"
+        (click)="onToggleShapesGallery($event)"
+      >
+        <app-ppt-icon name="shapes" [size]="24"></app-ppt-icon>
+        <span class="btn-label">Shapes ▾</span>
+      </button>
+
+      <!-- Shapes dropdown gallery -->
+      <div *ngIf="isShapesGalleryOpen" class="shapes-gallery-popup" [style.position]="'fixed'" [style.left.px]="shapesPos.left" [style.top.px]="shapesPos.top" [style.zIndex]="2000" (click)="$event.stopPropagation()">
+        <div class="shapes-category">
+          <div class="shapes-category-title">Rectangles</div>
+          <div class="shapes-category-grid">
+            <button
+              type="button"
+              class="shape-popup-item"
+              title="Rectangle"
+              data-demo-target="insert-shape-rectangle"
+              (click)="onSelectShape('rectangle', $event)"
+            >
+              <svg viewBox="0 0 24 24" width="24" height="24"><rect x="3" y="5" width="18" height="14" rx="0.5"/></svg>
+            </button>
+            <button
+              type="button"
+              class="shape-popup-item"
+              title="Rounded Rectangle"
+              data-demo-target="insert-shape-rounded-rectangle"
+              (click)="onSelectShape('roundedRectangle', $event)"
+            >
+              <svg viewBox="0 0 24 24" width="24" height="24"><rect x="3" y="5" width="18" height="14" rx="4"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="shapes-category">
+          <div class="shapes-category-title">Basic Shapes</div>
+          <div class="shapes-category-grid">
+            <button
+              type="button"
+              class="shape-popup-item"
+              title="Oval"
+              data-demo-target="insert-shape-oval"
+              (click)="onSelectShape('ellipse', $event)"
+            >
+              <svg viewBox="0 0 24 24" width="24" height="24"><ellipse cx="12" cy="12" rx="9" ry="7"/></svg>
+            </button>
+            <button
+              type="button"
+              class="shape-popup-item"
+              title="Triangle"
+              data-demo-target="insert-shape-triangle"
+              (click)="onSelectShape('triangle', $event)"
+            >
+              <svg viewBox="0 0 24 24" width="24" height="24"><polygon points="12,4 21,20 3,20"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="shapes-category">
+          <div class="shapes-category-title">Block Arrows</div>
+          <div class="shapes-category-grid">
+            <button
+              type="button"
+              class="shape-popup-item"
+              title="Right Arrow"
+              data-demo-target="insert-shape-arrow"
+              (click)="onSelectShape('arrow', $event)"
+            >
+              <svg viewBox="0 0 24 24" width="24" height="24"><path d="M3 9.5h10V5.5l8 6.5-8 6.5v-4H3z"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="shapes-category">
+          <div class="shapes-category-title">Stars and Banners</div>
+          <div class="shapes-category-grid">
+            <button
+              type="button"
+              class="shape-popup-item"
+              title="5-Point Star"
+              data-demo-target="insert-shape-star"
+              (click)="onSelectShape('star', $event)"
+            >
+              <svg viewBox="0 0 24 24" width="24" height="24"><polygon points="12,2 14.8,8.5 22,9.2 16.6,14 18.2,21 12,17.3 5.8,21 7.4,14 2,9.2 9.2,8.5"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ppt-btn-column">
+      <button type="button" class="ppt-small-btn" disabled title="Icons" data-demo-target="insert-icons">
+        <app-ppt-icon name="shapes" [size]="16"></app-ppt-icon>
+        <span class="btn-text">Icons</span>
+      </button>
+      <button type="button" class="ppt-small-btn" disabled title="3D Models" data-demo-target="insert-3d-models">
+        <app-ppt-icon name="shapes" [size]="16"></app-ppt-icon>
+        <span class="btn-text">3D Models ▾</span>
+      </button>
+      <button type="button" class="ppt-small-btn" disabled title="SmartArt" data-demo-target="insert-smartart">
+        <app-ppt-icon name="shapes" [size]="16"></app-ppt-icon>
+        <span class="btn-text">SmartArt</span>
+      </button>
+    </div>
+    <div class="ppt-btn-column">
+      <button type="button" class="ppt-small-btn" disabled title="Chart" data-demo-target="insert-chart">
+        <app-ppt-icon name="table" [size]="16"></app-ppt-icon>
+        <span class="btn-text">Chart</span>
+      </button>
+    </div>
+  </app-ppt-ribbon-group>
+
+  <!-- 6. Zoom Group (disabled) -->
+  <app-ppt-ribbon-group
+    label="Zoom"
+    groupId="zoom"
+    [isOverflow]="isOverflow('zoom')"
+    [isCompact]="isCompact"
+    icon="search"
+    [isFolded]="isFolded('zoom')"
+    [isOpen]="isFoldOpen('zoom')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <button type="button" class="ppt-large-btn" disabled title="Zoom" data-demo-target="insert-zoom">
+      <app-ppt-icon name="search" [size]="20"></app-ppt-icon>
+      <span class="btn-label">Zoom ▾</span>
+    </button>
+  </app-ppt-ribbon-group>
+
+  <!-- 7. Links Group (disabled) -->
+  <app-ppt-ribbon-group
+    label="Links"
+    groupId="links"
+    [isOverflow]="isOverflow('links')"
+    [isCompact]="isCompact"
+    icon="link"
+    [isFolded]="isFolded('links')"
+    [isOpen]="isFoldOpen('links')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <div class="ppt-btn-column">
+      <button type="button" class="ppt-small-btn" disabled title="Link" data-demo-target="insert-link">
+        <app-ppt-icon name="link" [size]="16"></app-ppt-icon>
+        <span class="btn-text">Link ▾</span>
+      </button>
+      <button type="button" class="ppt-small-btn" disabled title="Action" data-demo-target="insert-action">
+        <app-ppt-icon name="action" [size]="16"></app-ppt-icon>
+        <span class="btn-text">Action</span>
+      </button>
+    </div>
+  </app-ppt-ribbon-group>
+
+  <!-- 8. Comments Group (disabled) -->
+  <app-ppt-ribbon-group
+    label="Comments"
+    groupId="comments"
+    [isOverflow]="isOverflow('comments')"
+    [isCompact]="isCompact"
+    icon="comment"
+    [isFolded]="isFolded('comments')"
+    [isOpen]="isFoldOpen('comments')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <button type="button" class="ppt-large-btn" disabled title="Comment" data-demo-target="insert-comment">
+      <svg viewBox="0 0 16 16" width="22" height="22" fill="currentColor"><path d="M2 3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H5l-3 3V3z"/></svg>
+      <span class="btn-label">Comment</span>
+    </button>
+  </app-ppt-ribbon-group>
+
+  <!-- 9. Text Group -->
+  <app-ppt-ribbon-group
+    label="Text"
+    groupId="text"
+    [isOverflow]="isOverflow('text')"
+    [isCompact]="isCompact"
+    icon="text-box"
+    [isFolded]="isFolded('text')"
+    [isOpen]="isFoldOpen('text')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <button
+      type="button"
+      class="ppt-large-btn"
+      title="Text Box"
+      data-demo-target="insert-text-box"
+      (click)="insertTextBox.emit()"
+    >
+      <app-ppt-icon name="text-box" [size]="24"></app-ppt-icon>
+      <span class="btn-label">Text Box</span>
+    </button>
+
+    <div class="ppt-btn-column">
+      <button type="button" class="ppt-small-btn" disabled title="Header & Footer" data-demo-target="insert-header-footer">
+        <app-ppt-icon name="layout" [size]="16"></app-ppt-icon>
+        <span class="btn-text">Header & Footer</span>
+      </button>
+      <button type="button" class="ppt-small-btn" disabled title="WordArt" data-demo-target="insert-wordart">
+        <app-ppt-icon name="text-box" [size]="16"></app-ppt-icon>
+        <span class="btn-text">WordArt ▾</span>
+      </button>
+      <button type="button" class="ppt-small-btn" disabled title="Date & Time" data-demo-target="insert-date-time">
+        <app-ppt-icon name="layout" [size]="16"></app-ppt-icon>
+        <span class="btn-text">Date & Time</span>
+      </button>
+    </div>
+    <div class="ppt-btn-column">
+      <button type="button" class="ppt-small-btn" disabled title="Slide Number" data-demo-target="insert-slide-number">
+        <app-ppt-icon name="new-slide" [size]="16"></app-ppt-icon>
+        <span class="btn-text">Slide Number</span>
+      </button>
+      <button type="button" class="ppt-small-btn" disabled title="Object" data-demo-target="insert-object">
+        <app-ppt-icon name="shapes" [size]="16"></app-ppt-icon>
+        <span class="btn-text">Object</span>
+      </button>
+    </div>
+  </app-ppt-ribbon-group>
+
+  <!-- 10. Symbols Group (disabled) -->
+  <app-ppt-ribbon-group
+    label="Symbols"
+    groupId="symbols"
+    [isOverflow]="isOverflow('symbols')"
+    [isCompact]="isCompact"
+    icon="symbols"
+    [isFolded]="isFolded('symbols')"
+    [isOpen]="isFoldOpen('symbols')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <div class="ppt-btn-column">
+      <button type="button" class="ppt-small-btn" disabled title="Equation" data-demo-target="insert-equation">
+        <app-ppt-icon name="equation" [size]="16"></app-ppt-icon>
+        <span class="btn-text">Equation ▾</span>
+      </button>
+      <button type="button" class="ppt-small-btn" disabled title="Symbol" data-demo-target="insert-symbol">
+        <app-ppt-icon name="symbols" [size]="16"></app-ppt-icon>
+        <span class="btn-text">Symbol</span>
+      </button>
+    </div>
+  </app-ppt-ribbon-group>
+
+  <!-- 11. Media Group (disabled) -->
+  <app-ppt-ribbon-group
+    label="Media"
+    groupId="media"
+    [isOverflow]="isOverflow('media')"
+    [isCompact]="isCompact"
+    icon="media"
+    [isFolded]="isFolded('media')"
+    [isOpen]="isFoldOpen('media')"
+    (toggleFold)="onToggleFold($event)"
+    (closeFold)="onCloseFold()"
+  >
+    <div class="ppt-btn-column">
+      <button type="button" class="ppt-small-btn" disabled title="Video" data-demo-target="insert-video">
+        <app-ppt-icon name="media" [size]="16"></app-ppt-icon>
+        <span class="btn-text">Video ▾</span>
+      </button>
+      <button type="button" class="ppt-small-btn" disabled title="Audio" data-demo-target="insert-audio">
+        <app-ppt-icon name="sound" [size]="16"></app-ppt-icon>
+        <span class="btn-text">Audio ▾</span>
+      </button>
+      <button type="button" class="ppt-small-btn" disabled title="Screen Recording" data-demo-target="insert-screen-recording">
+        <app-ppt-icon name="screen-recording" [size]="16"></app-ppt-icon>
+        <span class="btn-text">Screen Recording</span>
+      </button>
+    </div>
+  </app-ppt-ribbon-group>
+</div>

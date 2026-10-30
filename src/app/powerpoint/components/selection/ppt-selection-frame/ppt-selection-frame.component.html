@@ -1,0 +1,32 @@
+<div
+  *ngIf="element"
+  class="selection-frame"
+  [class.text-element]="isTextEditable"
+  [class.dragging]="isDragging"
+  [class.resizing]="isResizing"
+  [style.left.px]="element.x"
+  [style.top.px]="element.y"
+  [style.width.px]="element.w"
+  [style.height.px]="element.h"
+  (pointerdown)="onFramePointerDown($event)"
+  (click)="$event.stopPropagation()"
+>
+  <!-- 4 Edge strips for text boxes and tables (drag border = move, click inside = type) -->
+  <ng-container *ngIf="isTextEditable">
+    <div class="edge-strip edge-top" (pointerdown)="onEdgePointerDown($event)" (click)="$event.stopPropagation()"></div>
+    <div class="edge-strip edge-right" (pointerdown)="onEdgePointerDown($event)" (click)="$event.stopPropagation()"></div>
+    <div class="edge-strip edge-bottom" (pointerdown)="onEdgePointerDown($event)" (click)="$event.stopPropagation()"></div>
+    <div class="edge-strip edge-left" (pointerdown)="onEdgePointerDown($event)" (click)="$event.stopPropagation()"></div>
+  </ng-container>
+
+  <!-- 8 Resize Handles -->
+  <div
+    *ngFor="let h of handles"
+    class="resize-handle"
+    [class]="'handle-' + h"
+    [attr.data-demo-target]="'handle-' + h"
+    (pointerdown)="onHandlePointerDown(h, $event)"
+    (click)="$event.stopPropagation()"
+  ></div>
+</div>
+

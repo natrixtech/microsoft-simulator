@@ -1,0 +1,214 @@
+<div
+  class="ppt-simulator-root"
+  [class.dark-theme]="isDarkTheme"
+  [class.paused]="bridge.isPaused()"
+  [class.demo-mode]="demoMode"
+  #editorContainer
+>
+  <!-- 1. Microsoft 365 PowerPoint Title Bar -->
+  <app-ppt-title-bar
+    [title]="currentActivity()?.title || 'Presentation1'"
+  ></app-ppt-title-bar>
+
+  <!-- 2. Ribbon (Tab strip + Groups) -->
+    <app-ppt-ribbon
+    [attr.inert]="isFrozen ? '' : null"
+    [activeTab]="activeTab()"
+    [canUndo]="history.canUndo()"
+    [canRedo]="history.canRedo()"
+    [canPaste]="!!state.clipboardSlide()"
+    [currentLayout]="state.currentSlide()?.layout || 'title'"
+    [currentTheme]="state.deck().theme"
+    [currentTransition]="state.currentSlide()?.transition || { type: 'none' }"
+    [isTextActive]="state.isTextActive()"
+    [isBold]="textFormat.isBold()"
+    [isItalic]="textFormat.isItalic()"
+    [isUnderline]="textFormat.isUnderline()"
+    [currentFont]="textFormat.currentFont()"
+    [currentFontSize]="textFormat.currentFontSize()"
+    [currentAlign]="textFormat.currentAlign()"
+    [currentLineSpacing]="textFormat.currentLineSpacing()"
+    [lastFontColor]="textFormat.lastFontColor()"
+    [hasBullets]="textFormat.hasBullets()"
+    [hasNumbering]="textFormat.hasNumbering()"
+    (tabChange)="onTabChange($event)"
+    (undo)="onUndo()"
+    (redo)="onRedo()"
+    (paste)="onPasteSlide()"
+    (copy)="onCopySlide()"
+    (newSlide)="onNewSlide($event)"
+    (changeLayout)="onChangeLayout($event)"
+    (selectTheme)="onSelectTheme($event)"
+    (selectTransition)="onSelectTransition($event)"
+    (previewTransition)="onPreviewTransition()"
+    (insertShape)="onInsertShape($event)"
+    (insertTextBox)="onInsertTextBox()"
+    (insertTable)="onInsertTable($event)"
+    (openPictures)="onOpenPictures('insert')"
+    (toggleBold)="onToggleBold()"
+    (toggleItalic)="onToggleItalic()"
+    (toggleUnderline)="onToggleUnderline()"
+    (changeFont)="onChangeFont($event)"
+    (changeFontSize)="onChangeFontSize($event)"
+    (increaseFontSize)="onIncreaseFontSize()"
+    (decreaseFontSize)="onDecreaseFontSize()"
+    (setFontColor)="onSetFontColor($event)"
+    (setBullets)="onSetBullets()"
+    (setNumbering)="onSetNumbering()"
+    (setAlign)="onSetAlign($event)"
+    (setLineSpacing)="onSetLineSpacing($event)"
+    (formatBackground)="onOpenFormatBackground()"
+    (resetBackground)="onResetSlideBackground()"
+    (selectAll)="onSelectAll()"
+    (selectObjects)="onSelectObjects()"
+  ></app-ppt-ribbon>
+
+  <!-- 3. Main Area: Assessment Sidebar + Slide Panel + Canvas -->
+  <main class="ppt-work-layout" role="main" #workLayout [attr.inert]="isFrozen ? '' : null">
+    <!-- Left Assessment Progress Strip (only in assessment mode) -->
+    <aside class="assessment-progress-sidebar" *ngIf="isAssessment" aria-label="Assessment progress">
+      <div class="progress-step-indicator" *ngFor="let t of currentActivity()?.tasks; let i = index">
+        <span
+          class="step-badge"
+          [class.passed]="passedTasks().has(i)"
+          [class.current]="taskIndex() === i && !passedTasks().has(i)"
+        >
+          <ng-container *ngIf="passedTasks().has(i)">✓</ng-container>
+          <ng-container *ngIf="!passedTasks().has(i)">{{ i + 1 }}</ng-container>
+        </span>
+      </div>
+    </aside>
+
+    <!-- Slide Thumbnails Panel -->
+    <app-ppt-slide-panel
+      [slides]="state.deck().slides"
+      [currentSlideIndex]="state.currentSlideIndex()"
+      [theme]="state.currentTheme()"
+      [assetBaseUrl]="currentActivity()?.assetBaseUrl || './assets/'"
+      (selectSlide)="onSelectSlide($event)"
+      (deleteCurrentSlide)="onDeleteSlide()"
+      (copyCurrentSlide)="onCopySlide()"
+      (pasteSlide)="onPasteSlide()"
+      (openSlideContextMenu)="onOpenSlideContextMenu($event)"
+    ></app-ppt-slide-panel>
+
+    <!-- Canvas Area -->
+    <app-ppt-canvas
+      #canvasComponent
+      *ngIf="state.currentSlide()"
+      [slide]="state.currentSlide()!"
+      [theme]="state.currentTheme()"
+      [selectedElementId]="state.selectedElementId()"
+      [selectedElementIds]="state.selectedElementIds()"
+      [selectedElement]="state.selectedElement()"
+      [selectedElements]="state.selectedElements()"
+      [editingPlaceholderField]="state.editingPlaceholder()?.field || null"
+      [assetBaseUrl]="currentActivity()?.assetBaseUrl || './assets/'"
+      (selectElement)="onSelectElement($event)"
+      (updateElementBounds)="onUpdateElementBounds($event)"
+      (addElement)="onAddElement($event)"
+      (updateTableCellText)="onUpdateTableCellText($event)"
+      (updateTextBoxText)="onUpdateTextBoxText($event)"
+      (updatePlaceholder)="onUpdatePlaceholder($event)"
+      (startEditPlaceholder)="onStartEditPlaceholder($event)"
+      (stopEditPlaceholder)="onStopEditPlaceholder()"
+      (fitPercentChange)="fitPercent.set($event)"
+    ></app-ppt-canvas>
+
+    <!-- Floating Movable Task Card & Mascot Group -->
+    <div
+      *ngIf="!demoMode"
+      #movableGroup
+      class="ppt-floating-card-group"
+      [attr.inert]="isFrozen ? '' : null"
+      [class.dragging]="isDragging()"
+      [style.visibility]="groupX() === null ? 'hidden' : 'visible'"
+      [style.left.px]="groupX()"
+      [style.top.px]="groupY()"
+      (pointerdown)="onGroupPointerDown($event)"
+      (pointermove)="onGroupPointerMove($event)"
+      (pointerup)="onGroupPointerUp($event)"
+      (pointercancel)="onGroupPointerCancel($event)"
+    >
+      <lib-task-card
+        [appKind]="'powerpoint'"
+        [plainSingleStep]="true"
+        [title]="currentTask?.title || ''"
+        [explanation]="currentTask?.explanation || ''"
+        [instructions]="currentTask?.instructions || []"
+        [hasGoals]="(currentTask?.goals?.length || 0) > 0"
+        [hasShowMeHow]="hasShowMeHow"
+        [isSuccess]="isPassed()"
+        [isDisabled]="isFrozen"
+        [feedbackMessage]="feedbackMsg()"
+        [taskIndex]="taskIndex()"
+        [totalTasks]="totalTasks"
+        [isAssessment]="isAssessment"
+        [assetBaseUrl]="currentActivity()?.assetBaseUrl || './assets/'"
+        (checkWork)="checkWork()"
+        (startAgain)="onStartAgain()"
+        (showDemo)="onShowDemo()"
+        (nudgePosition)="onNudgePosition($event)"
+      ></lib-task-card>
+    </div>
+
+    <!-- Format Background Pane (docked right) -->
+    <app-ppt-format-background-pane
+      *ngIf="isFormatBackgroundOpen()"
+      [currentBackground]="state.currentSlide()?.background"
+      [defaultBackground]="state.currentTheme().background"
+      (close)="onCloseFormatBackground()"
+      (setBackground)="onSetSlideBackground($event)"
+      (openPictureDialog)="onOpenPictures('background')"
+      (resetBackground)="onResetSlideBackground()"
+    ></app-ppt-format-background-pane>
+  </main>
+
+  <!-- 4. Notes Bar -->
+  <app-ppt-notes-bar [attr.inert]="isFrozen ? '' : null"></app-ppt-notes-bar>
+
+  <!-- 5. Status Bar -->
+  <app-ppt-status-bar
+    [attr.inert]="isFrozen ? '' : null"
+    [currentSlideIndex]="state.currentSlideIndex()"
+    [totalSlides]="state.totalSlides()"
+    [fitPercent]="fitPercent()"
+    (refit)="onRefit()"
+  ></app-ppt-status-bar>
+
+  <!-- Slide Context Menu -->
+  <app-ppt-slide-context-menu
+    [isOpen]="isContextMenuOpen"
+    [x]="contextMenuPos.x"
+    [y]="contextMenuPos.y"
+    [canDelete]="state.totalSlides() > 1"
+    [canPaste]="!!state.clipboardSlide()"
+    (newSlide)="onNewSlide()"
+    (deleteSlide)="onDeleteSlide(contextMenuSlideIndex)"
+    (copy)="onCopySlide()"
+    (paste)="onPasteSlide()"
+    (close)="isContextMenuOpen = false"
+  ></app-ppt-slide-context-menu>
+
+  <!-- Insert Picture Dialog -->
+  <app-ppt-insert-picture-dialog
+    [isOpen]="isPictureDialogOpen"
+    [images]="currentActivity()?.images || []"
+    [assetBaseUrl]="currentActivity()?.assetBaseUrl || './assets/'"
+    (insert)="onPictureChosen($event)"
+    (close)="onClosePictureDialog()"
+  ></app-ppt-insert-picture-dialog>
+
+  <!-- Show Me How Demo Dialog -->
+  <app-ppt-demo
+    *ngIf="isDemoOpen && demoTask && demoStartingDeck"
+    [attr.inert]="bridge.isPaused() ? '' : null"
+    [task]="demoTask"
+    [startingDeck]="demoStartingDeck"
+    [images]="currentActivity()?.images || []"
+    [assetBaseUrl]="currentActivity()?.assetBaseUrl || './assets/'"
+    [isPaused]="bridge.isPaused()"
+    [isDarkTheme]="isDarkTheme"
+    (close)="onCloseDemo()"
+  ></app-ppt-demo>
+</div>

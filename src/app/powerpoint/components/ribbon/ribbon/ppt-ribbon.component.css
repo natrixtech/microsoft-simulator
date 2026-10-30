@@ -1,0 +1,490 @@
+:host {
+  display: block;
+  flex-shrink: 0;
+  background-color: #ffffff;
+  border-bottom: 1px solid #d2d0ce;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+}
+
+.ppt-ribbon-container {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tab Strip */
+.ppt-tab-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 34px;
+  background-color: #faf9f8;
+  border-bottom: 1px solid #edebe9;
+  padding: 0 8px;
+  user-select: none;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.tab-buttons-container {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 100%;
+  flex-shrink: 0;
+}
+
+.ppt-tab-btn {
+  background: transparent;
+  border: none;
+  height: 100%;
+  padding: 0 10px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  color: #323130;
+  cursor: pointer;
+  position: relative;
+  box-sizing: border-box;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ppt-tab-btn:hover:not(:disabled) {
+  color: #c43e1c;
+  background-color: rgba(196, 62, 28, 0.04);
+}
+
+.ppt-tab-btn.active {
+  font-weight: 600;
+  color: #c43e1c;
+}
+
+.ppt-tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 6px;
+  right: 6px;
+  height: 3px;
+  background-color: #c43e1c;
+  border-radius: 2px 2px 0 0;
+}
+
+.ppt-tab-btn.disabled,
+.ppt-tab-btn:disabled {
+  color: #a19f9d;
+  cursor: default;
+}
+
+.tab-strip-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 1;
+}
+
+/* Search Box */
+.ppt-search-box-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 120px;
+  flex-shrink: 1;
+}
+
+.search-magnifier {
+  position: absolute;
+  left: 8px;
+  color: #605e5c;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.ppt-search-input {
+  width: 150px;
+  min-width: 120px;
+  max-width: 100%;
+  height: 26px;
+  padding: 0 10px 0 28px;
+  font-size: 12px;
+  font-family: inherit;
+  border: 1px solid #d2d0ce;
+  border-radius: 4px;
+  background-color: #ffffff;
+  color: #323130;
+  outline: none;
+  transition: width 0.15s, border-color 0.15s;
+}
+
+.ppt-search-input:focus {
+  width: 210px;
+  border-color: #c43e1c;
+}
+
+@media (max-width: 1100px) {
+  .ppt-present-btn span {
+    display: none;
+  }
+  .ppt-present-btn {
+    padding: 4px 6px;
+  }
+  
+}
+
+@media (max-width: 1000px) {
+  .ppt-search-box-wrapper {
+    min-width: 28px;
+  }
+  .ppt-search-input:not(:focus) {
+    width: 28px;
+    min-width: 28px;
+    padding: 0;
+    color: transparent;
+    cursor: pointer;
+    background-color: transparent;
+    border-color: transparent;
+  }
+  .ppt-search-input:not(:focus)::placeholder {
+    color: transparent;
+  }
+  .ppt-search-input:focus {
+    width: 180px;
+    min-width: 120px;
+    padding: 0 10px 0 28px;
+    color: #323130;
+    background-color: #ffffff;
+    border-color: #c43e1c;
+    position: absolute;
+    right: 0;
+    z-index: 10;
+  }
+}
+
+.search-results-dropdown {
+  position: fixed;
+  width: 220px;
+  background: #ffffff;
+  border: 1px solid #c8c6c4;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  margin-top: 4px;
+  z-index: 2000;
+  padding: 4px 0;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.search-result-item:hover {
+  background: #f3f2f1;
+}
+
+.cmd-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.cmd-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #323130;
+}
+
+.cmd-group {
+  font-size: 10px;
+  color: #605e5c;
+}
+
+/* Present button */
+.ppt-present-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #f3f2f1;
+  color: #a19f9d;
+  border: 1px solid #e1dfdd;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: default;
+  opacity: 0.7;
+}
+
+/* Ribbon Body */
+.ppt-ribbon-body {
+  height: 98px;
+  background-color: #ffffff;
+  display: flex;
+  align-items: stretch;
+  padding: 2px 6px 4px;
+  overflow: hidden;
+  box-sizing: border-box;
+  }
+
+/* Dark mode styling */
+:host-context([data-theme='DARK']),
+:host-context(.dark-theme) {
+  background-color: #292929;
+  border-bottom-color: #3b3a39;
+}
+
+:host-context([data-theme='DARK']) .ppt-tab-strip,
+:host-context(.dark-theme) .ppt-tab-strip {
+  background-color: #1f1f1f;
+  border-bottom-color: #3b3a39;
+}
+
+:host-context([data-theme='DARK']) .ppt-tab-btn,
+:host-context(.dark-theme) .ppt-tab-btn {
+  color: #f3f2f1;
+}
+
+:host-context([data-theme='DARK']) .ppt-tab-btn:hover:not(:disabled),
+:host-context(.dark-theme) .ppt-tab-btn:hover:not(:disabled) {
+  color: #f3f2f1;
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+:host-context([data-theme='DARK']) .ppt-tab-btn.active,
+:host-context(.dark-theme) .ppt-tab-btn.active {
+  color: #ffffff;
+}
+
+:host-context([data-theme='DARK']) .ppt-search-input,
+:host-context(.dark-theme) .ppt-search-input {
+  background-color: #292929;
+  border-color: #484644;
+  color: #ffffff;
+}
+
+:host-context([data-theme='DARK']) .search-magnifier,
+:host-context(.dark-theme) .search-magnifier {
+  color: #a6a6a6;
+}
+
+:host-context([data-theme='DARK']) .search-results-dropdown,
+:host-context(.dark-theme) .search-results-dropdown {
+  background: #252423;
+  border-color: #3b3a39;
+}
+
+:host-context([data-theme='DARK']) .search-result-item:hover,
+:host-context(.dark-theme) .search-result-item:hover {
+  background: #3b3a39;
+}
+
+:host-context([data-theme='DARK']) .cmd-label,
+:host-context(.dark-theme) .cmd-label {
+  color: #ffffff;
+}
+
+:host-context([data-theme='DARK']) .cmd-group,
+:host-context(.dark-theme) .cmd-group {
+  color: #a6a6a6;
+}
+
+:host-context([data-theme='DARK']) .ppt-present-btn,
+:host-context(.dark-theme) .ppt-present-btn {
+  background-color: #3b3a39;
+  border-color: #484644;
+  color: #8a8886;
+}
+
+:host-context([data-theme='DARK']) .ppt-ribbon-body,
+:host-context(.dark-theme) .ppt-ribbon-body {
+  background-color: #201f1e;
+}
+
+/* Tab Strip Overflow Button & Menu */
+.ppt-tab-overflow-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  padding: 0 !important;
+  color: #323130;
+  cursor: pointer;
+}
+
+.ppt-tab-overflow-btn:hover {
+  background-color: rgba(196, 62, 28, 0.06);
+  color: #c43e1c;
+}
+
+.ppt-tab-overflow-btn.active {
+  background-color: rgba(196, 62, 28, 0.1);
+  color: #c43e1c;
+}
+
+.ppt-tab-overflow-menu {
+  background: #ffffff;
+  border: 1px solid #c8c6c4;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  padding: 4px 0;
+  min-width: 130px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.ppt-tab-overflow-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 6px 12px;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 13px;
+  color: #323130;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ppt-tab-overflow-item:hover:not(:disabled) {
+  background: #f3f2f1;
+  color: #c43e1c;
+}
+
+.ppt-tab-overflow-item.active {
+  font-weight: 600;
+  color: #c43e1c;
+  background-color: #f3f2f1;
+}
+
+.ppt-tab-overflow-item.disabled,
+.ppt-tab-overflow-item:disabled {
+  color: #a19f9d;
+  cursor: default;
+}
+
+/* Stage 3: Ribbon overflow button at right end of ribbon */
+.ppt-ribbon-overflow-btn-wrapper {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  flex-shrink: 0;
+  margin-left: 2px;
+}
+
+.ppt-ribbon-more-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  padding: 4px 6px;
+  cursor: pointer;
+  height: 100%;
+  min-width: 28px;
+  color: #323130;
+  box-sizing: border-box;
+}
+
+.ppt-ribbon-more-btn:hover {
+  background: #f3f2f1;
+}
+
+.ppt-ribbon-more-btn.active {
+  background: #edebe9;
+  border-color: #c8c6c4;
+}
+
+.ppt-ribbon-overflow-panel {
+  background: #ffffff;
+  border: 1px solid #c8c6c4;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  padding: 8px 10px;
+  min-width: 180px;
+  max-width: 360px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.overflow-groups-container {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.overflow-group-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.overflow-group-header {
+  font-size: 11px;
+  font-weight: 600;
+  color: #616161;
+  border-bottom: 1px solid #edebe9;
+  padding-bottom: 2px;
+  margin-bottom: 2px;
+}
+
+.overflow-group-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Dark mode for Tab Overflow & Ribbon Overflow */
+:host-context([data-theme='DARK']) .ppt-tab-overflow-btn,
+:host-context(.dark-theme) .ppt-tab-overflow-btn {
+  color: #f3f2f1;
+}
+
+:host-context([data-theme='DARK']) .ppt-tab-overflow-menu,
+:host-context(.dark-theme) .ppt-tab-overflow-menu {
+  background: #252423;
+  border-color: #3b3a39;
+}
+
+:host-context([data-theme='DARK']) .ppt-tab-overflow-item,
+:host-context(.dark-theme) .ppt-tab-overflow-item {
+  color: #f3f2f1;
+}
+
+:host-context([data-theme='DARK']) .ppt-tab-overflow-item:hover:not(:disabled),
+:host-context(.dark-theme) .ppt-tab-overflow-item:hover:not(:disabled) {
+  background: #3b3a39;
+}
+
+:host-context([data-theme='DARK']) .ppt-ribbon-more-btn,
+:host-context(.dark-theme) .ppt-ribbon-more-btn {
+  color: #f3f2f1;
+}
+
+:host-context([data-theme='DARK']) .ppt-ribbon-more-btn:hover,
+:host-context(.dark-theme) .ppt-ribbon-more-btn:hover {
+  background: #3b3a39;
+}
+
+:host-context([data-theme='DARK']) .ppt-ribbon-overflow-panel,
+:host-context(.dark-theme) .ppt-ribbon-overflow-panel {
+  background: #252423;
+  border-color: #3b3a39;
+}
+
+:host-context([data-theme='DARK']) .overflow-group-header,
+:host-context(.dark-theme) .overflow-group-header {
+  color: #a6a6a6;
+  border-bottom-color: #3b3a39;
+}

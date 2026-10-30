@@ -134,11 +134,6 @@ export class PluginBridgeService {
       return;
     }
 
-    if (app === 'powerpoint') {
-      this.sendError(`The ${app} editor is not available in this build.`);
-      return;
-    }
-
     const appKind = app as AppKind;
     this.currentKind = appKind;
 

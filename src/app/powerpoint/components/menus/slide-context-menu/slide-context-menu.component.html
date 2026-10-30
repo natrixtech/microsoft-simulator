@@ -1,0 +1,83 @@
+<div
+  *ngIf="isOpen"
+  class="slide-context-menu"
+  [style.left.px]="x"
+  [style.top.px]="y"
+  (click)="$event.stopPropagation()"
+>
+  <!-- Cut (disabled) -->
+  <button type="button" class="menu-item" disabled title="Cut">
+    <span>Cut</span>
+    <span class="shortcut">Ctrl+X</span>
+  </button>
+
+  <!-- Copy (ENABLED) -->
+  <button
+    type="button"
+    class="menu-item"
+    data-demo-target="context-copy"
+    (click)="onAction('copy')"
+  >
+    <span>Copy</span>
+    <span class="shortcut">Ctrl+C</span>
+  </button>
+
+  <!-- Paste (ENABLED if canPaste) -->
+  <button
+    type="button"
+    class="menu-item"
+    [disabled]="!canPaste"
+    data-demo-target="context-paste"
+    (click)="onAction('paste')"
+  >
+    <span>Paste</span>
+    <span class="shortcut">Ctrl+V</span>
+  </button>
+
+  <div class="menu-divider"></div>
+
+  <!-- New Slide (ENABLED) -->
+  <button
+    type="button"
+    class="menu-item"
+    data-demo-target="context-new-slide"
+    (click)="onAction('new')"
+  >
+    <span>New Slide</span>
+  </button>
+
+  <!-- Duplicate Slide (disabled) -->
+  <button type="button" class="menu-item" disabled title="Duplicate Slide">
+    <span>Duplicate Slide</span>
+  </button>
+
+  <!-- Delete Slide (ENABLED if canDelete) -->
+  <button
+    type="button"
+    class="menu-item"
+    [disabled]="!canDelete"
+    data-demo-target="context-delete-slide"
+    (click)="onAction('delete')"
+  >
+    <span>Delete Slide</span>
+    <span class="shortcut">Del</span>
+  </button>
+
+  <div class="menu-divider"></div>
+
+  <!-- Layout (disabled) -->
+  <button type="button" class="menu-item" disabled title="Layout">
+    <span>Layout</span>
+  </button>
+
+  <!-- Reset Slide (disabled) -->
+  <button type="button" class="menu-item" disabled title="Reset Slide">
+    <span>Reset Slide</span>
+  </button>
+
+  <!-- Hide Slide (disabled) -->
+  <button type="button" class="menu-item" disabled title="Hide Slide">
+    <span>Hide Slide</span>
+  </button>
+</div>
+

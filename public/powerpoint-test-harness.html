@@ -1,0 +1,866 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>PowerPoint Simulator &mdash; Developer / QA Test Harness</title>
+    <style>
+      :root { color-scheme: light; }
+      body { margin: 0; font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background: #f8fafc; color: #0f172a; padding: 20px; }
+      header { margin-bottom: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; }
+      h1 { margin: 0 0 6px; font-size: 20px; color: #1e293b; }
+      .badge { display: inline-block; background: #fbeae5; color: #c43e1c; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; border: 1px solid #f3bdae; margin-bottom: 8px; }
+      .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+      .nav-group { display: flex; align-items: center; gap: 6px; background: #e2e8f0; padding: 4px 8px; border-radius: 6px; }
+      select, button, textarea { font-family: inherit; font-size: 13px; }
+      select, button { padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; }
+      button.primary { background: #c43e1c; color: white; border-color: #a83517; font-weight: 600; }
+      button.nav-btn { background: #0f172a; color: white; border-color: #0f172a; font-weight: 600; }
+      button:hover { opacity: 0.9; }
+      .lesson-indicator { font-size: 12px; font-weight: 700; color: #1e293b; padding: 0 4px; }
+      iframe { width: 100%; height: 780px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+      .log-panel { margin-top: 16px; }
+      pre { background: #1e293b; color: #f8fafc; padding: 12px; border-radius: 6px; font-family: Consolas, monospace; font-size: 12px; max-height: 180px; overflow-y: auto; }
+      details { margin-top: 12px; }
+      textarea { width: 100%; height: 180px; font-family: Consolas, monospace; font-size: 12px; box-sizing: border-box; padding: 8px; margin-top: 6px; }
+      .status-pill { font-size: 12px; padding: 3px 8px; border-radius: 12px; background: #dcfce7; color: #166534; font-weight: 600; display: none; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <span class="badge">Developer / QA test harness &mdash; Microsoft PowerPoint Simulator</span>
+      <h1>Microsoft PowerPoint Simulator &mdash; Test Harness</h1>
+    </header>
+
+    <div class="controls">
+      <!-- Lesson Navigation Group -->
+      <div class="nav-group">
+        <button id="prev-lesson-btn" title="Previous Lesson">◀ Prev</button>
+        <span id="lesson-indicator" class="lesson-indicator">Lesson 1 of 4</span>
+        <button id="next-lesson-btn" class="nav-btn" title="Next Lesson">Next Lesson ▶</button>
+      </div>
+
+      <label for="lesson-select"><strong>Activity:</strong></label>
+      <select id="lesson-select">
+        <option value="slideTitle">Lesson 1: Add a Slide Title</option>
+        <option value="startPresentation">Lesson 2: Start a Presentation</option>
+        <option value="formatText">Lesson 3: Format the Text</option>
+        <option value="picturesShapes">Lesson 4: Pictures and Shapes</option>
+        <option value="tableSlide">Lesson 5: Make a Table Slide</option>
+        <option value="organiseSlides">Lesson 6: Organise the Slides</option>
+        <option value="undoRedo">Lesson 7: Undo, Redo and Layout</option>
+        <option value="assessment">Lesson 8: Presentation Basics Assessment</option>
+      </select>
+
+      <button id="load-btn" class="primary">Load Activity</button>
+
+      <span id="status-pill" class="status-pill">Next lesson loaded ✓</span>
+
+      <span style="flex: 1;"></span>
+      <button id="light-btn">Light</button>
+      <button id="dark-btn">Dark</button>
+      <button id="pause-btn">Pause</button>
+      <button id="resume-btn">Resume</button>
+      <button id="finish-btn">Force Finish</button>
+    </div>
+
+    <iframe id="plugin" src="./index.html"></iframe>
+
+    <div class="log-panel">
+      <h3>Host Message Log</h3>
+      <pre id="log-monitor">(Waiting for messages from simulator...)</pre>
+    </div>
+
+    <details>
+      <summary><strong>Custom Activity JSON Payload</strong></summary>
+      <textarea id="custom-json"></textarea>
+      <button id="send-json-btn" class="primary" style="margin-top: 8px;">Send Custom Activity</button>
+    </details>
+
+    <script type="module">
+      let frame = document.querySelector('#plugin');
+      const logMonitor = document.querySelector('#log-monitor');
+      const select = document.querySelector('#lesson-select');
+      const jsonArea = document.querySelector('#custom-json');
+      const indicator = document.querySelector('#lesson-indicator');
+      const statusPill = document.querySelector('#status-pill');
+      const log = [];
+
+      let currentTheme = 'LIGHT';
+      let pendingPayload = null;
+      let readyTimeout = null;
+
+      const samples = {
+        "slideTitle": {
+                "app": "powerpoint",
+                "mode": "lesson",
+                "title": "Add a Slide Title",
+                "assetBaseUrl": "./assets/",
+                "theme": "LIGHT",
+                "images": [
+                        {
+                                "file": "headphones.svg",
+                                "alt": "Headphones"
+                        },
+                        {
+                                "file": "books-stack.svg",
+                                "alt": "A stack of books"
+                        },
+                        {
+                                "file": "art.svg",
+                                "alt": "Paint and brushes"
+                        },
+                        {
+                                "file": "sports.svg",
+                                "alt": "Sports balls"
+                        }
+                ],
+                "tasks": [
+                        {
+                                "title": "Add the title",
+                                "explanation": "A title tells what a slide is about. It usually goes at the top.",
+                                "instructions": [
+                                        "Click the title area on the slide and type `My Favorite Animal`."
+                                ],
+                                "hint": "Click inside the box that says Click to add title, then type.",
+                                "startingDeck": {
+                                        "theme": "simple-light",
+                                        "slides": [
+                                                {
+                                                        "layout": "titleAndBody",
+                                                        "title": "",
+                                                        "body": ""
+                                                }
+                                        ]
+                                },
+                                "goals": [
+                                        {
+                                                "type": "slideText",
+                                                "slide": 1,
+                                                "placeholder": "title",
+                                                "contains": "My Favorite Animal"
+                                        }
+                                ],
+                                "showMeHow": true
+                        }
+                ]
+        },
+        "startPresentation": {
+                "app": "powerpoint",
+                "mode": "lesson",
+                "title": "Start a Presentation",
+                "assetBaseUrl": "./assets/",
+                "theme": "LIGHT",
+                "images": [
+                        {
+                                "file": "headphones.svg",
+                                "alt": "Headphones"
+                        },
+                        {
+                                "file": "books-stack.svg",
+                                "alt": "A stack of books"
+                        },
+                        {
+                                "file": "art.svg",
+                                "alt": "Paint and brushes"
+                        },
+                        {
+                                "file": "sports.svg",
+                                "alt": "Sports balls"
+                        }
+                ],
+                "tasks": [
+                        {
+                                "title": "Start a presentation",
+                                "explanation": "Every presentation starts with a title slide. Remove slides you do not need.",
+                                "instructions": [
+                                        "Click the title area and type `Our School Garden`.",
+                                        "Click the subtitle area and type `By Class 5B`.",
+                                        "Right-click slide 2 in the slide list and choose Delete Slide."
+                                ],
+                                "hint": "Click inside each box on the slide to type. Right-click a slide thumbnail to delete it.",
+                                "startingDeck": {
+                                        "theme": "simple-light",
+                                        "slides": [
+                                                {
+                                                        "layout": "title",
+                                                        "title": "",
+                                                        "subtitle": ""
+                                                },
+                                                {
+                                                        "layout": "titleAndBody",
+                                                        "title": "Delete me",
+                                                        "body": ""
+                                                }
+                                        ]
+                                },
+                                "goals": [
+                                        {
+                                                "type": "slideText",
+                                                "slide": 1,
+                                                "placeholder": "title",
+                                                "contains": "Our School Garden"
+                                        },
+                                        {
+                                                "type": "slideText",
+                                                "slide": 1,
+                                                "placeholder": "subtitle",
+                                                "contains": "By Class 5B"
+                                        },
+                                        {
+                                                "type": "slideCount",
+                                                "count": 1
+                                        }
+                                ],
+                                "showMeHow": true
+                        }
+                ]
+        },
+        "formatText": {
+                "app": "powerpoint",
+                "mode": "lesson",
+                "title": "Format the Text",
+                "assetBaseUrl": "./assets/",
+                "theme": "LIGHT",
+                "images": [
+                        {
+                                "file": "headphones.svg",
+                                "alt": "Headphones"
+                        },
+                        {
+                                "file": "books-stack.svg",
+                                "alt": "A stack of books"
+                        },
+                        {
+                                "file": "art.svg",
+                                "alt": "Paint and brushes"
+                        },
+                        {
+                                "file": "sports.svg",
+                                "alt": "Sports balls"
+                        }
+                ],
+                "tasks": [
+                        {
+                                "title": "Format the text",
+                                "explanation": "Formatting makes the important words stand out and the content easy to read.",
+                                "instructions": [
+                                        "Select the title `All about me` and make it bold, italic and underlined.",
+                                        "Select the three lines in the body and click Numbering.",
+                                        "Select the title again, change the font to Georgia, the size to 54, the colour to red, and center it."
+                                ],
+                                "hint": "All of these buttons are in the Font and Paragraph groups on the Home tab.",
+                                "startingDeck": {
+                                        "theme": "simple-light",
+                                        "slides": [
+                                                {
+                                                        "layout": "titleAndBody",
+                                                        "title": "All about me",
+                                                        "body": "Reading\nFootball\nMusic"
+                                                }
+                                        ]
+                                },
+                                "goals": [
+                                        {
+                                                "type": "textStyle",
+                                                "slide": 1,
+                                                "text": "All about me",
+                                                "bold": true,
+                                                "italic": true,
+                                                "underline": true
+                                        },
+                                        {
+                                                "type": "list",
+                                                "slide": 1,
+                                                "placeholder": "body",
+                                                "listType": "numbered",
+                                                "minItems": 3
+                                        },
+                                        {
+                                                "type": "textStyle",
+                                                "slide": 1,
+                                                "text": "All about me",
+                                                "font": "Georgia",
+                                                "size": 54,
+                                                "color": "red",
+                                                "align": "center"
+                                        }
+                                ],
+                                "showMeHow": true
+                        }
+                ]
+        },
+        "picturesShapes": {
+                "app": "powerpoint",
+                "mode": "lesson",
+                "title": "Pictures and Shapes",
+                "assetBaseUrl": "./assets/",
+                "theme": "LIGHT",
+                "images": [
+                        {
+                                "file": "headphones.svg",
+                                "alt": "Headphones"
+                        },
+                        {
+                                "file": "books-stack.svg",
+                                "alt": "A stack of books"
+                        },
+                        {
+                                "file": "art.svg",
+                                "alt": "Paint and brushes"
+                        },
+                        {
+                                "file": "sports.svg",
+                                "alt": "Sports balls"
+                        }
+                ],
+                "tasks": [
+                        {
+                                "title": "Add a picture and a shape",
+                                "explanation": "Pictures and shapes make a slide more interesting.",
+                                "instructions": [
+                                        "Click the Insert tab.",
+                                        "Use Insert > Pictures to add the headphones picture, drag it to the left half of the slide and make it bigger.",
+                                        "Use Insert > Shapes to draw a star."
+                                ],
+                                "hint": "Pictures and Shapes are on the Insert tab. Drag a picture to move it, drag a corner to resize it.",
+                                "startingDeck": {
+                                        "theme": "simple-light",
+                                        "slides": [
+                                                {
+                                                        "layout": "titleOnly",
+                                                        "title": "My Hobbies"
+                                                }
+                                        ]
+                                },
+                                "goals": [
+                                        {
+                                                "type": "action",
+                                                "action": "openMenu",
+                                                "menu": "Insert"
+                                        },
+                                        {
+                                                "type": "image",
+                                                "slide": 1,
+                                                "file": "headphones.svg",
+                                                "position": "left",
+                                                "minWidth": 480
+                                        },
+                                        {
+                                                "type": "shape",
+                                                "slide": 1,
+                                                "shape": "star"
+                                        }
+                                ],
+                                "showMeHow": true
+                        }
+                ]
+        },
+        "tableSlide": {
+                "app": "powerpoint",
+                "mode": "lesson",
+                "title": "Make a Table Slide",
+                "assetBaseUrl": "./assets/",
+                "theme": "LIGHT",
+                "images": [
+                        {
+                                "file": "headphones.svg",
+                                "alt": "Headphones"
+                        },
+                        {
+                                "file": "books-stack.svg",
+                                "alt": "A stack of books"
+                        },
+                        {
+                                "file": "art.svg",
+                                "alt": "Paint and brushes"
+                        },
+                        {
+                                "file": "sports.svg",
+                                "alt": "Sports balls"
+                        }
+                ],
+                "tasks": [
+                        {
+                                "title": "Make a table slide",
+                                "explanation": "Tables put information in rows and columns. A background picture and a transition finish the slide.",
+                                "instructions": [
+                                        "Use Insert > Table to add a 2 x 2 table and type `Cat` and `Dog` in the first row.",
+                                        "Use Design > Background Styles > Format Background to set the paint and brushes picture as the background.",
+                                        "On the Transitions tab, add Push and set Effect Options to From Right."
+                                ],
+                                "hint": "Table is on the Insert tab, Background Styles on the Design tab, Push on the Transitions tab.",
+                                "startingDeck": {
+                                        "theme": "simple-light",
+                                        "slides": [
+                                                {
+                                                        "layout": "titleOnly",
+                                                        "title": "Class Pets"
+                                                }
+                                        ]
+                                },
+                                "goals": [
+                                        {
+                                                "type": "table",
+                                                "slide": 1,
+                                                "rows": 2,
+                                                "columns": 2,
+                                                "cells": [
+                                                        [
+                                                                "Cat",
+                                                                "Dog"
+                                                        ],
+                                                        [
+                                                                "",
+                                                                ""
+                                                        ]
+                                                ]
+                                        },
+                                        {
+                                                "type": "background",
+                                                "slide": 1,
+                                                "file": "art.svg"
+                                        },
+                                        {
+                                                "type": "transition",
+                                                "slide": 1,
+                                                "transition": "slideFromRight"
+                                        }
+                                ],
+                                "showMeHow": true
+                        }
+                ]
+        },
+        "organiseSlides": {
+                "app": "powerpoint",
+                "mode": "lesson",
+                "title": "Organise the Slides",
+                "assetBaseUrl": "./assets/",
+                "theme": "LIGHT",
+                "images": [
+                        {
+                                "file": "headphones.svg",
+                                "alt": "Headphones"
+                        },
+                        {
+                                "file": "books-stack.svg",
+                                "alt": "A stack of books"
+                        },
+                        {
+                                "file": "art.svg",
+                                "alt": "Paint and brushes"
+                        },
+                        {
+                                "file": "sports.svg",
+                                "alt": "Sports balls"
+                        }
+                ],
+                "tasks": [
+                        {
+                                "title": "Organise the slides",
+                                "explanation": "Slides should be in a clear order, and a theme gives them all the same look.",
+                                "instructions": [
+                                        "Click slide 2 in the slide list.",
+                                        "Move the slides into this order: Introduction, The Problem, Our Solution.",
+                                        "On the Design tab, pick a new theme."
+                                ],
+                                "hint": "Drag a slide in the left slide list to move it. Themes are on the Design tab.",
+                                "startingDeck": {
+                                        "theme": "simple-light",
+                                        "slides": [
+                                                {
+                                                        "layout": "title",
+                                                        "title": "The Problem",
+                                                        "subtitle": ""
+                                                },
+                                                {
+                                                        "layout": "title",
+                                                        "title": "Introduction",
+                                                        "subtitle": ""
+                                                },
+                                                {
+                                                        "layout": "title",
+                                                        "title": "Our Solution",
+                                                        "subtitle": ""
+                                                }
+                                        ]
+                                },
+                                "goals": [
+                                        {
+                                                "type": "action",
+                                                "action": "selectSlide",
+                                                "slide": 2
+                                        },
+                                        {
+                                                "type": "slideOrder",
+                                                "titles": [
+                                                        "Introduction",
+                                                        "The Problem",
+                                                        "Our Solution"
+                                                ]
+                                        },
+                                        {
+                                                "type": "theme",
+                                                "theme": "any"
+                                        }
+                                ],
+                                "showMeHow": true
+                        }
+                ]
+        },
+        "undoRedo": {
+                "app": "powerpoint",
+                "mode": "lesson",
+                "title": "Undo, Redo and Layout",
+                "assetBaseUrl": "./assets/",
+                "theme": "LIGHT",
+                "images": [
+                        {
+                                "file": "headphones.svg",
+                                "alt": "Headphones"
+                        },
+                        {
+                                "file": "books-stack.svg",
+                                "alt": "A stack of books"
+                        },
+                        {
+                                "file": "art.svg",
+                                "alt": "Paint and brushes"
+                        },
+                        {
+                                "file": "sports.svg",
+                                "alt": "Sports balls"
+                        }
+                ],
+                "tasks": [
+                        {
+                                "title": "Undo, redo and change the layout",
+                                "explanation": "Undo takes back your last change and Redo brings it back again.",
+                                "instructions": [
+                                        "Click New Slide, then click Undo to remove the new slide.",
+                                        "Click New Slide, click Undo, then click Redo to bring the slide back.",
+                                        "Change the layout of slide 2 to Title Only."
+                                ],
+                                "hint": "New Slide, Undo, Redo and Layout are on the Home tab.",
+                                "startingDeck": {
+                                        "theme": "simple-light",
+                                        "slides": [
+                                                {
+                                                        "layout": "title",
+                                                        "title": "My Week",
+                                                        "subtitle": ""
+                                                }
+                                        ]
+                                },
+                                "goals": [
+                                        {
+                                                "type": "action",
+                                                "action": "undo"
+                                        },
+                                        {
+                                                "type": "action",
+                                                "action": "redo"
+                                        },
+                                        {
+                                                "type": "layout",
+                                                "slide": 2,
+                                                "layout": "titleOnly"
+                                        }
+                                ],
+                                "showMeHow": true
+                        }
+                ]
+        },
+        "assessment": {
+                "app": "powerpoint",
+                "mode": "assessment",
+                "title": "Presentation Basics Assessment",
+                "assetBaseUrl": "./assets/",
+                "theme": "LIGHT",
+                "images": [
+                        {
+                                "file": "headphones.svg",
+                                "alt": "Headphones"
+                        },
+                        {
+                                "file": "books-stack.svg",
+                                "alt": "A stack of books"
+                        },
+                        {
+                                "file": "art.svg",
+                                "alt": "Paint and brushes"
+                        },
+                        {
+                                "file": "sports.svg",
+                                "alt": "Sports balls"
+                        }
+                ],
+                "tasks": [
+                        {
+                                "title": "Make the title slide",
+                                "explanation": "Start your presentation with a title slide.",
+                                "instructions": [
+                                        "Click the title area and type `Healthy Eating`.",
+                                        "Click the subtitle area and type `By Class 5B`.",
+                                        "Use Insert > Text Box to add a text box that says `Eat five a day`."
+                                ],
+                                "hint": "Click inside each box on the slide to type. Text Box is on the Insert tab.",
+                                "startingDeck": {
+                                        "theme": "simple-light",
+                                        "slides": [
+                                                {
+                                                        "layout": "title",
+                                                        "title": "",
+                                                        "subtitle": ""
+                                                }
+                                        ]
+                                },
+                                "goals": [
+                                        {
+                                                "type": "slideText",
+                                                "slide": 1,
+                                                "placeholder": "title",
+                                                "contains": "Healthy Eating"
+                                        },
+                                        {
+                                                "type": "slideText",
+                                                "slide": 1,
+                                                "placeholder": "subtitle",
+                                                "contains": "By Class 5B"
+                                        },
+                                        {
+                                                "type": "textBox",
+                                                "slide": 1,
+                                                "contains": "Eat five a day"
+                                        }
+                                ],
+                                "showMeHow": true
+                        },
+                        {
+                                "title": "Add a content slide",
+                                "explanation": "Content slides hold the main points of your presentation.",
+                                "instructions": [
+                                        "Click New Slide to add slide 2.",
+                                        "On slide 2, click the title area and type `Fruits`.",
+                                        "In the body of slide 2, type three lines and turn them into a bulleted list."
+                                ],
+                                "hint": "New Slide and Bullets are on the Home tab. Press Enter to start a new line.",
+                                "startingDeck": null,
+                                "goals": [
+                                        {
+                                                "type": "slideCount",
+                                                "count": 2
+                                        },
+                                        {
+                                                "type": "slideText",
+                                                "slide": 2,
+                                                "placeholder": "title",
+                                                "contains": "Fruits"
+                                        },
+                                        {
+                                                "type": "list",
+                                                "slide": 2,
+                                                "placeholder": "body",
+                                                "listType": "bullet",
+                                                "minItems": 3
+                                        }
+                                ],
+                                "showMeHow": true
+                        },
+                        {
+                                "title": "Finish the slide",
+                                "explanation": "Shapes and colour make your slides look finished.",
+                                "instructions": [
+                                        "Use Insert > Shapes to draw a star on slide 2.",
+                                        "Click the star to select it.",
+                                        "Change the background of slide 2 to light yellow."
+                                ],
+                                "hint": "Shapes is on the Insert tab, Background Styles on the Design tab.",
+                                "startingDeck": null,
+                                "goals": [
+                                        {
+                                                "type": "shape",
+                                                "slide": 2,
+                                                "shape": "star"
+                                        },
+                                        {
+                                                "type": "action",
+                                                "action": "selectElement",
+                                                "slide": 2
+                                        },
+                                        {
+                                                "type": "background",
+                                                "slide": 2,
+                                                "color": "lightYellow"
+                                        }
+                                ],
+                                "showMeHow": true
+                        }
+                ]
+        }
+};
+
+      function appendLog(line) {
+        const time = new Date().toLocaleTimeString();
+        log.push(`[${time}] ${line}`);
+        logMonitor.textContent = log.slice(-30).join('\n');
+        logMonitor.scrollTop = logMonitor.scrollHeight;
+      }
+
+      function showStatusBadge(text) {
+        statusPill.textContent = text;
+        statusPill.style.display = 'inline-block';
+        setTimeout(() => {
+          statusPill.style.display = 'none';
+        }, 3000);
+      }
+
+      function updateIndicator() {
+        const idx = select.selectedIndex + 1;
+        const total = select.options.length;
+        indicator.textContent = `Lesson ${idx} of ${total}`;
+      }
+
+      function reloadSimulator(payload) {
+        pendingPayload = payload;
+        appendLog(`Reloading iframe with new lesson payload...`);
+
+        if (readyTimeout) clearTimeout(readyTimeout);
+        readyTimeout = setTimeout(() => {
+          if (pendingPayload) {
+            appendLog('Warning: pluginReady not received within 3s, attempting fallback send...');
+            if (frame && frame.contentWindow) {
+              frame.contentWindow.postMessage({ type: 'PLUGIN_DATA_IN', payload: pendingPayload }, '*');
+              pendingPayload = null;
+            }
+          }
+        }, 3000);
+
+        const newFrame = document.createElement('iframe');
+        newFrame.id = 'plugin';
+        newFrame.src = './index.html';
+        frame.parentNode.replaceChild(newFrame, frame);
+        frame = newFrame;
+      }
+
+      function loadSelectedLesson() {
+        const key = select.value;
+        const template = samples[key];
+        if (!template) return;
+        const payload = JSON.parse(JSON.stringify(template));
+        payload.theme = currentTheme;
+        jsonArea.value = JSON.stringify(payload, null, 2);
+        updateIndicator();
+        reloadSimulator(payload);
+      }
+
+      function advanceToNextLesson() {
+        if (select.selectedIndex < select.options.length - 1) {
+          select.selectedIndex++;
+          loadSelectedLesson();
+          showStatusBadge('Advanced to ' + select.options[select.selectedIndex].text);
+        } else {
+          showStatusBadge('All lessons completed!');
+        }
+      }
+
+      window.addEventListener('message', (event) => {
+        if (!frame || event.source !== frame.contentWindow) return;
+        const data = event.data;
+        if (!data || typeof data !== 'object') return;
+
+        if (data.type === 'PLUGIN_EVENT') {
+          if (data.name === 'pluginReady') {
+            appendLog('Received: pluginReady');
+            if (readyTimeout) {
+              clearTimeout(readyTimeout);
+              readyTimeout = null;
+            }
+            if (pendingPayload) {
+              const toSend = pendingPayload;
+              pendingPayload = null;
+              frame.contentWindow.postMessage({ type: 'PLUGIN_DATA_IN', payload: toSend }, '*');
+              appendLog(`Sent PLUGIN_DATA_IN: "${toSend.title}" (${toSend.app || 'unknown app'})`);
+            }
+          } else if (data.name === 'activityCompleted') {
+            const p = data.payload || {};
+            appendLog(`Received: activityCompleted { completed: ${p.completed}, tasksPassed: ${p.tasksPassed}/${p.tasksTotal} }`);
+          } else if (data.name === 'pluginError') {
+            appendLog(`Received: pluginError -> "${data.message}"`);
+          } else {
+            appendLog(`Received: ${data.name}`);
+          }
+        }
+      });
+
+      document.querySelector('#load-btn').addEventListener('click', loadSelectedLesson);
+
+      document.querySelector('#next-lesson-btn').addEventListener('click', () => {
+        advanceToNextLesson();
+      });
+
+      document.querySelector('#prev-lesson-btn').addEventListener('click', () => {
+        if (select.selectedIndex > 0) {
+          select.selectedIndex--;
+          loadSelectedLesson();
+          showStatusBadge('Moved to ' + select.options[select.selectedIndex].text);
+        }
+      });
+
+      select.addEventListener('change', () => {
+        loadSelectedLesson();
+      });
+
+      document.querySelector('#send-json-btn').addEventListener('click', () => {
+        try {
+          const payload = JSON.parse(jsonArea.value);
+          payload.theme = currentTheme;
+          jsonArea.value = JSON.stringify(payload, null, 2);
+          reloadSimulator(payload);
+        } catch (err) {
+          alert('Invalid JSON: ' + err.message);
+        }
+      });
+
+      document.querySelector('#light-btn').addEventListener('click', () => {
+        currentTheme = 'LIGHT';
+        if (frame && frame.contentWindow) {
+          frame.contentWindow.postMessage({ type: 'PREFERENCE_CHANGED', payload: { type: 'theme', value: 'LIGHT' } }, '*');
+          appendLog('Sent: PREFERENCE_CHANGED theme LIGHT');
+        }
+      });
+
+      document.querySelector('#dark-btn').addEventListener('click', () => {
+        currentTheme = 'DARK';
+        if (frame && frame.contentWindow) {
+          frame.contentWindow.postMessage({ type: 'PREFERENCE_CHANGED', payload: { type: 'theme', value: 'DARK' } }, '*');
+          appendLog('Sent: PREFERENCE_CHANGED theme DARK');
+        }
+      });
+
+      document.querySelector('#pause-btn').addEventListener('click', () => {
+        if (frame && frame.contentWindow) {
+          frame.contentWindow.postMessage({ type: 'PAUSE', payload: { pause: true } }, '*');
+          appendLog('Sent: PAUSE true');
+        }
+      });
+
+      document.querySelector('#resume-btn').addEventListener('click', () => {
+        if (frame && frame.contentWindow) {
+          frame.contentWindow.postMessage({ type: 'PAUSE', payload: { pause: false } }, '*');
+          appendLog('Sent: PAUSE false');
+        }
+      });
+
+      document.querySelector('#finish-btn').addEventListener('click', () => {
+        if (frame && frame.contentWindow) {
+          frame.contentWindow.postMessage({ type: 'FORCE_FINISH' }, '*');
+          appendLog('Sent: FORCE_FINISH');
+        }
+      });
+
+      // Initial load: populate and load selected lesson
+      loadSelectedLesson();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,49 @@
+<ng-template #groupContent><ng-content></ng-content></ng-template>
+
+<div class="ppt-group-container" [class.folded]="isFolded" [class.compact]="isCompact">
+  <!-- Normal expanded state -->
+  <ng-container *ngIf="!isFolded">
+    <div class="ppt-group-body">
+      <ng-container *ngTemplateOutlet="groupContent"></ng-container>
+    </div>
+    <div class="ppt-group-footer">
+      <span class="ppt-group-label">{{ label }}</span>
+    </div>
+  </ng-container>
+
+  <!-- Folded state button -->
+  <ng-container *ngIf="isFolded">
+    <button
+      #foldedBtn
+      type="button"
+      class="ppt-folded-btn"
+      [class.active]="isOpen"
+      [title]="label"
+      [attr.data-demo-target]="'folded-group-' + groupId"
+      (click)="onFoldButtonClick($event)"
+    >
+      <app-ppt-icon [name]="icon || 'shapes'" [size]="20"></app-ppt-icon>
+      <span class="folded-btn-label">{{ label }}</span>
+      <app-ppt-icon name="chevron-down" [size]="10" class="folded-chevron"></app-ppt-icon>
+    </button>
+
+    <!-- Folded dropdown panel (rendered fixed outside ribbon clipping) -->
+    <div
+      *ngIf="isOpen"
+      class="ppt-folded-panel"
+      [style.position]="'fixed'"
+      [style.left.px]="panelPos.left"
+      [style.top.px]="panelPos.top"
+      [style.zIndex]="2000"
+      (click)="onPanelClick($event)"
+    >
+      <div class="ppt-folded-panel-header">
+        <strong>{{ label }}</strong>
+      </div>
+      <div class="ppt-folded-panel-body">
+        <ng-container *ngTemplateOutlet="groupContent"></ng-container>
+      </div>
+    </div>
+  </ng-container>
+</div>
+<div class="ppt-group-separator" aria-hidden="true"></div>

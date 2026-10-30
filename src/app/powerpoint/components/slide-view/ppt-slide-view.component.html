@@ -1,0 +1,186 @@
+<div
+  class="ppt-slide-surface"
+  [ngStyle]="slideBackgroundStyle"
+  [style.width.px]="slideWidth"
+  [style.height.px]="slideHeight"
+  (click)="onSlideSurfaceClick($event)"
+>
+  <!-- Placeholders from current layout -->
+  <app-ppt-placeholder
+    *ngFor="let ph of layoutPlaceholders; trackBy: trackByPlaceholderType"
+    [placeholder]="ph"
+    [text]="getPlaceholderText(ph.type)"
+    [html]="getPlaceholderHtml(ph.type)"
+    [theme]="theme"
+    [isInteractive]="isInteractive"
+    [isEditing]="isInteractive && editingPlaceholderField === ph.type"
+    (textChange)="onPlaceholderTextChange(ph.type, $event)"
+    (startEdit)="startEditPlaceholder.emit(ph.type)"
+    (stopEdit)="stopEditPlaceholder.emit()"
+  ></app-ppt-placeholder>
+
+  <!-- Slide extra elements (images, text boxes, shapes, tables) -->
+  <ng-container *ngFor="let el of slide.elements; let elIdx = index; trackBy: trackByElementId">
+    <!-- Image -->
+    <div
+      *ngIf="el.kind === 'image'"
+      class="ppt-slide-element ppt-element-image"
+      [attr.data-demo-target]="isInteractive ? 'slide-element-' + (elIdx + 1) : null"
+      [class.selected]="isInteractive && isElementSelected(el.id)"
+      [style.left.px]="el.x"
+      [style.top.px]="el.y"
+      [style.width.px]="el.w"
+      [style.height.px]="el.h"
+      (click)="onElementClick(el.id, $event)"
+      (pointerdown)="onElementPointerDown(el, $event)"
+    >
+      <img
+        *ngIf="!hasImageFailed(asAny(el).file)"
+        [src]="getAssetUrl(asAny(el).file)"
+        [alt]="asAny(el).alt || ''"
+        (error)="onImageError(asAny(el).file)"
+      />
+      <div *ngIf="hasImageFailed(asAny(el).file)" class="image-fallback-tile">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="#8a8886"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-5-7l-3 3.72L9 13l-3 4h12l-4-5z"/></svg>
+        <span class="fallback-alt-text">{{ asAny(el).alt || asAny(el).file }}</span>
+      </div>
+    </div>
+
+    <!-- TextBox -->
+    <div
+      *ngIf="el.kind === 'textBox'"
+      class="ppt-slide-element ppt-element-textbox"
+      [attr.data-demo-target]="isInteractive ? 'slide-element-' + (elIdx + 1) : null"
+      [class.selected]="isInteractive && isElementSelected(el.id)"
+      [style.left.px]="el.x"
+      [style.top.px]="el.y"
+      [style.width.px]="el.w"
+      [style.height.px]="el.h"
+      [style.font-size.px]="asAny(el).fontSize || 20"
+      [style.font-family]="asAny(el).fontFamily || theme.bodyFont"
+      [style.color]="asAny(el).color || theme.bodyColor"
+      [style.font-weight]="asAny(el).bold ? 'bold' : 'normal'"
+      [style.font-style]="asAny(el).italic ? 'italic' : 'normal'"
+      [style.text-decoration]="asAny(el).underline ? 'underline' : 'none'"
+      [style.text-align]="asAny(el).align || 'left'"
+      [attr.contenteditable]="isInteractive && selectedElementId === el.id ? 'true' : null"
+      (click)="onElementClick(el.id, $event)"
+      (focus)="onTextBoxFocus(el.id, $event)"
+      (input)="onTextBoxInput(el.id, $event)"
+      (paste)="onTextBoxPaste($event)"
+      (cut)="onBlockClipboard($event)"
+      (drop)="onBlockClipboard($event)"
+      (blur)="onTextBoxBlur(el.id, $event)"
+      (keydown)="onTextBoxKeyDown($event)"
+      [innerHTML]="getTextBoxContent(el) | pptSafeHtml"
+    ></div>
+
+    <!-- Shape -->
+    <div
+      *ngIf="el.kind === 'shape'"
+      class="ppt-slide-element ppt-element-shape"
+      [attr.data-demo-target]="isInteractive ? 'slide-element-' + (elIdx + 1) : null"
+      [class.selected]="isInteractive && isElementSelected(el.id)"
+      [style.left.px]="el.x"
+      [style.top.px]="el.y"
+      [style.width.px]="el.w"
+      [style.height.px]="el.h"
+      (click)="onElementClick(el.id, $event)"
+      (pointerdown)="onElementPointerDown(el, $event)"
+    >
+      <svg
+        [attr.viewBox]="'0 0 ' + el.w + ' ' + el.h"
+        [style.width.px]="el.w"
+        [style.height.px]="el.h"
+      >
+        <rect
+          *ngIf="asAny(el).shape === 'rectangle'"
+          x="1"
+          y="1"
+          [attr.width]="el.w - 2"
+          [attr.height]="el.h - 2"
+          [attr.fill]="getShapeFill(el)"
+          [attr.stroke]="getShapeStroke(el)"
+          stroke-width="1.5"
+        />
+        <rect
+          *ngIf="asAny(el).shape === 'roundedRectangle'"
+          x="1"
+          y="1"
+          [attr.width]="el.w - 2"
+          [attr.height]="el.h - 2"
+          rx="12"
+          [attr.fill]="getShapeFill(el)"
+          [attr.stroke]="getShapeStroke(el)"
+          stroke-width="1.5"
+        />
+        <ellipse
+          *ngIf="asAny(el).shape === 'ellipse'"
+          [attr.cx]="el.w / 2"
+          [attr.cy]="el.h / 2"
+          [attr.rx]="(el.w - 2) / 2"
+          [attr.ry]="(el.h - 2) / 2"
+          [attr.fill]="getShapeFill(el)"
+          [attr.stroke]="getShapeStroke(el)"
+          stroke-width="1.5"
+        />
+        <polygon
+          *ngIf="asAny(el).shape === 'triangle'"
+          [attr.points]="(el.w / 2) + ',2 ' + (el.w - 2) + ',' + (el.h - 2) + ' 2,' + (el.h - 2)"
+          [attr.fill]="getShapeFill(el)"
+          [attr.stroke]="getShapeStroke(el)"
+          stroke-width="1.5"
+        />
+        <path
+          *ngIf="asAny(el).shape === 'arrow'"
+          [attr.d]="'M 2 ' + (el.h * 0.3) + ' H ' + (el.w * 0.6) + ' V 2 L ' + (el.w - 2) + ' ' + (el.h / 2) + ' L ' + (el.w * 0.6) + ' ' + (el.h - 2) + ' V ' + (el.h * 0.7) + ' H 2 Z'"
+          [attr.fill]="getShapeFill(el)"
+          [attr.stroke]="getShapeStroke(el)"
+          stroke-width="1.5"
+        />
+        <polygon
+          *ngIf="asAny(el).shape === 'star'"
+          [attr.points]="(el.w * 0.5) + ',2 ' + (el.w * 0.62) + ',' + (el.h * 0.38) + ' ' + (el.w - 2) + ',' + (el.h * 0.38) + ' ' + (el.w * 0.69) + ',' + (el.h * 0.62) + ' ' + (el.w * 0.81) + ',' + (el.h - 2) + ' ' + (el.w * 0.5) + ',' + (el.h * 0.75) + ' ' + (el.w * 0.19) + ',' + (el.h - 2) + ' ' + (el.w * 0.31) + ',' + (el.h * 0.62) + ' 2,' + (el.h * 0.38) + ' ' + (el.w * 0.38) + ',' + (el.h * 0.38)"
+          [attr.fill]="getShapeFill(el)"
+          [attr.stroke]="getShapeStroke(el)"
+          stroke-width="1.5"
+        />
+      </svg>
+    </div>
+
+    <!-- Table -->
+    <div
+      *ngIf="el.kind === 'table'"
+      class="ppt-slide-element ppt-element-table"
+      [attr.data-demo-target]="isInteractive ? 'slide-element-' + (elIdx + 1) : null"
+      [class.selected]="isInteractive && isElementSelected(el.id)"
+      [style.left.px]="el.x"
+      [style.top.px]="el.y"
+      [style.width.px]="el.w"
+      [style.height.px]="el.h"
+      (click)="onElementClick(el.id, $event)"
+      (pointerdown)="onElementPointerDown(el, $event)"
+    >
+      <table class="ppt-slide-rendered-table">
+        <tbody>
+          <tr *ngFor="let row of asAny(el).cells; let rIdx = index; trackBy: trackByIndex">
+            <td
+              *ngFor="let cell of row; let cIdx = index; trackBy: trackByIndex"
+              [attr.data-demo-target]="isInteractive ? 'slide-table-cell-' + (rIdx + 1) + 'x' + (cIdx + 1) : null"
+              [attr.contenteditable]="isInteractive ? 'true' : null"
+              [textContent]="getCellText(el, rIdx, cIdx)"
+              (focus)="onTableCellFocus(el.id, rIdx, cIdx)"
+              (input)="onTableCellInput(el.id, rIdx, cIdx, $event)"
+              (paste)="onTableCellPaste($event)"
+              (cut)="onBlockClipboard($event)"
+              (drop)="onBlockClipboard($event)"
+              (blur)="onTableCellBlur(el.id, rIdx, cIdx, $event)"
+              (click)="onTableCellClick(el.id, $event)"
+              (keydown)="onTableCellKeyDown($event)"
+            ></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </ng-container>
+</div>

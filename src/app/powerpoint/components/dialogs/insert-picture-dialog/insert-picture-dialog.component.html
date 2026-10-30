@@ -1,0 +1,66 @@
+<div *ngIf="isOpen" class="modal-backdrop" (click)="onCancel()">
+  <div
+    class="modal-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="dialog-title"
+    data-demo-target="insert-picture-dialog"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="modal-header">
+      <h3 id="dialog-title">Insert Picture</h3>
+      <button type="button" class="close-btn" (click)="onCancel()" title="Close">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div *ngIf="images && images.length > 0; else noImages" class="pictures-grid">
+        <button
+          *ngFor="let img of images; let idx = index"
+          type="button"
+          class="picture-item"
+          [class.selected]="selectedFile === img.file"
+          [attr.data-demo-target]="'picture-item-' + (idx + 1)"
+          (click)="onSelectPicture(img.file)"
+        >
+          <div class="picture-preview">
+            <img
+              *ngIf="!hasImageFailed(img.file)"
+              [src]="getAssetUrl(img.file)"
+              [alt]="img.alt || img.file"
+              (error)="onImageError(img.file)"
+            />
+            <div *ngIf="hasImageFailed(img.file)" class="image-fallback-tile">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="#8a8886"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-5-7l-3 3.72L9 13l-3 4h12l-4-5z"/></svg>
+              <span class="fallback-alt-text">{{ img.alt || img.file }}</span>
+            </div>
+          </div>
+          <span class="picture-label">{{ img.alt || img.file }}</span>
+        </button>
+      </div>
+
+      <ng-template #noImages>
+        <div class="no-images-message">No pictures available</div>
+      </ng-template>
+    </div>
+
+    <div class="modal-footer">
+      <button
+        type="button"
+        class="btn btn-secondary"
+        data-demo-target="picture-dialog-cancel"
+        (click)="onCancel()"
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="!selectedFile"
+        data-demo-target="picture-dialog-insert"
+        (click)="onInsert()"
+      >
+        Insert
+      </button>
+    </div>
+  </div>
+</div>

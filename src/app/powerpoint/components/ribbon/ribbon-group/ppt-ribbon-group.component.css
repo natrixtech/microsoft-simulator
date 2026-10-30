@@ -1,0 +1,219 @@
+:host {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  position: relative;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+:host.in-overflow {
+  display: none !important;
+}
+
+:host:last-child .ppt-group-separator,
+:host:last-of-type .ppt-group-separator {
+  display: none !important;
+}
+
+:host:last-child .ppt-group-container,
+:host:last-of-type .ppt-group-container {
+  padding-right: 0 !important;
+}
+
+.ppt-group-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 3px 4px 2px;
+  position: relative;
+  box-sizing: border-box;
+  height: 100%;
+}
+
+.ppt-group-container.folded {
+  padding: 3px 2px 2px;
+}
+
+.ppt-group-container.folded .ppt-group-footer {
+  display: none !important;
+}
+
+.ppt-group-body {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 2px;
+}
+
+.ppt-group-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 16px;
+  margin-top: 1px;
+  margin-bottom: 2px;
+}
+
+.ppt-group-label {
+  font-size: 11px;
+  color: #616161;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+
+:host-context([data-theme='DARK']) .ppt-group-label,
+:host-context(.dark-theme) .ppt-group-label {
+  color: #a6a6a6;
+}
+
+.ppt-group-separator {
+  width: 1px;
+  background-color: #e0e0e0;
+  margin: 6px 2px;
+  align-self: stretch;
+}
+
+:host-context([data-theme='DARK']) .ppt-group-separator,
+:host-context(.dark-theme) .ppt-group-separator {
+  background-color: #3b3a39;
+}
+
+/* Folded button */
+.ppt-folded-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  padding: 4px 6px;
+  cursor: pointer;
+  height: 100%;
+  gap: 2px;
+  color: #323130;
+  box-sizing: border-box;
+}
+
+.ppt-folded-btn:hover:not(:disabled) {
+  background: #f3f2f1;
+}
+
+.ppt-folded-btn.active {
+  background: #edebe9;
+  border-color: #c8c6c4;
+}
+
+/* Disabled folded button (light mode) */
+.ppt-folded-btn:disabled,
+button:disabled {
+  opacity: 1;
+  color: #a19f9d;
+  cursor: default;
+}
+
+.ppt-folded-btn:disabled .folded-btn-label,
+button:disabled .folded-btn-label {
+  color: #a19f9d;
+}
+
+.ppt-folded-btn:disabled app-ppt-icon,
+button:disabled app-ppt-icon {
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+
+:host-context([data-theme='DARK']) .ppt-folded-btn,
+:host-context(.dark-theme) .ppt-folded-btn {
+  color: #f3f2f1;
+}
+
+:host-context([data-theme='DARK']) .ppt-folded-btn:hover:not(:disabled),
+:host-context(.dark-theme) .ppt-folded-btn:hover:not(:disabled) {
+  background: #3b3a39;
+}
+
+/* Disabled folded button (dark mode) */
+:host-context([data-theme='DARK']) .ppt-folded-btn:disabled,
+:host-context(.dark-theme) .ppt-folded-btn:disabled,
+:host-context([data-theme='DARK']) button:disabled,
+:host-context(.dark-theme) button:disabled {
+  color: #8a8886;
+}
+
+:host-context([data-theme='DARK']) .ppt-folded-btn:disabled .folded-btn-label,
+:host-context(.dark-theme) .ppt-folded-btn:disabled .folded-btn-label,
+:host-context([data-theme='DARK']) button:disabled .folded-btn-label,
+:host-context(.dark-theme) button:disabled .folded-btn-label {
+  color: #8a8886;
+}
+
+:host-context([data-theme='DARK']) .ppt-folded-btn:disabled app-ppt-icon,
+:host-context(.dark-theme) .ppt-folded-btn:disabled app-ppt-icon,
+:host-context([data-theme='DARK']) button:disabled app-ppt-icon,
+:host-context(.dark-theme) button:disabled app-ppt-icon {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
+.folded-btn-label {
+  display: block;
+  font-size: 12px;
+  white-space: nowrap;
+  line-height: 1.2;
+  text-align: center;
+  color: #323130;
+}
+
+:host-context([data-theme='DARK']) .folded-btn-label,
+:host-context(.dark-theme) .folded-btn-label {
+  color: #f3f2f1;
+}
+
+.folded-chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Folded panel popup */
+.ppt-folded-panel {
+  position: fixed;
+  z-index: 2000;
+  background: #ffffff;
+  border: 1px solid #c8c6c4;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  padding: 8px;
+  min-width: 180px;
+}
+
+:host-context([data-theme='DARK']) .ppt-folded-panel,
+:host-context(.dark-theme) .ppt-folded-panel {
+  background: #252423;
+  border-color: #3b3a39;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.ppt-folded-panel-header {
+  font-size: 11px;
+  color: #616161;
+  border-bottom: 1px solid #edebe9;
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+}
+
+:host-context([data-theme='DARK']) .ppt-folded-panel-header,
+:host-context(.dark-theme) .ppt-folded-panel-header {
+  color: #a6a6a6;
+  border-bottom-color: #3b3a39;
+}
+
+.ppt-folded-panel-body {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}

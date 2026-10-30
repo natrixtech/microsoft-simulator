@@ -1,0 +1,35 @@
+:host {
+  display: block;
+  flex-shrink: 0;
+}
+
+.ppt-notes-bar {
+  height: 28px;
+  background-color: #ffffff;
+  border-top: 1px solid #d2d0ce;
+  border-bottom: 1px solid #edebe9;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  user-select: none;
+  cursor: default;
+}
+
+:host-context([data-theme='DARK']) .ppt-notes-bar,
+:host-context(.dark-theme) .ppt-notes-bar {
+  background-color: #292929;
+  border-top-color: #3b3a39;
+  border-bottom-color: #3b3a39;
+}
+
+.notes-placeholder-text {
+  font-size: 12px;
+  color: #797775;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+}
+
+:host-context([data-theme='DARK']) .notes-placeholder-text,
+:host-context(.dark-theme) .notes-placeholder-text {
+  color: #8a8886;
+}
+

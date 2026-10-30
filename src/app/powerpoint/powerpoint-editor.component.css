@@ -1,0 +1,121 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+}
+
+.ppt-simulator-root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #ffffff;
+  color: #323130;
+  position: relative;
+}
+
+.ppt-simulator-root.dark-theme {
+  background-color: #1f1f1f;
+  color: #f3f2f1;
+}
+
+.ppt-simulator-root.paused {
+  pointer-events: none;
+  filter: grayscale(0.2) opacity(0.85);
+}
+
+/* Main Work Area */
+.ppt-work-layout {
+  display: flex;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Assessment Sidebar */
+.assessment-progress-sidebar {
+  width: 44px;
+  background-color: #f3f2f1;
+  border-right: 1px solid #edebe9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 0;
+  gap: 12px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.dark-theme .assessment-progress-sidebar {
+  background-color: #252423;
+  border-right-color: #3b3a39;
+}
+
+.progress-step-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-badge {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  background-color: #e1dfdd;
+  color: #605e5c;
+  transition: all 0.2s ease;
+}
+
+.step-badge.current {
+  background-color: #0078d4;
+  color: #ffffff;
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.3);
+}
+
+.step-badge.passed {
+  background-color: #107c41;
+  color: #ffffff;
+}
+
+.dark-theme .step-badge {
+  background-color: #3b3a39;
+  color: #a19f9d;
+}
+
+.dark-theme .step-badge.current {
+  background-color: #2899f5;
+  color: #ffffff;
+}
+
+.dark-theme .step-badge.passed {
+  background-color: #107c41;
+  color: #ffffff;
+}
+
+/* Floating Task Card & Mascot */
+.ppt-floating-card-group {
+  position: absolute;
+  z-index: 1100;
+  cursor: default;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  touch-action: none;
+}
+
+.ppt-floating-card-group.dragging {
+  cursor: grabbing;
+  user-select: none;
+}

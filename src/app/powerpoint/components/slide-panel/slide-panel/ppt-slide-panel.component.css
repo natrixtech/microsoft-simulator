@@ -1,0 +1,74 @@
+:host {
+  display: block;
+  width: 180px;
+  flex-shrink: 0;
+  height: 100%;
+  border-right: 1px solid #edebe9;
+  background-color: #faf9f8;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+:host-context([data-theme='DARK']),
+:host-context(.dark-theme) {
+  background-color: #252423;
+  border-right-color: #3b3a39;
+}
+
+:host-context(.demo-mode) { width: 220px; }
+
+.ppt-slide-strip {
+  height: 100%;
+  padding: 12px 8px;
+  box-sizing: border-box;
+}
+
+.thumbnails-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+
+.insertion-line {
+  height: 3px;
+  background-color: #c43e1c;
+  border-radius: 1.5px;
+  margin: -6px 6px;
+  position: relative;
+  z-index: 10;
+  box-shadow: 0 0 4px rgba(196, 62, 28, 0.4);
+}
+
+.insertion-line::before,
+.insertion-line::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  width: 9px;
+  height: 9px;
+  background-color: #c43e1c;
+  border-radius: 50%;
+}
+
+.insertion-line::before {
+  left: -2px;
+}
+
+.insertion-line::after {
+  right: -2px;
+}
+
+:host-context([data-theme='DARK']) .insertion-line,
+:host-context(.dark-theme) .insertion-line {
+  background-color: #f1704b;
+  box-shadow: 0 0 6px rgba(241, 112, 75, 0.6);
+}
+
+:host-context([data-theme='DARK']) .insertion-line::before,
+:host-context([data-theme='DARK']) .insertion-line::after,
+:host-context(.dark-theme) .insertion-line::before,
+:host-context(.dark-theme) .insertion-line::after {
+  background-color: #f1704b;
+}

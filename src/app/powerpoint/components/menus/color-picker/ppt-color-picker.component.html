@@ -1,0 +1,32 @@
+<div class="ppt-color-picker-panel" (click)="$event.stopPropagation()">
+  <!-- Optional No Fill / Transparent option for background -->
+  <button
+    *ngIf="allowTransparent"
+    type="button"
+    class="transparent-swatch-btn"
+    (mousedown)="$event.preventDefault()"
+    title="No Fill / Transparent"
+    data-demo-target="color-swatch-transparent"
+    (click)="onPickTransparent($event)"
+  >
+    <span class="no-fill-slash"></span>
+    <span class="no-fill-label">No Fill / Transparent</span>
+  </button>
+
+  <div class="color-picker-header">Standard Colors</div>
+
+  <div class="color-grid">
+    <button
+      *ngFor="let c of colorList"
+      type="button"
+      class="color-swatch"
+      (mousedown)="$event.preventDefault()"
+      [class.selected]="selectedColor === c.hex || selectedColor === c.name"
+      [style.background-color]="c.hex"
+      [title]="c.label"
+      [attr.data-demo-target]="'color-swatch-' + c.name"
+      (click)="onPickColor(c.hex, $event)"
+    ></button>
+  </div>
+</div>
+

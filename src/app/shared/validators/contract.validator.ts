@@ -81,6 +81,12 @@ export function validateActivity(kind: AppKind, data: unknown): ActivityPayload 
     throw new Error('theme must be LIGHT or DARK.');
   }
 
+  if (kind === 'powerpoint' && act['images'] !== undefined) {
+    if (!Array.isArray(act['images']) || act['images'].length > 8) {
+      throw new Error('images must be an array of at most 8 items.');
+    }
+  }
+
   const validateShowMeHow = (val: unknown) => {
     if (val === undefined) return;
     if (kind === 'excel') {
@@ -418,11 +424,183 @@ export function validateActivity(kind: AppKind, data: unknown): ActivityPayload 
           }
         }
 
-        if (
-          kind === 'powerpoint' &&
-          (!Array.isArray(s.slides) || !s.slides.length)
-        ) {
-          throw new Error('startingDeck needs at least one slide.');
+        if (kind === 'powerpoint') {
+          const allowedThemes = [
+            'simple-light',
+            'simple-dark',
+            'streamline',
+            'focus',
+            'shift',
+            'momentum',
+            'paradigm',
+            'material',
+          ];
+          const allowedLayouts = [
+            'title',
+            'titleAndBody',
+            'titleOnly',
+            'sectionHeader',
+            'twoColumns',
+            'blank',
+          ];
+
+          if (s.theme !== undefined && !allowedThemes.includes(s.theme)) {
+            throw new Error(`theme must be one of: ${allowedThemes.join(', ')}.`);
+          }
+
+          if (!Array.isArray(s.slides) || !s.slides.length) {
+            throw new Error('startingDeck needs at least one slide.');
+          }
+
+          const allowedImageFiles: string[] = Array.isArray(act['images'])
+            ? act['images']
+                .map((img: any) => img?.file)
+                .filter((f: any) => typeof f === 'string')
+            : [];
+
+          for (let sIdx = 0; sIdx < s.slides.length; sIdx++) {
+            const slide = s.slides[sIdx];
+            const n = sIdx + 1;
+            if (!slide || typeof slide !== 'object') {
+              throw new Error(`Slide ${n} must be an object.`);
+            }
+            if (typeof slide.layout !== 'string' || !allowedLayouts.includes(slide.layout)) {
+              throw new Error(`slide.layout must be one of: ${allowedLayouts.join(', ')}.`);
+            }
+
+            // 1. background (optional)
+            if (slide.background !== undefined && slide.background !== null) {
+              const isColor =
+                typeof slide.background === 'string' &&
+                Object.prototype.hasOwnProperty.call(COLORS, slide.background);
+              const isImageFile =
+                typeof slide.background === 'string' &&
+                allowedImageFiles.includes(slide.background);
+              if (!isColor && !isImageFile) {
+                throw new Error(
+                  `slide ${n}: background must be a colour name or a file from images.`
+                );
+              }
+            }
+
+            // 2. elements (optional)
+            if (slide.elements !== undefined && slide.elements !== null) {
+              if (!Array.isArray(slide.elements)) {
+                throw new Error(`slide ${n}: elements must be an array.`);
+              }
+
+              for (let elemIdx = 0; elemIdx < slide.elements.length; elemIdx++) {
+                const el = slide.elements[elemIdx];
+                const i = elemIdx + 1;
+
+                if (
+                  !el ||
+                  typeof el !== 'object' ||
+                  Array.isArray(el) ||
+                  !['image', 'textBox', 'shape', 'table'].includes(el.kind)
+                ) {
+                  throw new Error(
+                    `slide ${n}: element ${i} kind must be image, textBox, shape or table.`
+                  );
+                }
+
+                // image: file required and must exist in images[].file
+                if (el.kind === 'image') {
+                  if (typeof el.file !== 'string' || !el.file || !allowedImageFiles.includes(el.file)) {
+                    throw new Error(
+                      `slide ${n}: element ${i} image file must exist in images.`
+                    );
+                  }
+                }
+
+                // textBox: text must be a string (may be "")
+                if (el.kind === 'textBox') {
+                  if (typeof el.text !== 'string') {
+                    throw new Error(
+                      `slide ${n}: element ${i} textBox text must be a string.`
+                    );
+                  }
+                }
+
+                // shape: shape in ['rectangle','roundedRectangle','ellipse','triangle','arrow','star']
+                if (el.kind === 'shape') {
+                  const allowedShapes = [
+                    'rectangle',
+                    'roundedRectangle',
+                    'ellipse',
+                    'triangle',
+                    'arrow',
+                    'star',
+                  ];
+                  if (typeof el.shape !== 'string' || !allowedShapes.includes(el.shape)) {
+                    throw new Error(
+                      `slide ${n}: element ${i} shape must be one of: ${allowedShapes.join(', ')}.`
+                    );
+                  }
+                }
+
+                // table: rows and columns integers 1..6; cells (optional) array of up to rows arrays of up to columns strings
+                if (el.kind === 'table') {
+                  if (
+                    typeof el.rows !== 'number' ||
+                    !Number.isInteger(el.rows) ||
+                    el.rows < 1 ||
+                    el.rows > 6 ||
+                    typeof el.columns !== 'number' ||
+                    !Number.isInteger(el.columns) ||
+                    el.columns < 1 ||
+                    el.columns > 6
+                  ) {
+                    throw new Error(
+                      `slide ${n}: element ${i} table rows and columns must be integers 1..6.`
+                    );
+                  }
+
+                  if (el.cells !== undefined && el.cells !== null) {
+                    if (!Array.isArray(el.cells) || el.cells.length > el.rows) {
+                      throw new Error(
+                        `slide ${n}: element ${i} table cells must be an array of up to ${el.rows} arrays.`
+                      );
+                    }
+                    for (const row of el.cells) {
+                      if (!Array.isArray(row) || row.length > el.columns) {
+                        throw new Error(
+                          `slide ${n}: element ${i} table cells row must be an array of up to ${el.columns} strings.`
+                        );
+                      }
+                      for (const cell of row) {
+                        if (typeof cell !== 'string') {
+                          throw new Error(
+                            `slide ${n}: element ${i} table cells must contain strings.`
+                          );
+                        }
+                      }
+                    }
+                  }
+                }
+
+                // x, y, w, h: optional; if present must be finite numbers, w and h > 0 (missing → keep current defaults)
+                if (el.x !== undefined && (typeof el.x !== 'number' || !Number.isFinite(el.x))) {
+                  throw new Error(`slide ${n}: element ${i} x must be a finite number.`);
+                }
+                if (el.y !== undefined && (typeof el.y !== 'number' || !Number.isFinite(el.y))) {
+                  throw new Error(`slide ${n}: element ${i} y must be a finite number.`);
+                }
+                if (
+                  el.w !== undefined &&
+                  (typeof el.w !== 'number' || !Number.isFinite(el.w) || el.w <= 0)
+                ) {
+                  throw new Error(`slide ${n}: element ${i} w must be a finite number > 0.`);
+                }
+                if (
+                  el.h !== undefined &&
+                  (typeof el.h !== 'number' || !Number.isFinite(el.h) || el.h <= 0)
+                ) {
+                  throw new Error(`slide ${n}: element ${i} h must be a finite number > 0.`);
+                }
+              }
+            }
+          }
         }
       }
     });

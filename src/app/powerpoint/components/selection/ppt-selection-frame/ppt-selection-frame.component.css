@@ -1,0 +1,90 @@
+:host {
+  display: contents;
+}
+
+.selection-frame {
+  position: absolute;
+  border: 1.5px solid #0078d4;
+  box-sizing: border-box;
+  cursor: move;
+  z-index: 100;
+  pointer-events: auto;
+}
+
+.selection-frame.text-element {
+  pointer-events: none;
+  cursor: default;
+}
+
+:host-context([data-theme='DARK']) .selection-frame,
+:host-context(.dark-theme) .selection-frame {
+  border-color: #2899f5;
+}
+
+.selection-frame.dragging {
+  cursor: grabbing;
+}
+
+/* 4 thin edge strips inside text-element frame */
+.edge-strip {
+  position: absolute;
+  pointer-events: auto;
+  cursor: move;
+  z-index: 100;
+}
+
+.edge-top {
+  top: -3px;
+  left: 0;
+  right: 0;
+  height: 6px;
+}
+
+.edge-right {
+  top: 0;
+  bottom: 0;
+  right: -3px;
+  width: 6px;
+}
+
+.edge-bottom {
+  bottom: -3px;
+  left: 0;
+  right: 0;
+  height: 6px;
+}
+
+.edge-left {
+  top: 0;
+  bottom: 0;
+  left: -3px;
+  width: 6px;
+}
+
+.resize-handle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background-color: #ffffff;
+  border: 1.5px solid #0078d4;
+  border-radius: 50%;
+  box-sizing: border-box;
+  z-index: 101;
+  pointer-events: auto;
+}
+
+:host-context([data-theme='DARK']) .resize-handle,
+:host-context(.dark-theme) .resize-handle {
+  background-color: #1f1f1f;
+  border-color: #2899f5;
+}
+
+.handle-nw { top: -4px; left: -4px; cursor: nwse-resize; }
+.handle-n  { top: -4px; left: calc(50% - 4px); cursor: ns-resize; }
+.handle-ne { top: -4px; right: -4px; cursor: nesw-resize; }
+.handle-e  { top: calc(50% - 4px); right: -4px; cursor: ew-resize; }
+.handle-se { bottom: -4px; right: -4px; cursor: nwse-resize; }
+.handle-s  { bottom: -4px; left: calc(50% - 4px); cursor: ns-resize; }
+.handle-sw { bottom: -4px; left: -4px; cursor: nesw-resize; }
+.handle-w  { top: calc(50% - 4px); left: -4px; cursor: ew-resize; }
+

@@ -1,0 +1,80 @@
+:host {
+  display: contents;
+}
+
+.slide-context-menu {
+  position: fixed;
+  z-index: 2500;
+  min-width: 170px;
+  background-color: #ffffff;
+  border: 1px solid #c8c6c4;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  border-radius: 4px;
+  padding: 4px 0;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  user-select: none;
+}
+
+:host-context([data-theme='DARK']) .slide-context-menu,
+:host-context(.dark-theme) .slide-context-menu {
+  background-color: #252423;
+  border-color: #3b3a39;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 6px 14px;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 12px;
+  color: #323130;
+  cursor: pointer;
+  text-align: left;
+}
+
+.menu-item:hover:not(:disabled) {
+  background-color: #f3f2f1;
+}
+
+.menu-item:disabled {
+  color: #a19f9d;
+  cursor: default;
+}
+
+:host-context([data-theme='DARK']) .menu-item,
+:host-context(.dark-theme) .menu-item {
+  color: #f3f2f1;
+}
+
+:host-context([data-theme='DARK']) .menu-item:hover:not(:disabled),
+:host-context(.dark-theme) .menu-item:hover:not(:disabled) {
+  background-color: #3b3a39;
+}
+
+:host-context([data-theme='DARK']) .menu-item:disabled,
+:host-context(.dark-theme) .menu-item:disabled {
+  color: #797775;
+}
+
+.shortcut {
+  font-size: 11px;
+  color: #797775;
+  margin-left: 16px;
+}
+
+.menu-divider {
+  height: 1px;
+  background-color: #edebe9;
+  margin: 4px 0;
+}
+
+:host-context([data-theme='DARK']) .menu-divider,
+:host-context(.dark-theme) .menu-divider {
+  background-color: #3b3a39;
+}
+

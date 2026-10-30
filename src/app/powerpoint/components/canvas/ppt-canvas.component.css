@@ -1,0 +1,68 @@
+:host {
+  display: block;
+  flex: 1;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.ppt-canvas-area {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background-color: #e6e6e6;
+  overflow: hidden;
+  box-sizing: border-box;
+  display: block;
+  outline: none;
+}
+
+:host-context([data-theme='DARK']) .ppt-canvas-area,
+:host-context(.dark-theme) .ppt-canvas-area {
+  background-color: #1f1f1f;
+}
+
+.ppt-canvas-area.insert-drawing-mode,
+.ppt-canvas-area.insert-drawing-mode * {
+  cursor: crosshair !important;
+}
+
+.slide-transform-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  pointer-events: auto;
+}
+
+.draw-preview-box {
+  position: absolute;
+  border: 1.5px dashed #0078d4;
+  background-color: rgba(0, 120, 212, 0.15);
+  pointer-events: none;
+  z-index: 150;
+  box-sizing: border-box;
+}
+
+:host-context([data-theme='DARK']) .draw-preview-box,
+:host-context(.dark-theme) .draw-preview-box {
+  border-color: #2899f5;
+  background-color: rgba(40, 153, 245, 0.2);
+}
+
+.slide-transform-wrapper.is-previewing { overflow: hidden; background: #000; pointer-events: none; perspective: 1600px; }
+.slide-transform-wrapper.is-previewing app-ppt-selection-frame { display: none; }
+.slide-transform-wrapper.is-previewing app-ppt-slide-view { display: block; width: 960px; height: 540px; }
+.ppt-tr-fade        { animation: pptTrFade 1s ease-out both; }
+.ppt-tr-push-right  { animation: pptTrPushRight 1s ease-out both; }
+.ppt-tr-push-left   { animation: pptTrPushLeft 1s ease-out both; }
+.ppt-tr-flip        { animation: pptTrFlip 1s ease-out both; transform-origin: 50% 50%; backface-visibility: hidden; }
+.ppt-tr-cube        { animation: pptTrCube 1s ease-out both; transform-origin: 0% 50%; backface-visibility: hidden; }
+@keyframes pptTrFade      { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pptTrPushRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes pptTrPushLeft  { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+@keyframes pptTrFlip      { from { transform: rotateY(-90deg); } to { transform: rotateY(0); } }
+@keyframes pptTrCube      { from { transform: translateX(100%) rotateY(-90deg); } to { transform: translateX(0) rotateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .ppt-tr-push-right, .ppt-tr-push-left, .ppt-tr-flip, .ppt-tr-cube { animation-name: pptTrFade; }
+}

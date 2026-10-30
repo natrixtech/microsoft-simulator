@@ -1,0 +1,25 @@
+<div
+  class="ppt-thumbnail-wrapper"
+  [class.selected]="isSelected"
+  [class.is-dragging]="isDragging"
+  [attr.data-demo-target]="'slide-thumb-' + (slideIndex + 1)"
+  (pointerdown)="onPointerDown($event)"
+  (contextmenu)="onContextMenu($event)"
+>
+  <span class="slide-number">{{ slideIndex + 1 }}</span>
+  <div class="thumb-frame" [class.selected]="isSelected">
+    <div
+      class="scaled-slide-wrapper"
+      [style.width.px]="960"
+      [style.height.px]="540"
+      [style.transform]="'scale(' + thumbScale + ')'"
+    >
+      <app-ppt-slide-view
+        [slide]="slide"
+        [theme]="theme"
+        [isInteractive]="false"
+        [assetBaseUrl]="assetBaseUrl"
+      ></app-ppt-slide-view>
+    </div>
+  </div>
+</div>
