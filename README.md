@@ -21,7 +21,7 @@ Open the test harnesses:
 - PowerPoint: http://localhost:4200/powerpoint-test-harness.html
 - All three (links page): http://localhost:4200/test-harness.html
 
-Each harness loads the app in an iframe, sends sample Input objects and shows the `activityCompleted` result it receives. The Word harness has one lesson per goal type plus a 3-task assessment. The Excel harness has 32 lessons covering every goal type. The PowerPoint harness has 21 lessons plus 2 assessments (one that builds a single presentation across its tasks, one where each task has its own starting deck); together they cover every goal type and every setting in the Goal types table, including the copySlide, pasteSlide and duplicateSlide actions and a no-goals lesson with a Done button. All harnesses have Light/Dark, Pause/Resume and Force Finish controls, and a box for sending custom Input JSON.
+Each harness loads the app in an iframe, sends sample Input objects and shows the `activityCompleted` result it receives. The Word harness has one lesson per goal type plus a 3-task assessment. The Excel harness has 32 lessons covering every goal type. The PowerPoint harness has lessons covering every goal type plus two 3-task assessments. All harnesses have Light/Dark, Pause/Resume and Force Finish controls, and a box for sending custom Input JSON.
 
 Opening http://localhost:4200/ directly only shows "Waiting for an activity", because the app waits for the host to send `PLUGIN_DATA_IN`. The editor is chosen by the top-level `"app"` field of the Input object: `"word"`, `"excel"` or `"powerpoint"`.
 
@@ -39,7 +39,7 @@ The Excel simulator does not use any third-party spreadsheet or formula library.
 
 ## Slide editor
 
-The PowerPoint simulator does not use any third-party presentation or slide library. The slide editor, themes, layouts, shapes, tables, transition preview and the "Show me how" demo are written as part of this project, so no extra license applies. Slide text uses standard system fonts (Arial, Georgia, Times New Roman, Verdana, Courier New, Comic Sans MS); no font files are bundled for them.
+The PowerPoint simulator does not use any third-party presentation or slide library. The slide editor is written as part of this project, so no extra license applies.
 
 ## Libraries and licenses
 
