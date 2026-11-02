@@ -21,7 +21,7 @@ Open the test harnesses:
 - PowerPoint: http://localhost:4200/powerpoint-test-harness.html
 - All three (links page): http://localhost:4200/test-harness.html
 
-Each harness loads the app in an iframe, sends sample Input objects and shows the `activityCompleted` result it receives. The Word harness has one lesson per goal type plus a 3-task assessment. The Excel harness has 32 lessons covering every goal type. The PowerPoint harness has 7 lessons with 2–3 steps each plus a 3-task assessment; together they cover all 14 goal types and all 5 action types. All harnesses have Light/Dark, Pause/Resume and Force Finish controls, and a box for sending custom Input JSON.
+Each harness loads the app in an iframe, sends sample Input objects and shows the `activityCompleted` result it receives. The Word harness has one lesson per goal type plus a 3-task assessment. The Excel harness has 32 lessons covering every goal type. The PowerPoint harness has 21 lessons plus 2 assessments (one that builds a single presentation across its tasks, one where each task has its own starting deck); together they cover every goal type and every setting in the Goal types table, including the copySlide, pasteSlide and duplicateSlide actions and a no-goals lesson with a Done button. All harnesses have Light/Dark, Pause/Resume and Force Finish controls, and a box for sending custom Input JSON.
 
 Opening http://localhost:4200/ directly only shows "Waiting for an activity", because the app waits for the host to send `PLUGIN_DATA_IN`. The editor is chosen by the top-level `"app"` field of the Input object: `"word"`, `"excel"` or `"powerpoint"`.
 

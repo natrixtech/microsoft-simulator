@@ -64,14 +64,90 @@ export class PptPlaceholderComponent implements OnChanges, AfterViewInit {
   }
 
   private pendingClickPoint: { x: number; y: number } | null = null;
+  private pendingSelection: { start: number; end: number } | null = null;
+
+  private textOffsetIn(root: Node, node: Node, offset: number): number {
+    const r = document.createRange();
+    r.selectNodeContents(root);
+    r.setEnd(node, offset);
+    return r.toString().length;
+  }
+
+  private rangeFromOffsets(root: HTMLElement, start: number, end: number): Range | null {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const r = document.createRange();
+    let pos = 0;
+    let startSet = false;
+    let n: Node | null;
+    while ((n = walker.nextNode())) {
+      const len = (n.textContent || '').length;
+      if (!startSet && start <= pos + len) {
+        r.setStart(n, start - pos);
+        startSet = true;
+      }
+      if (startSet && end <= pos + len) {
+        r.setEnd(n, end - pos);
+        return r;
+      }
+      pos += len;
+    }
+    return null;
+  }
 
   onPlaceholderClick(event: MouseEvent): void {
     if (!this.isInteractive) return;
     event.stopPropagation();
     if (!this.isEditing) {
-      this.pendingClickPoint = { x: event.clientX, y: event.clientY };
+      const box = event.currentTarget as HTMLElement | null;
+      const rendered = box?.querySelector('.ppt-rendered-text');
+      const sel = window.getSelection();
+      if (
+        rendered &&
+        sel &&
+        !sel.isCollapsed &&
+        sel.rangeCount > 0
+      ) {
+        const r = sel.getRangeAt(0);
+        if (rendered.contains(r.startContainer) && rendered.contains(r.endContainer)) {
+          const start = this.textOffsetIn(rendered, r.startContainer, r.startOffset);
+          const end = this.textOffsetIn(rendered, r.endContainer, r.endOffset);
+          this.pendingSelection = { start, end };
+          this.pendingClickPoint = null;
+        } else {
+          this.pendingSelection = null;
+          this.pendingClickPoint = { x: event.clientX, y: event.clientY };
+        }
+      } else {
+        this.pendingSelection = null;
+        this.pendingClickPoint = { x: event.clientX, y: event.clientY };
+      }
       this.startEdit.emit();
     }
+  }
+
+  onPlaceholderDblClick(event: MouseEvent): void {
+    if (!this.isInteractive) return;
+    setTimeout(() => {
+      const el = this.editableRef?.nativeElement;
+      const sel = window.getSelection();
+      if (!el || !sel) return;
+      let r: Range | null = null;
+      if ((document as any).caretRangeFromPoint) {
+        r = (document as any).caretRangeFromPoint(event.clientX, event.clientY);
+      } else if ((document as any).caretPositionFromPoint) {
+        const pos = (document as any).caretPositionFromPoint(event.clientX, event.clientY);
+        if (pos && pos.offsetNode) {
+          r = document.createRange();
+          r.setStart(pos.offsetNode, pos.offset);
+          r.collapse(true);
+        }
+      }
+      if (!r || !el.contains(r.startContainer)) return;
+      sel.removeAllRanges();
+      sel.addRange(r);
+      (sel as any).modify('move', 'backward', 'word');
+      (sel as any).modify('extend', 'forward', 'word');
+    }, 20);
   }
 
   onInput(event: Event): void {
@@ -124,6 +200,21 @@ export class PptPlaceholderComponent implements OnChanges, AfterViewInit {
     if (!el) return;
     el.innerHTML = this.renderedHtml;
     el.focus();
+
+    if (this.pendingSelection) {
+      const { start, end } = this.pendingSelection;
+      this.pendingSelection = null;
+      this.pendingClickPoint = null;
+      const sel = window.getSelection();
+      if (sel) {
+        const range = this.rangeFromOffsets(el, start, end);
+        if (range) {
+          sel.removeAllRanges();
+          sel.addRange(range);
+          return;
+        }
+      }
+    }
 
     const point = this.pendingClickPoint;
     this.pendingClickPoint = null;

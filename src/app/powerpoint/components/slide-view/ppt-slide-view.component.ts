@@ -287,16 +287,38 @@ export class PptSlideViewComponent implements OnChanges {
     const el = this.slide.elements?.find((e) => e.id === id);
     if (el?.kind === 'textBox') {
       const target = event.currentTarget as HTMLElement;
+      const sel = window.getSelection();
+      const keepSelection =
+        event.detail > 1 ||
+        document.activeElement === target ||
+        (!!sel &&
+          !sel.isCollapsed &&
+          !!sel.anchorNode &&
+          !!sel.focusNode &&
+          target.contains(sel.anchorNode) &&
+          target.contains(sel.focusNode));
+
       this.focusedTextBoxId = id;
       if (!this.cachedTextBoxHtml.has(id)) {
         this.cachedTextBoxHtml.set(id, (el as any).html || (el as any).text || '');
       }
 
       target.contentEditable = 'true';
-      target.focus();
 
-      const sel = window.getSelection();
-      if (sel) {
+      const wasActive = document.activeElement === target;
+      const savedRange =
+        !wasActive && keepSelection && sel && !sel.isCollapsed && sel.rangeCount > 0
+          ? sel.getRangeAt(0).cloneRange()
+          : null;
+
+      if (document.activeElement !== target) {
+        target.focus({ preventScroll: true });
+      }
+
+      if (savedRange && sel) {
+        sel.removeAllRanges();
+        sel.addRange(savedRange);
+      } else if (!keepSelection && sel) {
         let range: Range | null = null;
         if ((document as any).caretRangeFromPoint) {
           range = (document as any).caretRangeFromPoint(event.clientX, event.clientY);

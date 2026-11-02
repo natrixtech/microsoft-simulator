@@ -13,6 +13,7 @@
   [style.font-family]="placeholder.type === 'title' ? theme.titleFont : theme.bodyFont"
   [style.color]="placeholder.type === 'title' ? theme.titleColor : theme.bodyColor"
   (click)="onPlaceholderClick($event)"
+  (dblclick)="onPlaceholderDblClick($event)"
 >
   <!-- Contenteditable text area when editing -->
   <div
