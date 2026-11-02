@@ -638,6 +638,16 @@ function buildActionStep(goal: any, goalIndex: number): DemoStep {
     } else {
       actions.push({ kind: 'click', target: `${(goal.menu || 'home').toLowerCase()}-tab` });
     }
+  } else if (act === 'copySlide') {
+    actions.push({ kind: 'click', target: `slide-thumb-${goal.slide || 1}` });
+    actions.push({ kind: 'key', key: 'Ctrl+C' });
+  } else if (act === 'pasteSlide') {
+    actions.push({ kind: 'click', target: `slide-thumb-${goal.slide || 1}` });
+    actions.push({ kind: 'key', key: 'Ctrl+C' });
+    actions.push({ kind: 'key', key: 'Ctrl+V' });
+  } else if (act === 'duplicateSlide') {
+    actions.push({ kind: 'rightClick', target: `slide-thumb-${goal.slide || 1}` });
+    actions.push({ kind: 'click', target: 'context-duplicate-slide' });
   } else {
     actions.push({ kind: 'click', target: 'slide-thumb-1' });
   }

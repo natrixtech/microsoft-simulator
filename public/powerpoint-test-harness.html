@@ -50,6 +50,21 @@
         <option value="organiseSlides">Lesson 6: Organise the Slides</option>
         <option value="undoRedo">Lesson 7: Undo, Redo and Layout</option>
         <option value="assessment">Lesson 8: Presentation Basics Assessment</option>
+        <option value="textEquals">Lesson 9: Type an Exact Title</option>
+        <option value="textLines">Lesson 10: Type Several Lines</option>
+        <option value="textReplace">Lesson 11: Replace a Word</option>
+        <option value="slidesMin">Lesson 12: Add More Slides</option>
+        <option value="slidesDelete">Lesson 13: Delete Extra Slides</option>
+        <option value="anyPicture">Lesson 14: Insert Any Picture</option>
+        <option value="smallPicture">Lesson 15: Make a Picture Smaller</option>
+        <option value="threeStars">Lesson 16: Draw Three Stars</option>
+        <option value="anyBackground">Lesson 17: Pick Any Background Colour</option>
+        <option value="namedTheme">Lesson 18: Apply the Momentum Theme</option>
+        <option value="anyTransition">Lesson 19: Add Any Transition</option>
+        <option value="copyPaste">Lesson 20: Copy and Paste a Slide</option>
+        <option value="duplicateSlide">Lesson 21: Duplicate a Slide</option>
+        <option value="noGoals">Lesson 22: Explore the Slide (Done button)</option>
+        <option value="assessmentDecks">Lesson 23: Slide Skills Assessment</option>
       </select>
 
       <button id="load-btn" class="primary">Load Activity</button>
@@ -319,11 +334,11 @@
                                 "title": "Add a picture and a shape",
                                 "explanation": "Pictures and shapes make a slide more interesting.",
                                 "instructions": [
-                                        "Click the Insert tab.",
                                         "Use Insert > Pictures to add the headphones picture, drag it to the left half of the slide and make it bigger.",
-                                        "Use Insert > Shapes to draw a star."
+                                        "Use Insert > Shapes to draw a star.",
+                                        "Use Insert > Text Box to add a text box that says `I love music`."
                                 ],
-                                "hint": "Pictures and Shapes are on the Insert tab. Drag a picture to move it, drag a corner to resize it.",
+                                "hint": "Pictures, Shapes and Text Box are on the Insert tab. Drag a picture to move it, drag a corner to resize it.",
                                 "startingDeck": {
                                         "theme": "simple-light",
                                         "slides": [
@@ -335,11 +350,6 @@
                                 },
                                 "goals": [
                                         {
-                                                "type": "action",
-                                                "action": "openMenu",
-                                                "menu": "Insert"
-                                        },
-                                        {
                                                 "type": "image",
                                                 "slide": 1,
                                                 "file": "headphones.svg",
@@ -350,6 +360,11 @@
                                                 "type": "shape",
                                                 "slide": 1,
                                                 "shape": "star"
+                                        },
+                                        {
+                                                "type": "textBox",
+                                                "slide": 1,
+                                                "contains": "I love music"
                                         }
                                 ],
                                 "showMeHow": true
@@ -460,11 +475,11 @@
                                 "title": "Organise the slides",
                                 "explanation": "Slides should be in a clear order, and a theme gives them all the same look.",
                                 "instructions": [
-                                        "Click slide 2 in the slide list.",
                                         "Move the slides into this order: Introduction, The Problem, Our Solution.",
-                                        "On the Design tab, pick a new theme."
+                                        "On the Design tab, pick a new theme.",
+                                        "Click slide 1 and add the Flip transition from the Transitions tab."
                                 ],
-                                "hint": "Drag a slide in the left slide list to move it. Themes are on the Design tab.",
+                                "hint": "Drag a slide in the left slide list to move it. Themes are on the Design tab, Flip is on the Transitions tab.",
                                 "startingDeck": {
                                         "theme": "simple-light",
                                         "slides": [
@@ -487,11 +502,6 @@
                                 },
                                 "goals": [
                                         {
-                                                "type": "action",
-                                                "action": "selectSlide",
-                                                "slide": 2
-                                        },
-                                        {
                                                 "type": "slideOrder",
                                                 "titles": [
                                                         "Introduction",
@@ -502,6 +512,11 @@
                                         {
                                                 "type": "theme",
                                                 "theme": "any"
+                                        },
+                                        {
+                                                "type": "transition",
+                                                "slide": 1,
+                                                "transition": "flip"
                                         }
                                 ],
                                 "showMeHow": true
@@ -672,10 +687,10 @@
                                 "explanation": "Shapes and colour make your slides look finished.",
                                 "instructions": [
                                         "Use Insert > Shapes to draw a star on slide 2.",
-                                        "Click the star to select it.",
-                                        "Change the background of slide 2 to light yellow."
+                                        "Change the background of slide 2 to light yellow.",
+                                        "Add the Fade transition to slide 2."
                                 ],
-                                "hint": "Shapes is on the Insert tab, Background Styles on the Design tab.",
+                                "hint": "Shapes is on the Insert tab, Background Styles on the Design tab, Fade on the Transitions tab.",
                                 "startingDeck": null,
                                 "goals": [
                                         {
@@ -684,14 +699,889 @@
                                                 "shape": "star"
                                         },
                                         {
-                                                "type": "action",
-                                                "action": "selectElement",
-                                                "slide": 2
-                                        },
-                                        {
                                                 "type": "background",
                                                 "slide": 2,
                                                 "color": "lightYellow"
+                                        },
+                                        {
+                                                "type": "transition",
+                                                "slide": 2,
+                                                "transition": "fade"
+                                        }
+                                ],
+                                "showMeHow": true
+                        }
+                ]
+        },
+        "textEquals": {
+                "app": "powerpoint",
+                "mode": "lesson",
+                "title": "Type an Exact Title",
+                "assetBaseUrl": "./assets/",
+                "theme": "LIGHT",
+                "images": [
+                        {
+                                "file": "headphones.svg",
+                                "alt": "Headphones"
+                        },
+                        {
+                                "file": "books-stack.svg",
+                                "alt": "A stack of books"
+                        },
+                        {
+                                "file": "art.svg",
+                                "alt": "Paint and brushes"
+                        },
+                        {
+                                "file": "sports.svg",
+                                "alt": "Sports balls"
+                        }
+                ],
+                "tasks": [
+                        {
+                                "title": "Type the exact title",
+                                "explanation": "Some titles must match exactly, word for word.",
+                                "instructions": [
+                                        "Click the title area and type exactly `Our Class Trip`."
+                                ],
+                                "hint": "Type the words exactly as shown, with capital letters.",
+                                "startingDeck": {
+                                        "theme": "simple-light",
+                                        "slides": [
+                                                {
+                                                        "layout": "title",
+                                                        "title": "",
+                                                        "subtitle": ""
+                                                }
+                                        ]
+                                },
+                                "goals": [
+                                        {
+                                                "type": "slideText",
+                                                "slide": 1,
+                                                "placeholder": "title",
+                                                "equals": "Our Class Trip"
+                                        }
+                                ],
+                                "showMeHow": true
+                        }
+                ]
+        },
+        "textLines": {
+                "app": "powerpoint",
+                "mode": "lesson",
+                "title": "Type Several Lines",
+                "assetBaseUrl": "./assets/",
+                "theme": "LIGHT",
+                "images": [
+                        {
+                                "file": "headphones.svg",
+                                "alt": "Headphones"
+                        },
+                        {
+                                "file": "books-stack.svg",
+                                "alt": "A stack of books"
+                        },
+                        {
+                                "file": "art.svg",
+                                "alt": "Paint and brushes"
+                        },
+                        {
+                                "file": "sports.svg",
+                                "alt": "Sports balls"
+                        }
+                ],
+                "tasks": [
+                        {
+                                "title": "Type three lines",
+                                "explanation": "Press Enter to start a new line in the body.",
+                                "instructions": [
+                                        "In the body, type three things you can see in a park, one on each line."
+                                ],
+                                "hint": "Press Enter after each line.",
+                                "startingDeck": {
+                                        "theme": "simple-light",
+                                        "slides": [
+                                                {
+                                                        "layout": "titleAndBody",
+                                                        "title": "In the Park",
+                                                        "body": ""
+                                                }
+                                        ]
+                                },
+                                "goals": [
+                                        {
+                                                "type": "slideText",
+                                                "slide": 1,
+                                                "placeholder": "body",
+                                                "minLines": 3
+                                        }
+                                ],
+                                "showMeHow": true
+                        }
+                ]
+        },
+        "textReplace": {
+                "app": "powerpoint",
+                "mode": "lesson",
+                "title": "Replace a Word",
+                "assetBaseUrl": "./assets/",
+                "theme": "LIGHT",
+                "images": [
+                        {
+                                "file": "headphones.svg",
+                                "alt": "Headphones"
+                        },
+                        {
+                                "file": "books-stack.svg",
+                                "alt": "A stack of books"
+                        },
+                        {
+                                "file": "art.svg",
+                                "alt": "Paint and brushes"
+                        },
+                        {
+                                "file": "sports.svg",
+                                "alt": "Sports balls"
+                        }
+                ],
+                "tasks": [
+                        {
+                                "title": "Change the animal",
+                                "explanation": "You can change words that are already on a slide.",
+                                "instructions": [
+                                        "Change the title to `My Favourite Animal: Cats`."
+                                ],
+                                "hint": "Click the title, remove the word Dogs and type Cats.",
+                                "startingDeck": {
+                                        "theme": "simple-light",
+                                        "slides": [
+                                                {
+                                                        "layout": "title",
+                                                        "title": "My Favourite Animal: Dogs",
+                                                        "subtitle": ""
+                                                }
+                                        ]
+                                },
+                                "goals": [
+                                        {
+                                                "type": "slideText",
+                                                "slide": 1,
+                                                "placeholder": "title",
+                                                "contains": "My Favourite Animal: Cats",
+                                                "notContains": [
+                                                        "Dogs"
+                                                ]
+                                        }
+                                ],
+                                "showMeHow": true
+                        }
+                ]
+        },
+        "slidesMin": {
+                "app": "powerpoint",
+                "mode": "lesson",
+                "title": "Add More Slides",
+                "assetBaseUrl": "./assets/",
+                "theme": "LIGHT",
+                "images": [
+                        {
+                                "file": "headphones.svg",
+                                "alt": "Headphones"
+                        },
+                        {
+                                "file": "books-stack.svg",
+                                "alt": "A stack of books"
+                        },
+                        {
+                                "file": "art.svg",
+                                "alt": "Paint and brushes"
+                        },
+                        {
+                                "file": "sports.svg",
+                                "alt": "Sports balls"
+                        }
+                ],
+                "tasks": [
+                        {
+                                "title": "Add slides",
+                                "explanation": "A presentation usually has several slides.",
+                                "instructions": [
+                                        "Click New Slide until the presentation has at least 3 slides."
+                                ],
+                                "hint": "New Slide is on the Home tab.",
+                                "startingDeck": {
+                                        "theme": "simple-light",
+                                        "slides": [
+                                                {
+                                                        "layout": "title",
+                                                        "title": "My Week",
+                                                        "subtitle": ""
+                                                }
+                                        ]
+                                },
+                                "goals": [
+                                        {
+                                                "type": "slideCount",
+                                                "min": 3
+                                        }
+                                ],
+                                "showMeHow": true
+                        }
+                ]
+        },
+        "slidesDelete": {
+                "app": "powerpoint",
+                "mode": "lesson",
+                "title": "Delete Extra Slides",
+                "assetBaseUrl": "./assets/",
+                "theme": "LIGHT",
+                "images": [
+                        {
+                                "file": "headphones.svg",
+                                "alt": "Headphones"
+                        },
+                        {
+                                "file": "books-stack.svg",
+                                "alt": "A stack of books"
+                        },
+                        {
+                                "file": "art.svg",
+                                "alt": "Paint and brushes"
+                        },
+                        {
+                                "file": "sports.svg",
+                                "alt": "Sports balls"
+                        }
+                ],
+                "tasks": [
+                        {
+                                "title": "Delete the extra slides",
+                                "explanation": "Remove slides you do not need.",
+                                "instructions": [
+                                        "Delete the two slides at the end (Extra 1 and Extra 2) so 2 slides are left."
+                                ],
+                                "hint": "Right-click a slide in the slide list and choose Delete Slide.",
+                                "startingDeck": {
+                                        "theme": "simple-light",
+                                        "slides": [
+                                                {
+                                                        "layout": "title",
+                                                        "title": "Introduction",
+                                                        "subtitle": ""
+                                                },
+                                                {
+                                                        "layout": "title",
+                                                        "title": "Summary",
+                                                        "subtitle": ""
+                                                },
+                                                {
+                                                        "layout": "title",
+                                                        "title": "Extra 1",
+                                                        "subtitle": ""
+                                                },
+                                                {
+                                                        "layout": "title",
+                                                        "title": "Extra 2",
+                                                        "subtitle": ""
+                                                }
+                                        ]
+                                },
+                                "goals": [
+                                        {
+                                                "type": "slideCount",
+                                                "count": 2
+                                        }
+                                ],
+                                "showMeHow": true
+                        }
+                ]
+        },
+        "anyPicture": {
+                "app": "powerpoint",
+                "mode": "lesson",
+                "title": "Insert Any Picture",
+                "assetBaseUrl": "./assets/",
+                "theme": "LIGHT",
+                "images": [
+                        {
+                                "file": "headphones.svg",
+                                "alt": "Headphones"
+                        },
+                        {
+                                "file": "books-stack.svg",
+                                "alt": "A stack of books"
+                        },
+                        {
+                                "file": "art.svg",
+                                "alt": "Paint and brushes"
+                        },
+                        {
+                                "file": "sports.svg",
+                                "alt": "Sports balls"
+                        }
+                ],
+                "tasks": [
+                        {
+                                "title": "Add a picture",
+                                "explanation": "Pictures help explain your ideas.",
+                                "instructions": [
+                                        "Use Insert > Pictures to add any picture you like."
+                                ],
+                                "hint": "Pictures is on the Insert tab.",
+                                "startingDeck": {
+                                        "theme": "simple-light",
+                                        "slides": [
+                                                {
+                                                        "layout": "titleOnly",
+                                                        "title": "My Favourite Things"
+                                                }
+                                        ]
+                                },
+                                "goals": [
+                                        {
+                                                "type": "image",
+                                                "slide": 1,
+                                                "file": null
+                                        }
+                                ],
+                                "showMeHow": true
+                        }
+                ]
+        },
+        "smallPicture": {
+                "app": "powerpoint",
+                "mode": "lesson",
+                "title": "Make a Picture Smaller",
+                "assetBaseUrl": "./assets/",
+                "theme": "LIGHT",
+                "images": [
+                        {
+                                "file": "headphones.svg",
+                                "alt": "Headphones"
+                        },
+                        {
+                                "file": "books-stack.svg",
+                                "alt": "A stack of books"
+                        },
+                        {
+                                "file": "art.svg",
+                                "alt": "Paint and brushes"
+                        },
+                        {
+                                "file": "sports.svg",
+                                "alt": "Sports balls"
+                        }
+                ],
+                "tasks": [
+                        {
+                                "title": "Resize the picture",
+                                "explanation": "Drag a corner of a picture to change its size.",
+                                "instructions": [
+                                        "Use Insert > Pictures to add the paint and brushes picture, then drag a corner to make it about half as wide."
+                                ],
+                                "hint": "Click the picture, then drag one of its corner handles inwards.",
+                                "startingDeck": {
+                                        "theme": "simple-light",
+                                        "slides": [
+                                                {
+                                                        "layout": "titleOnly",
+                                                        "title": "Art Club"
+                                                }
+                                        ]
+                                },
+                                "goals": [
+                                        {
+                                                "type": "image",
+                                                "slide": 1,
+                                                "file": "art.svg",
+                                                "maxWidth": 250
+                                        }
+                                ],
+                                "showMeHow": true
+                        }
+                ]
+        },
+        "threeStars": {
+                "app": "powerpoint",
+                "mode": "lesson",
+                "title": "Draw Three Stars",
+                "assetBaseUrl": "./assets/",
+                "theme": "LIGHT",
+                "images": [
+                        {
+                                "file": "headphones.svg",
+                                "alt": "Headphones"
+                        },
+                        {
+                                "file": "books-stack.svg",
+                                "alt": "A stack of books"
+                        },
+                        {
+                                "file": "art.svg",
+                                "alt": "Paint and brushes"
+                        },
+                        {
+                                "file": "sports.svg",
+                                "alt": "Sports balls"
+                        }
+                ],
+                "tasks": [
+                        {
+                                "title": "Draw three stars",
+                                "explanation": "You can add the same shape more than once.",
+                                "instructions": [
+                                        "Use Insert > Shapes to draw three stars."
+                                ],
+                                "hint": "Pick the star in Shapes, then drag on the slide. Do it three times.",
+                                "startingDeck": {
+                                        "theme": "simple-light",
+                                        "slides": [
+                                                {
+                                                        "layout": "titleOnly",
+                                                        "title": "Gold Stars"
+                                                }
+                                        ]
+                                },
+                                "goals": [
+                                        {
+                                                "type": "shape",
+                                                "slide": 1,
+                                                "shape": "star",
+                                                "count": 3
+                                        }
+                                ],
+                                "showMeHow": true
+                        }
+                ]
+        },
+        "anyBackground": {
+                "app": "powerpoint",
+                "mode": "lesson",
+                "title": "Pick Any Background Colour",
+                "assetBaseUrl": "./assets/",
+                "theme": "LIGHT",
+                "images": [
+                        {
+                                "file": "headphones.svg",
+                                "alt": "Headphones"
+                        },
+                        {
+                                "file": "books-stack.svg",
+                                "alt": "A stack of books"
+                        },
+                        {
+                                "file": "art.svg",
+                                "alt": "Paint and brushes"
+                        },
+                        {
+                                "file": "sports.svg",
+                                "alt": "Sports balls"
+                        }
+                ],
+                "tasks": [
+                        {
+                                "title": "Colour the background",
+                                "explanation": "A background colour changes the mood of a slide.",
+                                "instructions": [
+                                        "Change the slide background to any colour you like."
+                                ],
+                                "hint": "Use Design > Background Styles > Format Background.",
+                                "startingDeck": {
+                                        "theme": "simple-light",
+                                        "slides": [
+                                                {
+                                                        "layout": "title",
+                                                        "title": "Colours",
+                                                        "subtitle": ""
+                                                }
+                                        ]
+                                },
+                                "goals": [
+                                        {
+                                                "type": "background",
+                                                "slide": 1,
+                                                "color": "any"
+                                        }
+                                ],
+                                "showMeHow": true
+                        }
+                ]
+        },
+        "namedTheme": {
+                "app": "powerpoint",
+                "mode": "lesson",
+                "title": "Apply the Momentum Theme",
+                "assetBaseUrl": "./assets/",
+                "theme": "LIGHT",
+                "images": [
+                        {
+                                "file": "headphones.svg",
+                                "alt": "Headphones"
+                        },
+                        {
+                                "file": "books-stack.svg",
+                                "alt": "A stack of books"
+                        },
+                        {
+                                "file": "art.svg",
+                                "alt": "Paint and brushes"
+                        },
+                        {
+                                "file": "sports.svg",
+                                "alt": "Sports balls"
+                        }
+                ],
+                "tasks": [
+                        {
+                                "title": "Apply a theme",
+                                "explanation": "A theme gives every slide the same colours and fonts.",
+                                "instructions": [
+                                        "On the Design tab, apply the Momentum theme."
+                                ],
+                                "hint": "Hover over a theme to see its name. Use the arrow at the end of the themes to see them all.",
+                                "startingDeck": {
+                                        "theme": "simple-light",
+                                        "slides": [
+                                                {
+                                                        "layout": "title",
+                                                        "title": "Space Facts",
+                                                        "subtitle": ""
+                                                }
+                                        ]
+                                },
+                                "goals": [
+                                        {
+                                                "type": "theme",
+                                                "theme": "momentum"
+                                        }
+                                ],
+                                "showMeHow": true
+                        }
+                ]
+        },
+        "anyTransition": {
+                "app": "powerpoint",
+                "mode": "lesson",
+                "title": "Add Any Transition",
+                "assetBaseUrl": "./assets/",
+                "theme": "LIGHT",
+                "images": [
+                        {
+                                "file": "headphones.svg",
+                                "alt": "Headphones"
+                        },
+                        {
+                                "file": "books-stack.svg",
+                                "alt": "A stack of books"
+                        },
+                        {
+                                "file": "art.svg",
+                                "alt": "Paint and brushes"
+                        },
+                        {
+                                "file": "sports.svg",
+                                "alt": "Sports balls"
+                        }
+                ],
+                "tasks": [
+                        {
+                                "title": "Add a transition",
+                                "explanation": "A transition is how a slide appears during a presentation.",
+                                "instructions": [
+                                        "On the Transitions tab, add any transition to slide 1."
+                                ],
+                                "hint": "Click any transition except None.",
+                                "startingDeck": {
+                                        "theme": "simple-light",
+                                        "slides": [
+                                                {
+                                                        "layout": "title",
+                                                        "title": "Welcome",
+                                                        "subtitle": ""
+                                                }
+                                        ]
+                                },
+                                "goals": [
+                                        {
+                                                "type": "transition",
+                                                "slide": 1,
+                                                "transition": "any"
+                                        }
+                                ],
+                                "showMeHow": true
+                        }
+                ]
+        },
+        "copyPaste": {
+                "app": "powerpoint",
+                "mode": "lesson",
+                "title": "Copy and Paste a Slide",
+                "assetBaseUrl": "./assets/",
+                "theme": "LIGHT",
+                "images": [
+                        {
+                                "file": "headphones.svg",
+                                "alt": "Headphones"
+                        },
+                        {
+                                "file": "books-stack.svg",
+                                "alt": "A stack of books"
+                        },
+                        {
+                                "file": "art.svg",
+                                "alt": "Paint and brushes"
+                        },
+                        {
+                                "file": "sports.svg",
+                                "alt": "Sports balls"
+                        }
+                ],
+                "tasks": [
+                        {
+                                "title": "Copy and paste a slide",
+                                "explanation": "Copying a slide saves time when slides look alike.",
+                                "instructions": [
+                                        "Click slide 1 in the slide list and press Ctrl+C to copy it.",
+                                        "Press Ctrl+V to paste the copy after it.",
+                                        "On slide 2, change the title to `Day 2`."
+                                ],
+                                "hint": "Copy and Paste are also on the Home tab and in the right-click menu of a slide.",
+                                "startingDeck": {
+                                        "theme": "simple-light",
+                                        "slides": [
+                                                {
+                                                        "layout": "titleAndBody",
+                                                        "title": "Day 1",
+                                                        "body": "Visit the zoo"
+                                                }
+                                        ]
+                                },
+                                "goals": [
+                                        {
+                                                "type": "action",
+                                                "action": "copySlide"
+                                        },
+                                        {
+                                                "type": "action",
+                                                "action": "pasteSlide"
+                                        },
+                                        {
+                                                "type": "slideText",
+                                                "slide": 2,
+                                                "placeholder": "title",
+                                                "equals": "Day 2"
+                                        }
+                                ],
+                                "showMeHow": true
+                        }
+                ]
+        },
+        "duplicateSlide": {
+                "app": "powerpoint",
+                "mode": "lesson",
+                "title": "Duplicate a Slide",
+                "assetBaseUrl": "./assets/",
+                "theme": "LIGHT",
+                "images": [
+                        {
+                                "file": "headphones.svg",
+                                "alt": "Headphones"
+                        },
+                        {
+                                "file": "books-stack.svg",
+                                "alt": "A stack of books"
+                        },
+                        {
+                                "file": "art.svg",
+                                "alt": "Paint and brushes"
+                        },
+                        {
+                                "file": "sports.svg",
+                                "alt": "Sports balls"
+                        }
+                ],
+                "tasks": [
+                        {
+                                "title": "Duplicate a slide",
+                                "explanation": "Duplicate makes a copy of a slide right after it.",
+                                "instructions": [
+                                        "Right-click slide 1 in the slide list and choose Duplicate Slide.",
+                                        "On slide 2, change the title to `Week 2`."
+                                ],
+                                "hint": "Right-click the slide thumbnail on the left.",
+                                "startingDeck": {
+                                        "theme": "simple-light",
+                                        "slides": [
+                                                {
+                                                        "layout": "titleOnly",
+                                                        "title": "Week 1"
+                                                }
+                                        ]
+                                },
+                                "goals": [
+                                        {
+                                                "type": "action",
+                                                "action": "duplicateSlide"
+                                        },
+                                        {
+                                                "type": "slideText",
+                                                "slide": 2,
+                                                "placeholder": "title",
+                                                "equals": "Week 2"
+                                        }
+                                ],
+                                "showMeHow": true
+                        }
+                ]
+        },
+        "noGoals": {
+                "app": "powerpoint",
+                "mode": "lesson",
+                "title": "Explore the Slide",
+                "assetBaseUrl": "./assets/",
+                "theme": "LIGHT",
+                "images": [
+                        {
+                                "file": "headphones.svg",
+                                "alt": "Headphones"
+                        },
+                        {
+                                "file": "books-stack.svg",
+                                "alt": "A stack of books"
+                        },
+                        {
+                                "file": "art.svg",
+                                "alt": "Paint and brushes"
+                        },
+                        {
+                                "file": "sports.svg",
+                                "alt": "Sports balls"
+                        }
+                ],
+                "tasks": [
+                        {
+                                "title": "Look around",
+                                "explanation": "Take a moment to look at the slide before you start.",
+                                "instructions": [
+                                        "Look at the slide and its title. When you are ready, click Done."
+                                ],
+                                "startingDeck": {
+                                        "theme": "simple-light",
+                                        "slides": [
+                                                {
+                                                        "layout": "titleAndBody",
+                                                        "title": "Welcome to PowerPoint",
+                                                        "body": "Slides\nThemes\nTransitions"
+                                                }
+                                        ]
+                                },
+                                "goals": [],
+                                "showMeHow": false
+                        }
+                ]
+        },
+        "assessmentDecks": {
+                "app": "powerpoint",
+                "mode": "assessment",
+                "title": "Slide Skills Assessment",
+                "assetBaseUrl": "./assets/",
+                "theme": "LIGHT",
+                "images": [
+                        {
+                                "file": "headphones.svg",
+                                "alt": "Headphones"
+                        },
+                        {
+                                "file": "books-stack.svg",
+                                "alt": "A stack of books"
+                        },
+                        {
+                                "file": "art.svg",
+                                "alt": "Paint and brushes"
+                        },
+                        {
+                                "file": "sports.svg",
+                                "alt": "Sports balls"
+                        }
+                ],
+                "tasks": [
+                        {
+                                "title": "Fix the title",
+                                "explanation": "Check your spelling.",
+                                "instructions": [
+                                        "Change the title to `Summer Camp`."
+                                ],
+                                "hint": "Click the title and fix the spelling.",
+                                "startingDeck": {
+                                        "theme": "simple-light",
+                                        "slides": [
+                                                {
+                                                        "layout": "title",
+                                                        "title": "Sumer Camp",
+                                                        "subtitle": ""
+                                                }
+                                        ]
+                                },
+                                "goals": [
+                                        {
+                                                "type": "slideText",
+                                                "slide": 1,
+                                                "placeholder": "title",
+                                                "equals": "Summer Camp"
+                                        }
+                                ],
+                                "showMeHow": true
+                        },
+                        {
+                                "title": "Make the title bold",
+                                "explanation": "Bold text stands out.",
+                                "instructions": [
+                                        "Select the title `Rules` and make it bold."
+                                ],
+                                "hint": "Bold is on the Home tab.",
+                                "startingDeck": {
+                                        "theme": "simple-light",
+                                        "slides": [
+                                                {
+                                                        "layout": "titleAndBody",
+                                                        "title": "Rules",
+                                                        "body": "Be kind\nBe on time"
+                                                }
+                                        ]
+                                },
+                                "goals": [
+                                        {
+                                                "type": "textStyle",
+                                                "slide": 1,
+                                                "text": "Rules",
+                                                "bold": true
+                                        }
+                                ],
+                                "showMeHow": true
+                        },
+                        {
+                                "title": "Add a table",
+                                "explanation": "A table keeps a list tidy.",
+                                "instructions": [
+                                        "Use Insert > Table to add a table with 2 columns and 3 rows."
+                                ],
+                                "hint": "In the Table grid, pick 2 x 3 Table (2 columns, 3 rows).",
+                                "startingDeck": {
+                                        "theme": "simple-light",
+                                        "slides": [
+                                                {
+                                                        "layout": "titleOnly",
+                                                        "title": "Team List"
+                                                }
+                                        ]
+                                },
+                                "goals": [
+                                        {
+                                                "type": "table",
+                                                "slide": 1,
+                                                "rows": 3,
+                                                "columns": 2
                                         }
                                 ],
                                 "showMeHow": true

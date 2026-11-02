@@ -764,6 +764,24 @@ export class PptDemoComponent implements OnInit, AfterViewInit, OnChanges, OnDes
   }
 
   private async performKey(key: string): Promise<void> {
+    if (key === 'Ctrl+C' || key === 'Ctrl+V') {
+      const hostEl = this.demoHostRef?.elRef?.nativeElement;
+      const strip = hostEl?.querySelector('.ppt-slide-strip') as HTMLElement | null;
+      if (strip) {
+        strip.focus();
+        strip.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key: key === 'Ctrl+C' ? 'c' : 'v',
+            ctrlKey: true,
+            bubbles: true,
+            cancelable: true,
+          })
+        );
+      }
+      this.forceReplicaRender();
+      return;
+    }
+
     const hostEl = this.demoHostRef?.elRef?.nativeElement;
     const activeEl = document.activeElement as HTMLElement | null;
     const isReplicaActive =

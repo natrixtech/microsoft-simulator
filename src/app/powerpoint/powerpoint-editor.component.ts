@@ -403,12 +403,23 @@ export class PptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onCopySlide(): void {
     this.state.copyCurrentSlide();
+    this.actionLogger.log('copySlide', { slide: this.state.currentSlideIndex() + 1 });
   }
 
   onPasteSlide(): void {
     if (!this.state.clipboardSlide()) return;
     this.pushHistory();
     this.state.pasteSlide();
+    this.actionLogger.log('pasteSlide', { slide: this.state.currentSlideIndex() + 1 });
+  }
+
+  onDuplicateSlide(index?: number): void {
+    if (index !== undefined && index !== null && index >= 0 && index < this.state.totalSlides()) {
+      this.state.setCurrentSlideIndex(index);
+    }
+    this.pushHistory();
+    if (!this.state.duplicateSlide()) return;
+    this.actionLogger.log('duplicateSlide', { slide: this.state.currentSlideIndex() + 1 });
   }
 
   onInsertShape(shape: string): void {
@@ -925,7 +936,26 @@ export class PptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onStartAgain(): void {
     if (this.bridge.isCompleted()) return;
-    this.setupTask(0, true);
+    if (this.autoAdvanceTimer) {
+      clearTimeout(this.autoAdvanceTimer);
+      this.autoAdvanceTimer = null;
+    }
+    this.pendingAdvanceIdx = null;
+    if (this.isDemoOpen) this.onCloseDemo();
+    this.stopTextEditing();
+
+    const idx = this.taskIndex();
+    const task = this.currentActivity()?.tasks?.[idx];
+    const snap = this.taskStartDeckSnapshot ? clone(this.taskStartDeckSnapshot) : null;
+
+    this.setupTask(idx, false);
+
+    if (task && (task.startingDeck === null || task.startingDeck === undefined) && snap) {
+      this.state.initDeck(snap);
+      this.taskStartDeckSnapshot = clone(snap);
+      this.startingTheme = snap.theme;
+    }
+    this.cdr.markForCheck();
   }
 
   stopTextEditing(): void {

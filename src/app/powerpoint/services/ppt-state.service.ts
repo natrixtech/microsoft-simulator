@@ -330,6 +330,19 @@ export class PptStateService {
     return clonedSlide;
   }
 
+  duplicateSlide(): Slide | null {
+    const cur = this.currentSlide();
+    if (!cur) return null;
+    const copy = clone(cur);
+    copy.id = generateSlideId();
+    const idx = this.currentSlideIndex();
+    const d = clone(this.deck());
+    d.slides.splice(idx + 1, 0, copy);
+    this.deck.set(d);
+    this.setCurrentSlideIndex(idx + 1);
+    return copy;
+  }
+
   getSnapshot(): PptSnapshot {
     return {
       deck: clone(this.deck()),

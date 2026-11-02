@@ -46,8 +46,14 @@
     <span>New Slide</span>
   </button>
 
-  <!-- Duplicate Slide (disabled) -->
-  <button type="button" class="menu-item" disabled title="Duplicate Slide">
+  <!-- Duplicate Slide -->
+  <button
+    type="button"
+    class="menu-item"
+    title="Duplicate Slide"
+    data-demo-target="context-duplicate-slide"
+    (click)="onAction('duplicate')"
+  >
     <span>Duplicate Slide</span>
   </button>
 

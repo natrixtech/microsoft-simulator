@@ -28,6 +28,7 @@ export class PptSlideContextMenuComponent {
   @Output() readonly deleteSlide = new EventEmitter<void>();
   @Output() readonly copy = new EventEmitter<void>();
   @Output() readonly paste = new EventEmitter<void>();
+  @Output() readonly duplicate = new EventEmitter<void>();
   @Output() readonly close = new EventEmitter<void>();
 
   constructor(private elementRef: ElementRef) {}
@@ -46,7 +47,7 @@ export class PptSlideContextMenuComponent {
     }
   }
 
-  onAction(action: 'new' | 'delete' | 'copy' | 'paste'): void {
+  onAction(action: 'new' | 'delete' | 'copy' | 'paste' | 'duplicate'): void {
     this.close.emit();
     if (action === 'new') this.newSlide.emit();
     else if (action === 'delete') {
@@ -54,7 +55,7 @@ export class PptSlideContextMenuComponent {
     } else if (action === 'copy') this.copy.emit();
     else if (action === 'paste') {
       if (this.canPaste) this.paste.emit();
-    }
+    } else if (action === 'duplicate') this.duplicate.emit();
   }
 }
 
