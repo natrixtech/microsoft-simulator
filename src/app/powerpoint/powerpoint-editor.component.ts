@@ -1020,41 +1020,33 @@ export class PptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const groupEl = this.movableGroupRef?.nativeElement;
     const groupRect = groupEl?.getBoundingClientRect();
     const groupWidth = groupRect?.width || groupEl?.offsetWidth || 300;
-    const groupHeight = groupRect?.height || groupEl?.offsetHeight || 480;
 
-    // Top-right placement: top = 10 px, right = 12 px
-    const targetY = 10;
-    const targetX = layoutRect.width - groupWidth - 12;
+    // Top-right placement (screen coordinates): 10 px below the top and 12 px from the right of the work area
+    const targetY = layoutRect.top + 10;
+    const targetX = layoutRect.right - groupWidth - 12;
 
     this.groupX.set(Math.round(this.clampX(targetX)));
     this.groupY.set(Math.round(this.clampY(targetY)));
     this.cdr.markForCheck();
   }
 
+  // Keep the whole group inside the screen (8px from the left and right edges)
   clampX(x: number): number {
-    if (!this.workLayoutRef?.nativeElement) return Math.max(8, x);
-    const layoutEl = this.workLayoutRef.nativeElement;
-    const layoutRect = layoutEl.getBoundingClientRect();
     const groupEl = this.movableGroupRef?.nativeElement;
     const groupRect = groupEl?.getBoundingClientRect();
     const groupWidth = groupRect?.width || groupEl?.offsetWidth || 300;
-
-    const sidebarEl = layoutEl.querySelector('.assessment-progress-sidebar') as HTMLElement | null;
-    const minX = sidebarEl ? sidebarEl.offsetWidth + 8 : 8;
-    const maxX = Math.max(minX, layoutRect.width - groupWidth - 10);
+    const minX = 8;
+    const maxX = Math.max(minX, window.innerWidth - groupWidth - 8);
     return Math.min(Math.max(x, minX), maxX);
   }
 
+  // Keep the whole group (including mascot) inside the screen (8px from the top and bottom edges)
   clampY(y: number): number {
-    if (!this.workLayoutRef?.nativeElement) return Math.max(8, y);
-    const layoutEl = this.workLayoutRef.nativeElement;
-    const layoutRect = layoutEl.getBoundingClientRect();
     const groupEl = this.movableGroupRef?.nativeElement;
     const groupRect = groupEl?.getBoundingClientRect();
     const groupHeight = groupRect?.height || groupEl?.offsetHeight || 480;
-
     const minY = 8;
-    const maxY = Math.max(minY, layoutRect.height - groupHeight - 8);
+    const maxY = Math.max(minY, window.innerHeight - groupHeight - 8);
     return Math.min(Math.max(y, minY), maxY);
   }
 
@@ -1071,8 +1063,9 @@ export class PptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.dragStartPointerY = event.clientY;
 
     const groupEl = this.movableGroupRef?.nativeElement;
-    this.dragStartGroupX = this.groupX() ?? groupEl?.offsetLeft ?? 0;
-    this.dragStartGroupY = this.groupY() ?? groupEl?.offsetTop ?? 0;
+    const r = groupEl?.getBoundingClientRect();
+    this.dragStartGroupX = this.groupX() ?? r?.left ?? 0;
+    this.dragStartGroupY = this.groupY() ?? r?.top ?? 0;
 
     try {
       (event.currentTarget as HTMLElement)?.setPointerCapture(event.pointerId);
@@ -1129,8 +1122,9 @@ export class PptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   onNudgePosition(delta: { dx: number; dy: number }): void {
     if (this.isFrozen) return;
     const groupEl = this.movableGroupRef?.nativeElement;
-    const curX = this.groupX() ?? groupEl?.offsetLeft ?? 0;
-    const curY = this.groupY() ?? groupEl?.offsetTop ?? 0;
+    const r = groupEl?.getBoundingClientRect();
+    const curX = this.groupX() ?? r?.left ?? 0;
+    const curY = this.groupY() ?? r?.top ?? 0;
     this.groupX.set(Math.round(this.clampX(curX + delta.dx)));
     this.groupY.set(Math.round(this.clampY(curY + delta.dy)));
     this.hasUserMoved.set(true);

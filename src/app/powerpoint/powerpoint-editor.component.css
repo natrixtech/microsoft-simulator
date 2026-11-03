@@ -106,7 +106,7 @@
 
 /* Floating Task Card & Mascot */
 .ppt-floating-card-group {
-  position: absolute;
+  position: fixed;
   z-index: 1100;
   cursor: default;
   margin: 0;
