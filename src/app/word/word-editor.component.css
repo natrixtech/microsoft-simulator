@@ -98,6 +98,24 @@
   overflow: visible;
 }
 
+/* Tab names row: hidden sideways scroll at every width (tablet), no scrollbar or buttons */
+.ribbon-tab-list {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.ribbon-tab-list::-webkit-scrollbar {
+  display: none;
+}
+/* While the Tools dropdown is open, do not clip it (same rule the 600px block already uses) */
+.ribbon-tabs-strip.has-open-menu .ribbon-tab-list,
+.ribbon-tab-list:has([open]) {
+  overflow: visible !important;
+}
+
 .ribbon-tab-btn,
 .ribbon-tab-menu summary {
   background: none;
