@@ -88,3 +88,10 @@
 .handle-sw { bottom: -4px; left: -4px; cursor: nesw-resize; }
 .handle-w  { top: calc(50% - 4px); left: -4px; cursor: ew-resize; }
 
+/* Tablet touch: dragging the frame, an edge or a handle moves/resizes the element instead of scrolling */
+.selection-frame,
+.edge-strip,
+.resize-handle {
+  touch-action: none;
+}
+

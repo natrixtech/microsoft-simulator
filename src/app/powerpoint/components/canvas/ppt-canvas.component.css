@@ -27,6 +27,12 @@
   cursor: crosshair !important;
 }
 
+/* Tablet touch: drawing a new shape or text box does not scroll the page */
+.ppt-canvas-area.insert-drawing-mode,
+.ppt-canvas-area.insert-drawing-mode .slide-transform-wrapper {
+  touch-action: none;
+}
+
 .slide-transform-wrapper {
   position: absolute;
   top: 0;
