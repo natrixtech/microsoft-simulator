@@ -1576,13 +1576,13 @@
    Lesson Side & Task Card (Movable group at bottom-left of work area)
    ------------------------------------------------------------- */
 .lesson-side.movable-group {
-  position: absolute;
+  position: fixed;
   width: 300px;
   max-width: calc(100vw - 24px);
   max-height: calc(100% - 66px);
   padding: 0;
   margin: 0;
-  z-index: 1000;
+  z-index: 12500;
   pointer-events: auto;
   box-sizing: border-box;
   display: flex;

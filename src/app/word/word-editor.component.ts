@@ -3540,43 +3540,34 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const stripEl = layoutEl.querySelector('.assessment-strip') as HTMLElement | null;
     const leftOffset = stripEl ? stripEl.offsetWidth : 0;
 
-    // Find status bar to ensure mascot is at least 24px above it
+    // Status bar: the panel starts 24px above it
     const statusBar = layoutEl.querySelector('.word-statusbar') as HTMLElement | null;
-    const bottomLimit = statusBar
-      ? (statusBar.getBoundingClientRect().top - layoutRect.top)
-      : layoutRect.height;
 
-    // Sit at the bottom-left of the work area: left: 14px, at least 24px above status bar
+    // Sit at the bottom-left of the work area (screen coordinates): left 14px, 24px above status bar
     const actualHeight = groupEl?.getBoundingClientRect().height || groupHeight;
-    const targetX = Math.max(8, 14 + leftOffset);
-    const targetY = Math.max(8, Math.floor(bottomLimit - actualHeight - 24));
+    const targetX = layoutRect.left + Math.max(8, 14 + leftOffset);
+    const statusTop = statusBar ? statusBar.getBoundingClientRect().top : layoutRect.bottom;
+    const targetY = Math.floor(statusTop - actualHeight - 24);
 
     this.groupX.set(Math.round(this.clampX(targetX)));
     this.groupY.set(Math.round(this.clampY(targetY)));
+    this.cdr.markForCheck();
   }
 
   clampX(x: number): number {
-    if (!this.workLayoutRef) return Math.max(8, x);
-    const layoutRect = this.workLayoutRef.nativeElement.getBoundingClientRect();
     const groupEl = this.movableGroupRef?.nativeElement;
     const groupWidth = groupEl?.offsetWidth || 300;
     const minX = 8;
-    const maxX = Math.max(minX, layoutRect.width - groupWidth - 8);
+    const maxX = Math.max(minX, window.innerWidth - groupWidth - 8);
     return Math.min(Math.max(x, minX), maxX);
   }
 
   clampY(y: number): number {
-    if (!this.workLayoutRef) return Math.max(8, y);
-    const layoutRect = this.workLayoutRef.nativeElement.getBoundingClientRect();
     const groupEl = this.movableGroupRef?.nativeElement;
     const groupHeight = groupEl?.offsetHeight || 441;
     const actualHeight = groupEl?.getBoundingClientRect().height || groupHeight;
-    const statusBar = this.workLayoutRef.nativeElement.querySelector('.word-statusbar') as HTMLElement | null;
-    const bottomLimit = statusBar
-      ? (statusBar.getBoundingClientRect().top - layoutRect.top)
-      : layoutRect.height;
     const minY = 8;
-    const maxY = Math.max(minY, Math.floor(bottomLimit - actualHeight - 24));
+    const maxY = Math.max(minY, window.innerHeight - actualHeight - 8);
     return Math.min(Math.max(y, minY), maxY);
   }
 
@@ -3592,8 +3583,9 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.dragStartPointerY = event.clientY;
 
     const groupEl = this.movableGroupRef?.nativeElement;
-    this.dragStartGroupX = this.groupX() ?? groupEl?.offsetLeft ?? 0;
-    this.dragStartGroupY = this.groupY() ?? groupEl?.offsetTop ?? 0;
+    const r = groupEl?.getBoundingClientRect();
+    this.dragStartGroupX = this.groupX() ?? r?.left ?? 0;
+    this.dragStartGroupY = this.groupY() ?? r?.top ?? 0;
 
     try {
       (event.currentTarget as HTMLElement)?.setPointerCapture(event.pointerId);
@@ -3632,8 +3624,9 @@ export class WordEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onNudgePosition(delta: { dx: number; dy: number }): void {
     const groupEl = this.movableGroupRef?.nativeElement;
-    const curX = this.groupX() ?? groupEl?.offsetLeft ?? 14;
-    const curY = this.groupY() ?? groupEl?.offsetTop ?? 100;
+    const r = groupEl?.getBoundingClientRect();
+    const curX = this.groupX() ?? r?.left ?? 14;
+    const curY = this.groupY() ?? r?.top ?? 100;
     this.groupX.set(Math.round(this.clampX(curX + delta.dx)));
     this.groupY.set(Math.round(this.clampY(curY + delta.dy)));
     this.hasUserMoved.set(true);
