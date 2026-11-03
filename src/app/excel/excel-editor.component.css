@@ -123,7 +123,7 @@
 
 /* Floating Movable Task Card Group */
 .excel-floating-card-group {
-  position: absolute;
+  position: fixed;
   z-index: 100;
   cursor: default;
   margin: 0;

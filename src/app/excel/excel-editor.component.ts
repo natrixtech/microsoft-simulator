@@ -1216,7 +1216,7 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.closeDialog('fnPicker');
   }
 
-  // Initial placement of Task Card + Mascot group at top-right of worksheet viewport
+  // Initial placement of Task Card + Mascot group at top-right of worksheet viewport (screen coordinates)
   computeInitialPlacement(): void {
     if (!this.workLayoutRef?.nativeElement) return;
     const layoutEl = this.workLayoutRef.nativeElement;
@@ -1226,45 +1226,33 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const groupEl = this.movableGroupRef?.nativeElement;
     const groupRect = groupEl?.getBoundingClientRect();
     const groupWidth = groupRect?.width || groupEl?.offsetWidth || 300;
-    const groupHeight = groupRect?.height || groupEl?.offsetHeight || 480;
 
-    // Top-right placement: ~8-12px spacing from top and right of the worksheet viewport
-    const targetY = 10;
-    const targetX = layoutRect.width - groupWidth - 12;
+    // Top-right placement: 10px below the top and 12px from the right of the worksheet viewport
+    const targetY = layoutRect.top + 10;
+    const targetX = layoutRect.right - groupWidth - 12;
 
     this.groupX.set(Math.round(this.clampX(targetX)));
     this.groupY.set(Math.round(this.clampY(targetY)));
     this.cdr.markForCheck();
   }
 
+  // Keep the whole group inside the screen (8px from the left and right edges)
   clampX(x: number): number {
-    if (!this.workLayoutRef?.nativeElement) return Math.max(8, x);
-    const layoutEl = this.workLayoutRef.nativeElement;
-    const layoutRect = layoutEl.getBoundingClientRect();
     const groupEl = this.movableGroupRef?.nativeElement;
     const groupRect = groupEl?.getBoundingClientRect();
     const groupWidth = groupRect?.width || groupEl?.offsetWidth || 300;
-
-    // Left limit accounts for assessment sidebar if present
-    const sidebarEl = layoutEl.querySelector('.assessment-progress-sidebar') as HTMLElement | null;
-    const minX = sidebarEl ? sidebarEl.offsetWidth + 8 : 8;
-    const maxX = Math.max(minX, layoutRect.width - groupWidth - 10);
+    const minX = 8;
+    const maxX = Math.max(minX, window.innerWidth - groupWidth - 8);
     return Math.min(Math.max(x, minX), maxX);
   }
 
+  // Keep the whole group (including mascot) inside the screen (8px from the top and bottom edges)
   clampY(y: number): number {
-    if (!this.workLayoutRef?.nativeElement) return Math.max(8, y);
-    const layoutEl = this.workLayoutRef.nativeElement;
-    const layoutRect = layoutEl.getBoundingClientRect();
     const groupEl = this.movableGroupRef?.nativeElement;
     const groupRect = groupEl?.getBoundingClientRect();
     const groupHeight = groupRect?.height || groupEl?.offsetHeight || 480;
-
-    // Top boundary: ~8px below the formula bar (red line boundary)
     const minY = 8;
-    // Bottom limit: keep entire group (including mascot) visible above sheet tabs / status bar
-    const maxY = Math.max(minY, layoutRect.height - groupHeight - 8);
-
+    const maxY = Math.max(minY, window.innerHeight - groupHeight - 8);
     return Math.min(Math.max(y, minY), maxY);
   }
 
@@ -1281,8 +1269,9 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.dragStartPointerY = event.clientY;
 
     const groupEl = this.movableGroupRef?.nativeElement;
-    this.dragStartGroupX = this.groupX() ?? groupEl?.offsetLeft ?? 0;
-    this.dragStartGroupY = this.groupY() ?? groupEl?.offsetTop ?? 0;
+    const r = groupEl?.getBoundingClientRect();
+    this.dragStartGroupX = this.groupX() ?? r?.left ?? 0;
+    this.dragStartGroupY = this.groupY() ?? r?.top ?? 0;
 
     try {
       (event.currentTarget as HTMLElement)?.setPointerCapture(event.pointerId);
@@ -1339,8 +1328,9 @@ export class ExcelEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   onNudgePosition(delta: { dx: number; dy: number }): void {
     if (this.bridge.isPaused() || this.isCompleted()) return;
     const groupEl = this.movableGroupRef?.nativeElement;
-    const curX = this.groupX() ?? groupEl?.offsetLeft ?? 0;
-    const curY = this.groupY() ?? groupEl?.offsetTop ?? 0;
+    const r = groupEl?.getBoundingClientRect();
+    const curX = this.groupX() ?? r?.left ?? 0;
+    const curY = this.groupY() ?? r?.top ?? 0;
     this.groupX.set(Math.round(this.clampX(curX + delta.dx)));
     this.groupY.set(Math.round(this.clampY(curY + delta.dy)));
     this.hasUserMoved.set(true);

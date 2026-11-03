@@ -23,6 +23,11 @@
   z-index: 50;
 }
 
+/* Search results must show above the floating task panel */
+.ribbon-tab-strip:has(.search-results-popover) {
+  z-index: 200;
+}
+
 .tab-btn {
   background: transparent;
   border: none;
